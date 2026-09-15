@@ -8,6 +8,13 @@ public class Notebook
 
     public Notebook(string name)
     {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(
+                "Notebook name cannot be empty.",
+                nameof(name));
+        }
+
         Id = Guid.NewGuid();
         Name = name;
         CreatedAt = DateTime.UtcNow;
