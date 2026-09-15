@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Syllanote.Desktop (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Syllanote.Desktop (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
