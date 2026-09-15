@@ -11,12 +11,17 @@ public class CreateNotebookServiceTests
     {
         public Notebook? AddedNotebook { get; private set; }
         public int AddCallCount { get; private set; }
+        public IReadOnlyList<Notebook> NotebooksToReturn { get; set; } = [];
         public Task AddAsync(Notebook notebook)
         {
             AddCallCount++;
             AddedNotebook = notebook;
 
             return Task.CompletedTask;
+        }
+        public Task<IReadOnlyList<Notebook>> GetAllAsync()
+        {
+            return Task.FromResult(NotebooksToReturn);
         }
     }
     [TestMethod]

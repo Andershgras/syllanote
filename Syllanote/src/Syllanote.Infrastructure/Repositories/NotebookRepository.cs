@@ -1,6 +1,7 @@
 ﻿using Syllanote.Application.Abstractions;
 using Syllanote.Domain.Entities;
 using Syllanote.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Syllanote.Infrastructure.Repositories;
 
@@ -18,5 +19,11 @@ public class NotebookRepository : INotebookRepository
         _dbContext.Notebooks.Add(notebook);
 
         await _dbContext.SaveChangesAsync();
+    }
+    public async Task<IReadOnlyList<Notebook>> GetAllAsync()
+    {
+        return await _dbContext.Notebooks
+            .OrderBy(notebook => notebook.CreatedAt)
+            .ToListAsync();
     }
 }

@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Syllanote.Application;
+using Syllanote.Desktop.ViewModels;
 using Syllanote.Infrastructure;
 using Syllanote.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Syllanote.Application;
+using System;
+using Syllanote.Desktop.ViewModels;
 
 namespace Syllanote.Desktop
 {
@@ -28,6 +30,9 @@ namespace Syllanote.Desktop
 
             services.AddApplication();
 
+            services.AddTransient<NotebookViewModel>();
+            services.AddTransient<MainWindow>();
+
             var localFolder =
                 Windows.Storage.ApplicationData.Current.LocalFolder.Path;
 
@@ -50,9 +55,10 @@ namespace Syllanote.Desktop
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(
+            Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new MainWindow();
+            _window = Services.GetRequiredService<MainWindow>();
             _window.Activate();
         }
     }
