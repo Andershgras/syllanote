@@ -4,16 +4,14 @@ using Microsoft.UI.Xaml;
 using Syllanote.Infrastructure;
 using Syllanote.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using Syllanote.Application;
 
 namespace Syllanote.Desktop
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
-    public partial class App : Application
+    public partial class App : Microsoft.UI.Xaml.Application
     {
         private Window? _window;
 
@@ -27,6 +25,8 @@ namespace Syllanote.Desktop
             InitializeComponent();
 
             var services = new ServiceCollection();
+
+            services.AddApplication();
 
             var localFolder =
                 Windows.Storage.ApplicationData.Current.LocalFolder.Path;

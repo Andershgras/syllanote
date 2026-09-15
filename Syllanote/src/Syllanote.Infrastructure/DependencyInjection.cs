@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Syllanote.Infrastructure.Persistence;
+using Syllanote.Application.Abstractions;
+using Syllanote.Infrastructure.Repositories;
 
 namespace Syllanote.Infrastructure;
 
@@ -13,6 +15,8 @@ public static class DependencyInjection
         services.AddDbContext<SyllanoteDbContext>(options =>
             options.UseSqlite(connectionString));
 
+        services.AddScoped<INotebookRepository, NotebookRepository>();
+        
         return services;
     }
 }
