@@ -54,5 +54,7 @@ public class RenamePageServiceTests
             UpdateCallCount++;
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Page page) => Task.CompletedTask;
     }
 }

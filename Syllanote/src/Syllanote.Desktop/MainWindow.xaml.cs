@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Syllanote.Desktop.ViewModels;
+using System;
 
 namespace Syllanote.Desktop
 {
@@ -53,6 +54,33 @@ namespace Syllanote.Desktop
                 listView.SelectedItem as Syllanote.Domain.Entities.Page;
 
             await ViewModel.SelectPageAsync(page);
+        }
+
+        private async void DeletePageButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            var page = ViewModel.SelectedPage;
+            if (page is null)
+            {
+                return;
+            }
+
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Delete page?",
+                Content = $"Delete \"{page.Title}\"? This cannot be undone.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary &&
+                ViewModel.SelectedPage == page)
+            {
+                await ViewModel.DeletePageCommand.ExecuteAsync(null);
+            }
         }
     }
 }

@@ -58,5 +58,7 @@ public class UpdatePageContentServiceTests
 
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Page page) => Task.CompletedTask;
     }
 }

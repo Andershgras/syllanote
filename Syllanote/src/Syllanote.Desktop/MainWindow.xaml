@@ -169,6 +169,10 @@
                 Content="Rename Page"
                 Command="{Binding RenamePageCommand}" />
 
+            <Button
+                Content="Delete Page"
+                Click="DeletePageButton_Click" />
+
             <TextBox
                 Header="Note"
                 Text="{Binding PageContent, Mode=TwoWay}"

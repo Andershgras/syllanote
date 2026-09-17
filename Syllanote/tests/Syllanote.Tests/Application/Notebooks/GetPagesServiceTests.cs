@@ -29,6 +29,8 @@ public class GetPagesServiceTests
         {
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Page page) => Task.CompletedTask;
     }
 
     [TestMethod]

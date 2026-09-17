@@ -34,4 +34,10 @@ public class PageRepository : IPageRepository
         _dbContext.Pages.Update(page);
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task DeleteAsync(Page page)
+    {
+        _dbContext.Pages.Remove(page);
+        await _dbContext.SaveChangesAsync();
+    }
 }

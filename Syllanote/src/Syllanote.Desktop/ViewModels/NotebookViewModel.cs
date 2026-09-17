@@ -7,6 +7,7 @@ using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.RenameSection;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
+using Syllanote.Application.Notebooks.Sections.Pages.DeletePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
 using Syllanote.Application.Notebooks.Sections.Pages.RenamePage;
 using Syllanote.Application.Notebooks.Sections.Pages.UpdatePageContent;
@@ -21,6 +22,7 @@ namespace Syllanote.Desktop.ViewModels;
 public partial class NotebookViewModel : ObservableObject
 {
     private CancellationTokenSource? _autoSaveCancellationTokenSource;
+    private readonly SemaphoreSlim _pagePersistenceLock = new(1, 1);
     private bool _isLoadingPage;
 
     private readonly CreateNotebookService _createNotebookService;
@@ -31,6 +33,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly RenameSectionService _renameSectionService;
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
+    private readonly DeletePageService _deletePageService;
     private readonly RenamePageService _renamePageService;
     private readonly UpdatePageContentService _updatePageContentService;
 
@@ -43,6 +46,7 @@ public partial class NotebookViewModel : ObservableObject
         RenameSectionService renameSectionService,
         GetPagesService getPagesService,
         CreatePageService createPageService,
+        DeletePageService deletePageService,
         RenamePageService renamePageService,
         UpdatePageContentService updatePageContentService)
     {
@@ -54,6 +58,7 @@ public partial class NotebookViewModel : ObservableObject
         _renameSectionService = renameSectionService;
         _getPagesService = getPagesService;
         _createPageService = createPageService;
+        _deletePageService = deletePageService;
         _renamePageService = renamePageService;
         _updatePageContentService = updatePageContentService;
     }
@@ -294,6 +299,35 @@ public partial class NotebookViewModel : ObservableObject
             Pages[index] = SelectedPage;
         }
     }
+
+    [RelayCommand]
+    private async Task DeletePageAsync()
+    {
+        var page = SelectedPage;
+        if (page is null)
+        {
+            return;
+        }
+
+        _autoSaveCancellationTokenSource?.Cancel();
+
+        await _pagePersistenceLock.WaitAsync();
+        try
+        {
+            if (SelectedPage != page)
+            {
+                return;
+            }
+
+            await _deletePageService.DeleteAsync(page);
+            SelectedPage = null;
+            Pages.Remove(page);
+        }
+        finally
+        {
+            _pagePersistenceLock.Release();
+        }
+    }
     partial void OnPageContentChanged(string value)
     {
         if (_isLoadingPage)
@@ -313,16 +347,27 @@ public partial class NotebookViewModel : ObservableObject
     }
     public async Task SaveCurrentPageAsync()
     {
-        if (SelectedPage is null || !IsPageDirty)
+        await _pagePersistenceLock.WaitAsync();
+        try
         {
-            return;
+            if (SelectedPage is null || !IsPageDirty)
+            {
+                return;
+            }
+
+            var page = SelectedPage;
+            var content = PageContent;
+            await _updatePageContentService.UpdateAsync(page, content);
+
+            if (SelectedPage == page && PageContent == content)
+            {
+                IsPageDirty = false;
+            }
         }
-
-        await _updatePageContentService.UpdateAsync(
-            SelectedPage,
-            PageContent);
-
-        IsPageDirty = false;
+        finally
+        {
+            _pagePersistenceLock.Release();
+        }
     }
     private async Task ScheduleAutoSaveAsync()
     {
