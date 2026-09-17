@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Syllanote.Desktop.ViewModels;
 
 namespace Syllanote.Desktop
@@ -17,6 +18,12 @@ namespace Syllanote.Desktop
             RoutedEventArgs e)
         {
             await ViewModel.LoadNotebooksCommand.ExecuteAsync(null);
+        }
+        private async void NotebookListView_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
         }
     }
 }
