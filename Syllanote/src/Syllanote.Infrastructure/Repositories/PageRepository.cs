@@ -29,4 +29,9 @@ public class PageRepository : IPageRepository
             .OrderBy(page => page.CreatedAt)
             .ToListAsync();
     }
+    public async Task UpdateAsync(Page page)
+    {
+        _dbContext.Pages.Update(page);
+        await _dbContext.SaveChangesAsync();
+    }
 }

@@ -25,6 +25,10 @@ public class GetPagesServiceTests
 
             return Task.FromResult(PagesToReturn);
         }
+        public Task UpdateAsync(Page page)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     [TestMethod]

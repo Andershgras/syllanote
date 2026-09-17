@@ -43,4 +43,39 @@ public class PageTests
                 Guid.Empty,
                 "Confusion Matrix"));
     }
+    [TestMethod]
+    public void UpdateContent_ShouldUpdateContent()
+    {
+        // Arrange
+        var page = new Page(
+            Guid.NewGuid(),
+            "Confusion Matrix");
+
+        // Act
+        page.UpdateContent(
+            "A confusion matrix contains TP, TN, FP and FN.");
+
+        // Assert
+        Assert.AreEqual(
+            "A confusion matrix contains TP, TN, FP and FN.",
+            page.Content);
+    }
+    [TestMethod]
+    public void UpdateContent_ShouldUpdateUpdatedAt()
+    {
+        // Arrange
+        var page = new Page(
+            Guid.NewGuid(),
+            "Confusion Matrix");
+
+        var originalUpdatedAt = page.UpdatedAt;
+
+        // Act
+        page.UpdateContent(
+            "A confusion matrix contains TP, TN, FP and FN.");
+
+        // Assert
+        Assert.IsTrue(
+            page.UpdatedAt >= originalUpdatedAt);
+    }
 }

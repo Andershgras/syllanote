@@ -13,7 +13,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300" />
             <ColumnDefinition Width="300" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!-- ==================== -->
@@ -128,9 +128,10 @@
             <Button
                 Content="Create Page"
                 Command="{Binding CreatePageCommand}" />
-            
+
             <ListView
-                ItemsSource="{Binding Pages}">
+                ItemsSource="{Binding Pages}"
+                SelectedItem="{Binding SelectedPage, Mode=TwoWay}">
 
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -141,7 +142,22 @@
                 </ListView.ItemTemplate>
 
             </ListView>
+            <!-- Temporary: verify SelectedPage -->
+            <TextBlock
+                Text="{Binding SelectedPage.Title}"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Margin="0,16,0,0" />
 
+            <TextBox
+                Header="Note"
+                Text="{Binding PageContent, Mode=TwoWay}"
+                AcceptsReturn="True"
+                TextWrapping="Wrap"
+                MinHeight="200" />
+            <Button
+                Content="Save Note"
+                Command="{Binding SavePageCommand}" />
         </StackPanel>
 
     </Grid>

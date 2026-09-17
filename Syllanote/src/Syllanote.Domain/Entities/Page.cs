@@ -14,7 +14,7 @@ public class Page
 
     public DateTime UpdatedAt { get; private set; }
 
-    public Page(Guid sectionId, string title)
+    public Page(Guid sectionId, string title) 
     {
         if (sectionId == Guid.Empty)
         {
@@ -36,5 +36,10 @@ public class Page
         Content = string.Empty;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = CreatedAt;
+    }
+    public void UpdateContent(string content)
+    {
+        Content = content;
+        UpdatedAt = DateTime.UtcNow;
     }
 }

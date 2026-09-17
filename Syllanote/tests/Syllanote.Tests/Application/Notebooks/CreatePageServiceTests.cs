@@ -28,6 +28,10 @@ public class CreatePageServiceTests
 
             return Task.FromResult(pages);
         }
+        public Task UpdateAsync(Page page)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     [TestMethod]

@@ -1,14 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Syllanote.Application.Notebooks.CreateNotebook;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
-using Syllanote.Domain.Entities;
 using Syllanote.Application.Notebooks.GetNotebooks;
-using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
-using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
+using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
+using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
+using Syllanote.Application.Notebooks.Sections.Pages.UpdatePageContent;
+using Syllanote.Domain.Entities;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace Syllanote.Desktop.ViewModels;
 
@@ -20,6 +21,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly CreateSectionService _createSectionService;
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
+    private readonly UpdatePageContentService _updatePageContentService;
 
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
@@ -27,7 +29,8 @@ public partial class NotebookViewModel : ObservableObject
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
         GetPagesService getPagesService,
-        CreatePageService createPageService)
+        CreatePageService createPageService,
+        UpdatePageContentService updatePageContentService)
     {
         _createNotebookService = createNotebookService;
         _getNotebooksService = getNotebooksService;
@@ -35,20 +38,28 @@ public partial class NotebookViewModel : ObservableObject
         _createSectionService = createSectionService;
         _getPagesService = getPagesService;
         _createPageService = createPageService;
+        _updatePageContentService = updatePageContentService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
     public ObservableCollection<Section> Sections { get; } = [];
     public ObservableCollection<Page> Pages { get; } = [];
+
     [ObservableProperty]
     private string _newNotebookName = string.Empty;
     [ObservableProperty]
     private string _newSectionName = string.Empty;
     [ObservableProperty]
     private string _newPageTitle = string.Empty;
+
+    [ObservableProperty]
+    private string _pageContent = string.Empty;
+
     [ObservableProperty]
     private Notebook? _selectedNotebook;
     [ObservableProperty]
     private Section? _selectedSection;
+    [ObservableProperty]
+    private Page? _selectedPage;
 
     [RelayCommand]
     private async Task CreateNotebookAsync()
@@ -119,6 +130,7 @@ public partial class NotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadPagesAsync()
     {
+        SelectedPage = null;
         Pages.Clear();
 
         if (SelectedSection is null)
@@ -152,5 +164,21 @@ public partial class NotebookViewModel : ObservableObject
         Pages.Add(page);
 
         NewPageTitle = string.Empty;
+    }
+    partial void OnSelectedPageChanged(Page? value)
+    {
+        PageContent = value?.Content ?? string.Empty;
+    }
+    [RelayCommand]
+    private async Task SavePageAsync()
+    {
+        if (SelectedPage is null)
+        {
+            return;
+        }
+
+        await _updatePageContentService.UpdateAsync(
+            SelectedPage,
+            PageContent);
     }
 }
