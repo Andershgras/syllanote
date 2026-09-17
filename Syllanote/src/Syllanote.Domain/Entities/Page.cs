@@ -42,4 +42,17 @@ public class Page
         Content = content;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void Rename(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            throw new ArgumentException(
+                "Page title cannot be empty.",
+                nameof(title));
+        }
+
+        Title = title;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

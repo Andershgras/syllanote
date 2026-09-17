@@ -142,12 +142,14 @@
                 </ListView.ItemTemplate>
 
             </ListView>
-            <!-- Temporary: verify SelectedPage -->
-            <TextBlock
-                Text="{Binding SelectedPage.Title}"
-                FontSize="20"
-                FontWeight="SemiBold"
+            <TextBox
+                Header="Selected page title"
+                Text="{Binding SelectedPageTitle, Mode=TwoWay}"
                 Margin="0,16,0,0" />
+
+            <Button
+                Content="Rename Page"
+                Command="{Binding RenamePageCommand}" />
 
             <TextBox
                 Header="Note"

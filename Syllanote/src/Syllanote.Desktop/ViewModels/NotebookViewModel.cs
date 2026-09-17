@@ -6,6 +6,7 @@ using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
+using Syllanote.Application.Notebooks.Sections.Pages.RenamePage;
 using Syllanote.Application.Notebooks.Sections.Pages.UpdatePageContent;
 using Syllanote.Domain.Entities;
 using System;
@@ -26,6 +27,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly CreateSectionService _createSectionService;
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
+    private readonly RenamePageService _renamePageService;
     private readonly UpdatePageContentService _updatePageContentService;
 
     public NotebookViewModel(
@@ -35,6 +37,7 @@ public partial class NotebookViewModel : ObservableObject
         CreateSectionService createSectionService,
         GetPagesService getPagesService,
         CreatePageService createPageService,
+        RenamePageService renamePageService,
         UpdatePageContentService updatePageContentService)
     {
         _createNotebookService = createNotebookService;
@@ -43,6 +46,7 @@ public partial class NotebookViewModel : ObservableObject
         _createSectionService = createSectionService;
         _getPagesService = getPagesService;
         _createPageService = createPageService;
+        _renamePageService = renamePageService;
         _updatePageContentService = updatePageContentService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
@@ -58,6 +62,9 @@ public partial class NotebookViewModel : ObservableObject
 
     [ObservableProperty]
     private string _pageContent = string.Empty;
+
+    [ObservableProperty]
+    private string _selectedPageTitle = string.Empty;
 
     [ObservableProperty]
     private Notebook? _selectedNotebook;
@@ -183,11 +190,35 @@ public partial class NotebookViewModel : ObservableObject
 
         _isLoadingPage = true;
 
+        SelectedPageTitle = value?.Title ?? string.Empty;
         PageContent = value?.Content ?? string.Empty;
 
         _isLoadingPage = false;
 
         IsPageDirty = false;
+    }
+
+    [RelayCommand]
+    private async Task RenamePageAsync()
+    {
+        if (SelectedPage is null ||
+            string.IsNullOrWhiteSpace(SelectedPageTitle))
+        {
+            return;
+        }
+
+        _autoSaveCancellationTokenSource?.Cancel();
+        await SaveCurrentPageAsync();
+
+        await _renamePageService.RenameAsync(
+            SelectedPage,
+            SelectedPageTitle);
+
+        var index = Pages.IndexOf(SelectedPage);
+        if (index >= 0)
+        {
+            Pages[index] = SelectedPage;
+        }
     }
     partial void OnPageContentChanged(string value)
     {

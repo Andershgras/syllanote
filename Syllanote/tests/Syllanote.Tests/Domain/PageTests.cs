@@ -78,4 +78,31 @@ public class PageTests
         Assert.IsTrue(
             page.UpdatedAt >= originalUpdatedAt);
     }
+
+    [TestMethod]
+    public void Rename_WithValidTitle_UpdatesTitleAndUpdatedAt()
+    {
+        var page = new Page(Guid.NewGuid(), "Old title");
+        page.UpdateContent("Existing note");
+        var originalUpdatedAt = page.UpdatedAt;
+
+        page.Rename("New title");
+
+        Assert.AreEqual("New title", page.Title);
+        Assert.AreEqual("Existing note", page.Content);
+        Assert.IsTrue(page.UpdatedAt >= originalUpdatedAt);
+    }
+
+    [DataTestMethod]
+    [DataRow("")]
+    [DataRow(" ")]
+    [DataRow("\t")]
+    public void Rename_WithInvalidTitle_ThrowsArgumentException(string title)
+    {
+        var page = new Page(Guid.NewGuid(), "Original title");
+
+        Assert.ThrowsException<ArgumentException>(() => page.Rename(title));
+
+        Assert.AreEqual("Original title", page.Title);
+    }
 }
