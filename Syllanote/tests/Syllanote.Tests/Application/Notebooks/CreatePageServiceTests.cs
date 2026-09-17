@@ -28,6 +28,9 @@ public class CreatePageServiceTests
 
             return Task.FromResult(pages);
         }
+        public Task<IReadOnlyList<Syllanote.Application.Notebooks.Sections.Pages.SearchPages.SearchPageResult>> SearchAsync(string searchText)
+            => Task.FromResult<IReadOnlyList<Syllanote.Application.Notebooks.Sections.Pages.SearchPages.SearchPageResult>>([]);
+
         public Task UpdateAsync(Page page)
         {
             return Task.CompletedTask;

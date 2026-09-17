@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Syllanote.Application\Syllanote.Application.csproj" />
     <ProjectReference Include="..\..\src\Syllanote.Domain\Syllanote.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Syllanote.Infrastructure\Syllanote.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

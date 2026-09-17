@@ -10,36 +10,107 @@
         DataContext="{x:Bind ViewModel}"
         Loaded="RootGrid_Loaded">
 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="240" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <TextBox x:Name="SearchTextBox" Width="360" PlaceholderText="Search pages in all notebooks" AutomationProperties.Name="Search pages" />
+            <Button x:Name="SearchButton" Content="Search" Click="SearchButton_Click" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Margin="0,0,0,12">
+            <TextBlock Text="{Binding SearchMessage}" TextWrapping="Wrap" />
+            <ListView x:Name="SearchResultsListView"
+                      ItemsSource="{Binding SearchResults}"
+                      SelectionChanged="SearchResultsListView_SelectionChanged"
+                      MaxHeight="160"
+                      AutomationProperties.Name="Search results">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding PageTitle}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Location}" Opacity="0.7" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
 
         <!-- ==================== -->
         <!-- NOTEBOOKS            -->
         <!-- ==================== -->
 
-        <StackPanel
+        <Grid
+            Grid.Row="2"
             Grid.Column="0"
-            Spacing="12"
+            RowSpacing="12"
             Margin="0,0,24,0">
 
-            <TextBlock
-                Text="Notebooks"
-                FontSize="24"
-                FontWeight="SemiBold" />
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <TextBox
-                Header="Notebook name"
-                PlaceholderText="e.g. Machine Learning"
-                Text="{Binding NewNotebookName, Mode=TwoWay}" />
+            <Grid ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <Button
-                Content="Create Notebook"
-                Command="{Binding CreateNotebookCommand}" />
+                <TextBlock
+                    Text="Notebooks"
+                    FontSize="20"
+                    FontWeight="SemiBold" />
+
+                <Button
+                    Grid.Column="1"
+                    Content="+"
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    AutomationProperties.Name="New notebook"
+                    ToolTipService.ToolTip="New notebook"
+                    Click="NewNotebookButton_Click" />
+
+                <Button
+                    x:Name="NotebookActionsButton"
+                    Grid.Column="2"
+                    Content="..."
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    IsEnabled="False"
+                    AutomationProperties.Name="Notebook actions"
+                    ToolTipService.ToolTip="Notebook actions">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                Text="Rename"
+                                Click="RenameNotebookMenuItem_Click" />
+                            <MenuFlyoutItem
+                                Text="Delete"
+                                Click="DeleteNotebookButton_Click" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
 
             <ListView
+                x:Name="NotebookListView"
+                Grid.Row="1"
                 ItemsSource="{Binding Notebooks}"
                 SelectedItem="{Binding SelectedNotebook, Mode=TwoWay}"
                 SelectionChanged="NotebookListView_SelectionChanged">
@@ -54,51 +125,90 @@
 
             </ListView>
 
-            <TextBox
-                Header="Selected notebook name"
-                Text="{Binding SelectedNotebookName, Mode=TwoWay}"
-                Margin="0,16,0,0" />
+            <TextBlock
+                x:Name="NotebookEmptyState"
+                Grid.Row="1"
+                Text="No notebooks yet. Create one to get started."
+                TextWrapping="Wrap"
+                Opacity="0.7" />
 
-            <Button
-                Content="Rename Notebook"
-                Command="{Binding RenameNotebookCommand}" />
-
-            <Button
-                Content="Delete Notebook"
-                Click="DeleteNotebookButton_Click" />
-
-        </StackPanel>
+        </Grid>
 
 
         <!-- ==================== -->
         <!-- SECTIONS             -->
         <!-- ==================== -->
 
-        <StackPanel
+        <Grid
+            Grid.Row="2"
             Grid.Column="1"
-            Spacing="12"
+            RowSpacing="12"
             Margin="0,0,24,0">
 
-            <TextBlock
-                Text="Sections"
-                FontSize="24"
-                FontWeight="SemiBold" />
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Text="Sections"
+                    FontSize="20"
+                    FontWeight="SemiBold" />
+
+                <Button
+                    x:Name="NewSectionButton"
+                    Grid.Column="1"
+                    Content="+"
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    IsEnabled="False"
+                    AutomationProperties.Name="New section"
+                    ToolTipService.ToolTip="New section"
+                    Click="NewSectionButton_Click" />
+
+                <Button
+                    x:Name="SectionActionsButton"
+                    Grid.Column="2"
+                    Content="..."
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    IsEnabled="False"
+                    AutomationProperties.Name="Section actions"
+                    ToolTipService.ToolTip="Section actions">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                Text="Rename"
+                                Click="RenameSectionMenuItem_Click" />
+                            <MenuFlyoutItem
+                                Text="Delete"
+                                Click="DeleteSectionButton_Click" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
 
             <TextBlock
+                Grid.Row="1"
                 Text="{Binding SelectedNotebook.Name}"
                 FontSize="16"
                 Opacity="0.7" />
 
-            <TextBox
-                Header="Section name"
-                PlaceholderText="e.g. Classification"
-                Text="{Binding NewSectionName, Mode=TwoWay}" />
-
-            <Button
-                Content="Create Section"
-                Command="{Binding CreateSectionCommand}" />
-
             <ListView
+                x:Name="SectionListView"
+                Grid.Row="2"
                 ItemsSource="{Binding Sections}"
                 SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
                 SelectionChanged="SectionListView_SelectionChanged">
@@ -113,49 +223,88 @@
 
             </ListView>
 
-            <TextBox
-                Header="Selected section name"
-                Text="{Binding SelectedSectionName, Mode=TwoWay}"
-                Margin="0,16,0,0" />
+            <TextBlock
+                x:Name="SectionEmptyState"
+                Grid.Row="2"
+                TextWrapping="Wrap"
+                Opacity="0.7" />
 
-            <Button
-                Content="Rename Section"
-                Command="{Binding RenameSectionCommand}" />
-
-            <Button
-                Content="Delete Section"
-                Click="DeleteSectionButton_Click" />
-
-        </StackPanel>
+        </Grid>
 
 
         <!-- ==================== -->
         <!-- PAGES                -->
         <!-- ==================== -->
 
-        <StackPanel
+        <Grid
+            Grid.Row="2"
             Grid.Column="2"
-            Spacing="12">
+            RowSpacing="12"
+            Margin="0,0,24,0">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Text="Pages"
+                    FontSize="20"
+                    FontWeight="SemiBold" />
+
+                <Button
+                    x:Name="NewPageButton"
+                    Grid.Column="1"
+                    Content="+"
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    IsEnabled="False"
+                    AutomationProperties.Name="New page"
+                    ToolTipService.ToolTip="New page"
+                    Click="NewPageButton_Click" />
+
+                <Button
+                    x:Name="PageActionsButton"
+                    Grid.Column="2"
+                    Content="..."
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    IsEnabled="False"
+                    AutomationProperties.Name="Page actions"
+                    ToolTipService.ToolTip="Page actions">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                Text="Rename"
+                                Click="RenamePageMenuItem_Click" />
+                            <MenuFlyoutItem
+                                Text="Delete"
+                                Click="DeletePageButton_Click" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
 
             <TextBlock
-                Text="Pages"
-                FontSize="24"
-                FontWeight="SemiBold" />
-
-            <TextBlock
+                Grid.Row="1"
                 Text="{Binding SelectedSection.Name}"
                 FontSize="16"
                 Opacity="0.7" />
-            <TextBox
-                Header="Page title"
-                PlaceholderText="e.g. Confusion Matrix"
-                Text="{Binding NewPageTitle, Mode=TwoWay}" />
-
-            <Button
-                Content="Create Page"
-                Command="{Binding CreatePageCommand}" />
-
             <ListView
+                x:Name="PagesListView"
+                Grid.Row="2"
                 ItemsSource="{Binding Pages}"
                 SelectionChanged="PageListView_SelectionChanged">
 
@@ -168,27 +317,55 @@
                 </ListView.ItemTemplate>
 
             </ListView>
+
+            <TextBlock
+                x:Name="PageEmptyState"
+                Grid.Row="2"
+                TextWrapping="Wrap"
+                Opacity="0.7" />
+
+        </Grid>
+
+        <!-- ==================== -->
+        <!-- NOTE EDITOR          -->
+        <!-- ==================== -->
+
+        <Grid Grid.Row="2" Grid.Column="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock
+                x:Name="EditorPageTitle"
+                Text="{Binding SelectedPageTitle}"
+                FontSize="28"
+                FontWeight="SemiBold"
+                TextWrapping="Wrap"
+                Margin="0,0,0,16"
+                Visibility="Collapsed" />
+
             <TextBox
-                Header="Selected page title"
-                Text="{Binding SelectedPageTitle, Mode=TwoWay}"
-                Margin="0,16,0,0" />
-
-            <Button
-                Content="Rename Page"
-                Command="{Binding RenamePageCommand}" />
-
-            <Button
-                Content="Delete Page"
-                Click="DeletePageButton_Click" />
-
-            <TextBox
-                Header="Note"
+                x:Name="PageContentTextBox"
+                Grid.Row="1"
+                PlaceholderText="Start writing..."
                 Text="{Binding PageContent, Mode=TwoWay}"
                 TextChanged="PageContentTextBox_TextChanged"
                 AcceptsReturn="True"
                 TextWrapping="Wrap"
-                MinHeight="200" />
-        </StackPanel>
+                MinHeight="200"
+                Visibility="Collapsed" />
+
+            <TextBlock
+                x:Name="EditorEmptyState"
+                Grid.RowSpan="2"
+                Text="Select a page to start writing."
+                TextWrapping="Wrap"
+                TextAlignment="Center"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Opacity="0.7" />
+        </Grid>
 
     </Grid>
 

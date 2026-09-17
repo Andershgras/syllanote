@@ -13,9 +13,11 @@ using Syllanote.Application.Notebooks.Sections.Pages.DeletePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
 using Syllanote.Application.Notebooks.Sections.Pages.RenamePage;
 using Syllanote.Application.Notebooks.Sections.Pages.UpdatePageContent;
+using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,6 +42,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly DeletePageService _deletePageService;
     private readonly RenamePageService _renamePageService;
     private readonly UpdatePageContentService _updatePageContentService;
+    private readonly SearchPagesService _searchPagesService;
 
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
@@ -54,7 +57,8 @@ public partial class NotebookViewModel : ObservableObject
         CreatePageService createPageService,
         DeletePageService deletePageService,
         RenamePageService renamePageService,
-        UpdatePageContentService updatePageContentService)
+        UpdatePageContentService updatePageContentService,
+        SearchPagesService searchPagesService)
     {
         _createNotebookService = createNotebookService;
         _deleteNotebookService = deleteNotebookService;
@@ -69,10 +73,21 @@ public partial class NotebookViewModel : ObservableObject
         _deletePageService = deletePageService;
         _renamePageService = renamePageService;
         _updatePageContentService = updatePageContentService;
+        _searchPagesService = searchPagesService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
     public ObservableCollection<Section> Sections { get; } = [];
     public ObservableCollection<Page> Pages { get; } = [];
+    public ObservableCollection<SearchPageResult> SearchResults { get; } = [];
+
+    public string SearchText { get; set; } = string.Empty;
+
+    private string _searchMessage = string.Empty;
+    public string SearchMessage
+    {
+        get => _searchMessage;
+        private set => SetProperty(ref _searchMessage, value);
+    }
 
     [ObservableProperty]
     private string _newNotebookName = string.Empty;
@@ -475,5 +490,58 @@ public partial class NotebookViewModel : ObservableObject
         await SaveCurrentPageAsync();
 
         SelectedPage = page;
+    }
+
+    [RelayCommand]
+    private async Task SearchPagesAsync()
+    {
+        await SaveCurrentPageAsync();
+        var results = await _searchPagesService.SearchAsync(SearchText);
+
+        SearchResults.Clear();
+        foreach (var result in results)
+        {
+            SearchResults.Add(result);
+        }
+
+        SearchMessage = string.IsNullOrWhiteSpace(SearchText)
+            ? string.Empty
+            : results.Count == 0 ? "No pages found." : string.Empty;
+    }
+
+    public async Task<bool> NavigateToSearchResultAsync(SearchPageResult result)
+    {
+        var notebook = Notebooks.FirstOrDefault(item => item.Id == result.NotebookId);
+        if (notebook is null)
+        {
+            SearchMessage = "This page is no longer available. Search again.";
+            return false;
+        }
+
+        await SaveCurrentPageAsync();
+        SelectedNotebook = notebook;
+        await LoadSectionsAsync();
+        SelectedPage = null;
+
+        var section = Sections.FirstOrDefault(item => item.Id == result.SectionId);
+        if (section is null)
+        {
+            SearchMessage = "This page is no longer available. Search again.";
+            return false;
+        }
+
+        SelectedSection = section;
+        await LoadPagesAsync();
+
+        var page = Pages.FirstOrDefault(item => item.Id == result.PageId);
+        if (page is null)
+        {
+            SearchMessage = "This page is no longer available. Search again.";
+            return false;
+        }
+
+        await SelectPageAsync(page);
+        SearchMessage = string.Empty;
+        return true;
     }
 }

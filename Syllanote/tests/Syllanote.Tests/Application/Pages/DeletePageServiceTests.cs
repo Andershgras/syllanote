@@ -33,6 +33,9 @@ public class DeletePageServiceTests
             return Task.FromResult(pages);
         }
 
+        public Task<IReadOnlyList<Syllanote.Application.Notebooks.Sections.Pages.SearchPages.SearchPageResult>> SearchAsync(string searchText)
+            => Task.FromResult<IReadOnlyList<Syllanote.Application.Notebooks.Sections.Pages.SearchPages.SearchPageResult>>([]);
+
         public Task UpdateAsync(Page page) => Task.CompletedTask;
 
         public Task DeleteAsync(Page page)

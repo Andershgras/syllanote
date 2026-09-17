@@ -2,6 +2,7 @@
 using Syllanote.Application.Abstractions;
 using Syllanote.Domain.Entities;
 using Syllanote.Infrastructure.Persistence;
+using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 
 namespace Syllanote.Infrastructure.Repositories;
 
@@ -27,6 +28,39 @@ public class PageRepository : IPageRepository
         return await _dbContext.Pages
             .Where(page => page.SectionId == sectionId)
             .OrderBy(page => page.CreatedAt)
+            .ToListAsync();
+    }
+    public async Task<IReadOnlyList<SearchPageResult>> SearchAsync(string searchText)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return [];
+        }
+
+        const int maxResults = 100;
+        var escapedText = searchText.Trim()
+            .Replace("\\", "\\\\")
+            .Replace("%", "\\%")
+            .Replace("_", "\\_");
+        var pattern = $"%{escapedText}%";
+
+        return await (
+            from page in _dbContext.Pages.AsNoTracking()
+            join section in _dbContext.Sections.AsNoTracking()
+                on page.SectionId equals section.Id
+            join notebook in _dbContext.Notebooks.AsNoTracking()
+                on section.NotebookId equals notebook.Id
+            where EF.Functions.Like(page.Title, pattern, "\\") ||
+                  EF.Functions.Like(page.Content, pattern, "\\")
+            orderby notebook.Name, section.Name, page.Title, page.Id
+            select new SearchPageResult(
+                page.Id,
+                page.Title,
+                section.Id,
+                section.Name,
+                notebook.Id,
+                notebook.Name))
+            .Take(maxResults)
             .ToListAsync();
     }
     public async Task UpdateAsync(Page page)
