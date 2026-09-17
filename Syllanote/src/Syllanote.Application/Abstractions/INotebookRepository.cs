@@ -8,4 +8,5 @@ public interface INotebookRepository
     
     Task<IReadOnlyList<Notebook>> GetAllAsync();
     Task UpdateAsync(Notebook notebook);
+    Task DeleteAsync(Notebook notebook);
 }

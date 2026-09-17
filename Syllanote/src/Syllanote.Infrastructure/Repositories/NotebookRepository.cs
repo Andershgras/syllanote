@@ -32,4 +32,10 @@ public class NotebookRepository : INotebookRepository
         _dbContext.Notebooks.Update(notebook);
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task DeleteAsync(Notebook notebook)
+    {
+        _dbContext.Notebooks.Remove(notebook);
+        await _dbContext.SaveChangesAsync();
+    }
 }

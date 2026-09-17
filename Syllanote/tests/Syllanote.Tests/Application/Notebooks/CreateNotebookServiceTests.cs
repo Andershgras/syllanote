@@ -28,6 +28,8 @@ public class CreateNotebookServiceTests
         {
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Notebook notebook) => Task.CompletedTask;
     }
     [TestMethod]
     public async Task CreateAsync_WithValidName_CreatesAndAddsNotebook()

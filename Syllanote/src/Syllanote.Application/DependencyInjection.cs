@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Syllanote.Application.Notebooks.CreateNotebook;
+using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<CreateNotebookService>();
+        services.AddScoped<DeleteNotebookService>();
         services.AddScoped<GetNotebooksService>();
         services.AddScoped<RenameNotebookService>();
         services.AddScoped<CreateSectionService>();

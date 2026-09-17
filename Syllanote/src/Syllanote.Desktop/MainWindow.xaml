@@ -63,6 +63,10 @@
                 Content="Rename Notebook"
                 Command="{Binding RenameNotebookCommand}" />
 
+            <Button
+                Content="Delete Notebook"
+                Click="DeleteNotebookButton_Click" />
+
         </StackPanel>
 
 

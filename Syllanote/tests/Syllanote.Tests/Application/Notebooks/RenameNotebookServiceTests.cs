@@ -54,5 +54,7 @@ public class RenameNotebookServiceTests
             UpdateCallCount++;
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Notebook notebook) => Task.CompletedTask;
     }
 }

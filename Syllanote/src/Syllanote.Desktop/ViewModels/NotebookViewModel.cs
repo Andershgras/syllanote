@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Syllanote.Application.Notebooks.CreateNotebook;
+using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
@@ -27,6 +28,7 @@ public partial class NotebookViewModel : ObservableObject
     private bool _isLoadingPage;
 
     private readonly CreateNotebookService _createNotebookService;
+    private readonly DeleteNotebookService _deleteNotebookService;
     private readonly GetNotebooksService _getNotebooksService;
     private readonly RenameNotebookService _renameNotebookService;
     private readonly GetSectionsService _getSectionsService;
@@ -41,6 +43,7 @@ public partial class NotebookViewModel : ObservableObject
 
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
+        DeleteNotebookService deleteNotebookService,
         GetNotebooksService getNotebooksService,
         RenameNotebookService renameNotebookService,
         GetSectionsService getSectionsService,
@@ -54,6 +57,7 @@ public partial class NotebookViewModel : ObservableObject
         UpdatePageContentService updatePageContentService)
     {
         _createNotebookService = createNotebookService;
+        _deleteNotebookService = deleteNotebookService;
         _getNotebooksService = getNotebooksService;
         _renameNotebookService = renameNotebookService;
         _getSectionsService = getSectionsService;
@@ -143,6 +147,39 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(SelectedNotebook));
+    }
+
+    [RelayCommand]
+    private async Task DeleteNotebookAsync()
+    {
+        var notebook = SelectedNotebook;
+        if (notebook is null)
+        {
+            return;
+        }
+
+        _autoSaveCancellationTokenSource?.Cancel();
+
+        await _pagePersistenceLock.WaitAsync();
+        try
+        {
+            if (SelectedNotebook != notebook)
+            {
+                return;
+            }
+
+            await _deleteNotebookService.DeleteAsync(notebook);
+            SelectedPage = null;
+            Pages.Clear();
+            SelectedSection = null;
+            Sections.Clear();
+            SelectedNotebook = null;
+            Notebooks.Remove(notebook);
+        }
+        finally
+        {
+            _pagePersistenceLock.Release();
+        }
     }
     [RelayCommand]
     private async Task LoadNotebooksAsync()

@@ -26,6 +26,8 @@ public class GetNotebooksServiceTests
         {
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Notebook notebook) => Task.CompletedTask;
     }
 
     [TestMethod]
