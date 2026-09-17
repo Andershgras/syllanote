@@ -25,5 +25,11 @@ namespace Syllanote.Desktop
         {
             await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
         }
+        private async void SectionListView_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            await ViewModel.LoadPagesCommand.ExecuteAsync(null);
+        }
     }
 }

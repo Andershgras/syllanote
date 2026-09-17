@@ -10,15 +10,23 @@
         DataContext="{x:Bind ViewModel}"
         Loaded="RootGrid_Loaded">
 
-        <StackPanel
-            Width="350"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            Spacing="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
 
-            <!-- Create Notebook -->
+        <!-- ==================== -->
+        <!-- NOTEBOOKS            -->
+        <!-- ==================== -->
+
+        <StackPanel
+            Grid.Column="0"
+            Spacing="12"
+            Margin="0,0,24,0">
+
             <TextBlock
-                Text="Create Notebook"
+                Text="Notebooks"
                 FontSize="24"
                 FontWeight="SemiBold" />
 
@@ -30,13 +38,6 @@
             <Button
                 Content="Create Notebook"
                 Command="{Binding CreateNotebookCommand}" />
-
-            <!-- Notebook List -->
-            <TextBlock
-                Text="Your Notebooks"
-                FontSize="20"
-                FontWeight="SemiBold"
-                Margin="0,16,0,0" />
 
             <ListView
                 ItemsSource="{Binding Notebooks}"
@@ -53,14 +54,28 @@
 
             </ListView>
 
-            <!-- Selected Notebook -->
+        </StackPanel>
+
+
+        <!-- ==================== -->
+        <!-- SECTIONS             -->
+        <!-- ==================== -->
+
+        <StackPanel
+            Grid.Column="1"
+            Spacing="12"
+            Margin="0,0,24,0">
+
+            <TextBlock
+                Text="Sections"
+                FontSize="24"
+                FontWeight="SemiBold" />
+
             <TextBlock
                 Text="{Binding SelectedNotebook.Name}"
-                FontSize="20"
-                FontWeight="SemiBold"
-                Margin="0,16,0,0" />
+                FontSize="16"
+                Opacity="0.7" />
 
-            <!-- Create Section -->
             <TextBox
                 Header="Section name"
                 PlaceholderText="e.g. Classification"
@@ -70,20 +85,57 @@
                 Content="Create Section"
                 Command="{Binding CreateSectionCommand}" />
 
-            <!-- Section List -->
-            <TextBlock
-                Text="Sections"
-                FontSize="20"
-                FontWeight="SemiBold"
-                Margin="0,16,0,0" />
-
             <ListView
-                ItemsSource="{Binding Sections}">
+                ItemsSource="{Binding Sections}"
+                SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                SelectionChanged="SectionListView_SelectionChanged">
 
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <TextBlock
                             Text="{Binding Name}"
+                            FontSize="16" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+
+            </ListView>
+
+        </StackPanel>
+
+
+        <!-- ==================== -->
+        <!-- PAGES                -->
+        <!-- ==================== -->
+
+        <StackPanel
+            Grid.Column="2"
+            Spacing="12">
+
+            <TextBlock
+                Text="Pages"
+                FontSize="24"
+                FontWeight="SemiBold" />
+
+            <TextBlock
+                Text="{Binding SelectedSection.Name}"
+                FontSize="16"
+                Opacity="0.7" />
+            <TextBox
+                Header="Page title"
+                PlaceholderText="e.g. Confusion Matrix"
+                Text="{Binding NewPageTitle, Mode=TwoWay}" />
+
+            <Button
+                Content="Create Page"
+                Command="{Binding CreatePageCommand}" />
+            
+            <ListView
+                ItemsSource="{Binding Pages}">
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            Text="{Binding Title}"
                             FontSize="16" />
                     </DataTemplate>
                 </ListView.ItemTemplate>

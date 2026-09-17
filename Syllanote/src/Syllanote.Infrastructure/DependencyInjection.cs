@@ -17,6 +17,7 @@ public static class DependencyInjection
 
         services.AddScoped<INotebookRepository, NotebookRepository>();
         services.AddScoped<ISectionRepository, SectionRepository>();
+        services.AddScoped<IPageRepository, PageRepository>();
 
         return services;
     }
