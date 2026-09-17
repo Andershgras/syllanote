@@ -31,4 +31,16 @@ public class Section
         Name = name;
         CreatedAt = DateTime.UtcNow;
     }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(
+                "Section name cannot be empty.",
+                nameof(name));
+        }
+
+        Name = name;
+    }
 }

@@ -28,4 +28,10 @@ public class SectionRepository : ISectionRepository
             .OrderBy(section => section.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task UpdateAsync(Section section)
+    {
+        _dbContext.Sections.Update(section);
+        await _dbContext.SaveChangesAsync();
+    }
 }

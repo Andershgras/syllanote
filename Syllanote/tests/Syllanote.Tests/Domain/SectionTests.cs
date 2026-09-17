@@ -37,5 +37,29 @@ namespace Syllanote.Tests.Domain
             Assert.ThrowsException<ArgumentException>(
                 () => new Section(Guid.Empty, "Classification"));
         }
+
+        [TestMethod]
+        public void Rename_WithValidName_UpdatesName()
+        {
+            var section = new Section(Guid.NewGuid(), "Old name");
+
+            section.Rename("New name");
+
+            Assert.AreEqual("New name", section.Name);
+        }
+
+        [DataTestMethod]
+        [DataRow("")]
+        [DataRow(" ")]
+        [DataRow("\t")]
+        public void Rename_WithInvalidName_ThrowsArgumentException(string name)
+        {
+            var section = new Section(Guid.NewGuid(), "Original name");
+
+            Assert.ThrowsException<ArgumentException>(
+                () => section.Rename(name));
+
+            Assert.AreEqual("Original name", section.Name);
+        }
     }
 }

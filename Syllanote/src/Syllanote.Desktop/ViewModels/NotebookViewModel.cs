@@ -4,6 +4,7 @@ using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
+using Syllanote.Application.Notebooks.Sections.RenameSection;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
 using Syllanote.Application.Notebooks.Sections.Pages.RenamePage;
@@ -25,6 +26,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly GetNotebooksService _getNotebooksService;
     private readonly GetSectionsService _getSectionsService;
     private readonly CreateSectionService _createSectionService;
+    private readonly RenameSectionService _renameSectionService;
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
     private readonly RenamePageService _renamePageService;
@@ -35,6 +37,7 @@ public partial class NotebookViewModel : ObservableObject
         GetNotebooksService getNotebooksService,
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
+        RenameSectionService renameSectionService,
         GetPagesService getPagesService,
         CreatePageService createPageService,
         RenamePageService renamePageService,
@@ -44,6 +47,7 @@ public partial class NotebookViewModel : ObservableObject
         _getNotebooksService = getNotebooksService;
         _getSectionsService = getSectionsService;
         _createSectionService = createSectionService;
+        _renameSectionService = renameSectionService;
         _getPagesService = getPagesService;
         _createPageService = createPageService;
         _renamePageService = renamePageService;
@@ -57,6 +61,9 @@ public partial class NotebookViewModel : ObservableObject
     private string _newNotebookName = string.Empty;
     [ObservableProperty]
     private string _newSectionName = string.Empty;
+
+    [ObservableProperty]
+    private string _selectedSectionName = string.Empty;
     [ObservableProperty]
     private string _newPageTitle = string.Empty;
 
@@ -143,6 +150,36 @@ public partial class NotebookViewModel : ObservableObject
         Sections.Add(section);
 
         NewSectionName = string.Empty;
+    }
+
+    partial void OnSelectedSectionChanged(Section? value)
+    {
+        SelectedSectionName = value?.Name ?? string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task RenameSectionAsync()
+    {
+        if (SelectedSection is null ||
+            string.IsNullOrWhiteSpace(SelectedSectionName))
+        {
+            return;
+        }
+
+        _autoSaveCancellationTokenSource?.Cancel();
+        await SaveCurrentPageAsync();
+
+        await _renameSectionService.RenameAsync(
+            SelectedSection,
+            SelectedSectionName);
+
+        var index = Sections.IndexOf(SelectedSection);
+        if (index >= 0)
+        {
+            Sections[index] = SelectedSection;
+        }
+
+        OnPropertyChanged(nameof(SelectedSection));
     }
     [RelayCommand]
     private async Task LoadPagesAsync()

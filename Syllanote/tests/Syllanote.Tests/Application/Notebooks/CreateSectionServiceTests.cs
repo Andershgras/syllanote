@@ -27,6 +27,11 @@ public class CreateSectionServiceTests
 
             return Task.FromResult(sections);
         }
+
+        public Task UpdateAsync(Section section)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     [TestMethod]

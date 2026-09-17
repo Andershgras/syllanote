@@ -100,6 +100,15 @@
 
             </ListView>
 
+            <TextBox
+                Header="Selected section name"
+                Text="{Binding SelectedSectionName, Mode=TwoWay}"
+                Margin="0,16,0,0" />
+
+            <Button
+                Content="Rename Section"
+                Command="{Binding RenameSectionCommand}" />
+
         </StackPanel>
 
 

@@ -19,6 +19,11 @@ public class GetSectionsServiceTests
             return Task.CompletedTask;
         }
 
+        public Task UpdateAsync(Section section)
+        {
+            return Task.CompletedTask;
+        }
+
         public Task<IReadOnlyList<Section>> GetByNotebookIdAsync(
             Guid notebookId)
         {

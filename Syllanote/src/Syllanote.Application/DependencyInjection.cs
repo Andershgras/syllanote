@@ -3,6 +3,7 @@ using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
+using Syllanote.Application.Notebooks.Sections.RenameSection;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
 using Syllanote.Application.Notebooks.Sections.Pages.RenamePage;
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<GetNotebooksService>();
         services.AddScoped<CreateSectionService>();
         services.AddScoped<GetSectionsService>();
+        services.AddScoped<RenameSectionService>();
         services.AddScoped<CreatePageService>();
         services.AddScoped<GetPagesService>();
         services.AddScoped<RenamePageService>();
