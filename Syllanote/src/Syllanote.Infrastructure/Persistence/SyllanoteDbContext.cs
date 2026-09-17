@@ -11,9 +11,8 @@ public class SyllanoteDbContext : DbContext
     }
 
     public DbSet<Notebook> Notebooks => Set<Notebook>();
-
     public DbSet<Section> Sections => Set<Section>();
-
+    public DbSet<Page> Pages => Set<Page>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -22,6 +21,12 @@ public class SyllanoteDbContext : DbContext
             .HasOne<Notebook>()
             .WithMany()
             .HasForeignKey(section => section.NotebookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Page>()
+            .HasOne<Section>()
+            .WithMany()
+            .HasForeignKey(page => page.SectionId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
