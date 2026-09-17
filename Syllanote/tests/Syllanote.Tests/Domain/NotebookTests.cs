@@ -43,4 +43,28 @@ public class NotebookTests
     {
         Assert.ThrowsException<ArgumentException>(() => new Notebook(name));
     }
+
+    [TestMethod]
+    public void Rename_WithValidName_UpdatesName()
+    {
+        var notebook = new Notebook("Old name");
+
+        notebook.Rename("New name");
+
+        Assert.AreEqual("New name", notebook.Name);
+    }
+
+    [DataTestMethod]
+    [DataRow("")]
+    [DataRow(" ")]
+    [DataRow("\t")]
+    public void Rename_WithInvalidName_ThrowsArgumentException(string name)
+    {
+        var notebook = new Notebook("Original name");
+
+        Assert.ThrowsException<ArgumentException>(
+            () => notebook.Rename(name));
+
+        Assert.AreEqual("Original name", notebook.Name);
+    }
 }

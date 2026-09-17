@@ -54,6 +54,15 @@
 
             </ListView>
 
+            <TextBox
+                Header="Selected notebook name"
+                Text="{Binding SelectedNotebookName, Mode=TwoWay}"
+                Margin="0,16,0,0" />
+
+            <Button
+                Content="Rename Notebook"
+                Command="{Binding RenameNotebookCommand}" />
+
         </StackPanel>
 
 

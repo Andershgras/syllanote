@@ -21,6 +21,11 @@ public class GetNotebooksServiceTests
         {
             return Task.FromResult(NotebooksToReturn);
         }
+
+        public Task UpdateAsync(Notebook notebook)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     [TestMethod]

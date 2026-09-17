@@ -19,4 +19,16 @@ public class Notebook
         Name = name;
         CreatedAt = DateTime.UtcNow;
     }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(
+                "Notebook name cannot be empty.",
+                nameof(name));
+        }
+
+        Name = name;
+    }
 }

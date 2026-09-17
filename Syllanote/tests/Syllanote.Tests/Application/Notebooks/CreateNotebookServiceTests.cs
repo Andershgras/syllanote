@@ -23,6 +23,11 @@ public class CreateNotebookServiceTests
         {
             return Task.FromResult(NotebooksToReturn);
         }
+
+        public Task UpdateAsync(Notebook notebook)
+        {
+            return Task.CompletedTask;
+        }
     }
     [TestMethod]
     public async Task CreateAsync_WithValidName_CreatesAndAddsNotebook()

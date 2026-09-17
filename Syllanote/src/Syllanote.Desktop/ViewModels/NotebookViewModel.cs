@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
+using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.RenameSection;
@@ -24,6 +25,7 @@ public partial class NotebookViewModel : ObservableObject
 
     private readonly CreateNotebookService _createNotebookService;
     private readonly GetNotebooksService _getNotebooksService;
+    private readonly RenameNotebookService _renameNotebookService;
     private readonly GetSectionsService _getSectionsService;
     private readonly CreateSectionService _createSectionService;
     private readonly RenameSectionService _renameSectionService;
@@ -35,6 +37,7 @@ public partial class NotebookViewModel : ObservableObject
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
         GetNotebooksService getNotebooksService,
+        RenameNotebookService renameNotebookService,
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
         RenameSectionService renameSectionService,
@@ -45,6 +48,7 @@ public partial class NotebookViewModel : ObservableObject
     {
         _createNotebookService = createNotebookService;
         _getNotebooksService = getNotebooksService;
+        _renameNotebookService = renameNotebookService;
         _getSectionsService = getSectionsService;
         _createSectionService = createSectionService;
         _renameSectionService = renameSectionService;
@@ -59,6 +63,9 @@ public partial class NotebookViewModel : ObservableObject
 
     [ObservableProperty]
     private string _newNotebookName = string.Empty;
+
+    [ObservableProperty]
+    private string _selectedNotebookName = string.Empty;
     [ObservableProperty]
     private string _newSectionName = string.Empty;
 
@@ -97,6 +104,36 @@ public partial class NotebookViewModel : ObservableObject
         Notebooks.Add(notebook);
 
         NewNotebookName = string.Empty;
+    }
+
+    partial void OnSelectedNotebookChanged(Notebook? value)
+    {
+        SelectedNotebookName = value?.Name ?? string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task RenameNotebookAsync()
+    {
+        if (SelectedNotebook is null ||
+            string.IsNullOrWhiteSpace(SelectedNotebookName))
+        {
+            return;
+        }
+
+        _autoSaveCancellationTokenSource?.Cancel();
+        await SaveCurrentPageAsync();
+
+        await _renameNotebookService.RenameAsync(
+            SelectedNotebook,
+            SelectedNotebookName);
+
+        var index = Notebooks.IndexOf(SelectedNotebook);
+        if (index >= 0)
+        {
+            Notebooks[index] = SelectedNotebook;
+        }
+
+        OnPropertyChanged(nameof(SelectedNotebook));
     }
     [RelayCommand]
     private async Task LoadNotebooksAsync()

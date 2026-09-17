@@ -7,4 +7,5 @@ public interface INotebookRepository
     Task AddAsync(Notebook notebook);
     
     Task<IReadOnlyList<Notebook>> GetAllAsync();
+    Task UpdateAsync(Notebook notebook);
 }

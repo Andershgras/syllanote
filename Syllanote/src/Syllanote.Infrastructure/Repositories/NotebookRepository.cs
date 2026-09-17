@@ -26,4 +26,10 @@ public class NotebookRepository : INotebookRepository
             .OrderBy(notebook => notebook.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task UpdateAsync(Notebook notebook)
+    {
+        _dbContext.Notebooks.Update(notebook);
+        await _dbContext.SaveChangesAsync();
+    }
 }
