@@ -24,6 +24,8 @@ public class GetSectionsServiceTests
             return Task.CompletedTask;
         }
 
+        public Task DeleteAsync(Section section) => Task.CompletedTask;
+
         public Task<IReadOnlyList<Section>> GetByNotebookIdAsync(
             Guid notebookId)
         {

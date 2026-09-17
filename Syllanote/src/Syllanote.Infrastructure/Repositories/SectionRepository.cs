@@ -34,4 +34,10 @@ public class SectionRepository : ISectionRepository
         _dbContext.Sections.Update(section);
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task DeleteAsync(Section section)
+    {
+        _dbContext.Sections.Remove(section);
+        await _dbContext.SaveChangesAsync();
+    }
 }

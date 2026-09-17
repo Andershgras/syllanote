@@ -4,6 +4,7 @@ using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
+using Syllanote.Application.Notebooks.Sections.DeleteSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.RenameSection;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
@@ -30,6 +31,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly RenameNotebookService _renameNotebookService;
     private readonly GetSectionsService _getSectionsService;
     private readonly CreateSectionService _createSectionService;
+    private readonly DeleteSectionService _deleteSectionService;
     private readonly RenameSectionService _renameSectionService;
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
@@ -43,6 +45,7 @@ public partial class NotebookViewModel : ObservableObject
         RenameNotebookService renameNotebookService,
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
+        DeleteSectionService deleteSectionService,
         RenameSectionService renameSectionService,
         GetPagesService getPagesService,
         CreatePageService createPageService,
@@ -55,6 +58,7 @@ public partial class NotebookViewModel : ObservableObject
         _renameNotebookService = renameNotebookService;
         _getSectionsService = getSectionsService;
         _createSectionService = createSectionService;
+        _deleteSectionService = deleteSectionService;
         _renameSectionService = renameSectionService;
         _getPagesService = getPagesService;
         _createPageService = createPageService;
@@ -222,6 +226,37 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(SelectedSection));
+    }
+
+    [RelayCommand]
+    private async Task DeleteSectionAsync()
+    {
+        var section = SelectedSection;
+        if (section is null)
+        {
+            return;
+        }
+
+        _autoSaveCancellationTokenSource?.Cancel();
+
+        await _pagePersistenceLock.WaitAsync();
+        try
+        {
+            if (SelectedSection != section)
+            {
+                return;
+            }
+
+            await _deleteSectionService.DeleteAsync(section);
+            SelectedPage = null;
+            Pages.Clear();
+            SelectedSection = null;
+            Sections.Remove(section);
+        }
+        finally
+        {
+            _pagePersistenceLock.Release();
+        }
     }
     [RelayCommand]
     private async Task LoadPagesAsync()

@@ -55,5 +55,7 @@ public class RenameSectionServiceTests
             UpdateCallCount++;
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Section section) => Task.CompletedTask;
     }
 }

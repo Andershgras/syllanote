@@ -118,6 +118,10 @@
                 Content="Rename Section"
                 Command="{Binding RenameSectionCommand}" />
 
+            <Button
+                Content="Delete Section"
+                Click="DeleteSectionButton_Click" />
+
         </StackPanel>
 
 

@@ -32,6 +32,8 @@ public class CreateSectionServiceTests
         {
             return Task.CompletedTask;
         }
+
+        public Task DeleteAsync(Section section) => Task.CompletedTask;
     }
 
     [TestMethod]

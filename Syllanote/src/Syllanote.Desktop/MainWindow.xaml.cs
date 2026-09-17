@@ -82,5 +82,32 @@ namespace Syllanote.Desktop
                 await ViewModel.DeletePageCommand.ExecuteAsync(null);
             }
         }
+
+        private async void DeleteSectionButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            var section = ViewModel.SelectedSection;
+            if (section is null)
+            {
+                return;
+            }
+
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Delete section?",
+                Content = $"Delete \"{section.Name}\" and all its pages? This cannot be undone.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary &&
+                ViewModel.SelectedSection == section)
+            {
+                await ViewModel.DeleteSectionCommand.ExecuteAsync(null);
+            }
+        }
     }
 }
