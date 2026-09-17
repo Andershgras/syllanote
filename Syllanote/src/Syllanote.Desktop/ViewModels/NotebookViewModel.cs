@@ -8,13 +8,18 @@ using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
 using Syllanote.Application.Notebooks.Sections.Pages.UpdatePageContent;
 using Syllanote.Domain.Entities;
+using System;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Syllanote.Desktop.ViewModels;
 
 public partial class NotebookViewModel : ObservableObject
 {
+    private CancellationTokenSource? _autoSaveCancellationTokenSource;
+    private bool _isLoadingPage;
+
     private readonly CreateNotebookService _createNotebookService;
     private readonly GetNotebooksService _getNotebooksService;
     private readonly GetSectionsService _getSectionsService;
@@ -61,6 +66,9 @@ public partial class NotebookViewModel : ObservableObject
     [ObservableProperty]
     private Page? _selectedPage;
 
+    [ObservableProperty]
+    private bool _isPageDirty;
+
     [RelayCommand]
     private async Task CreateNotebookAsync()
     {
@@ -91,6 +99,8 @@ public partial class NotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadSectionsAsync()
     {
+        await SaveCurrentPageAsync();
+
         SelectedSection = null;
         Sections.Clear();
         Pages.Clear();
@@ -130,6 +140,8 @@ public partial class NotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadPagesAsync()
     {
+        await SaveCurrentPageAsync();
+
         SelectedPage = null;
         Pages.Clear();
 
@@ -167,12 +179,36 @@ public partial class NotebookViewModel : ObservableObject
     }
     partial void OnSelectedPageChanged(Page? value)
     {
+        _autoSaveCancellationTokenSource?.Cancel();
+
+        _isLoadingPage = true;
+
         PageContent = value?.Content ?? string.Empty;
+
+        _isLoadingPage = false;
+
+        IsPageDirty = false;
     }
+    partial void OnPageContentChanged(string value)
+    {
+        if (_isLoadingPage)
+        {
+            return;
+        }
+
+        IsPageDirty = true;
+
+        _ = ScheduleAutoSaveAsync();
+    }
+
     [RelayCommand]
     private async Task SavePageAsync()
     {
-        if (SelectedPage is null)
+        await SaveCurrentPageAsync();
+    }
+    public async Task SaveCurrentPageAsync()
+    {
+        if (SelectedPage is null || !IsPageDirty)
         {
             return;
         }
@@ -180,5 +216,42 @@ public partial class NotebookViewModel : ObservableObject
         await _updatePageContentService.UpdateAsync(
             SelectedPage,
             PageContent);
+
+        IsPageDirty = false;
+    }
+    private async Task ScheduleAutoSaveAsync()
+    {
+        _autoSaveCancellationTokenSource?.Cancel();
+        _autoSaveCancellationTokenSource?.Dispose();
+
+        _autoSaveCancellationTokenSource =
+            new CancellationTokenSource();
+
+        var cancellationToken =
+            _autoSaveCancellationTokenSource.Token;
+
+        try
+        {
+            await Task.Delay(
+                TimeSpan.FromSeconds(1),
+                cancellationToken);
+
+            await SaveCurrentPageAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when the user continues typing.
+        }
+    }
+    public async Task SelectPageAsync(Page? page)
+    {
+        if (page == SelectedPage)
+        {
+            return;
+        }
+
+        await SaveCurrentPageAsync();
+
+        SelectedPage = page;
     }
 }

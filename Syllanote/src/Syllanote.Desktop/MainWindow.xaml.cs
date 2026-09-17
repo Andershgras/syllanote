@@ -31,5 +31,28 @@ namespace Syllanote.Desktop
         {
             await ViewModel.LoadPagesCommand.ExecuteAsync(null);
         }
+        private void PageContentTextBox_TextChanged(
+            object sender,
+            TextChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                ViewModel.PageContent = textBox.Text;
+            }
+        }
+        private async void PageListView_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            if (sender is not ListView listView)
+            {
+                return;
+            }
+
+            var page =
+                listView.SelectedItem as Syllanote.Domain.Entities.Page;
+
+            await ViewModel.SelectPageAsync(page);
+        }
     }
 }

@@ -131,7 +131,7 @@
 
             <ListView
                 ItemsSource="{Binding Pages}"
-                SelectedItem="{Binding SelectedPage, Mode=TwoWay}">
+                SelectionChanged="PageListView_SelectionChanged">
 
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -152,12 +152,10 @@
             <TextBox
                 Header="Note"
                 Text="{Binding PageContent, Mode=TwoWay}"
+                TextChanged="PageContentTextBox_TextChanged"
                 AcceptsReturn="True"
                 TextWrapping="Wrap"
                 MinHeight="200" />
-            <Button
-                Content="Save Note"
-                Command="{Binding SavePageCommand}" />
         </StackPanel>
 
     </Grid>
