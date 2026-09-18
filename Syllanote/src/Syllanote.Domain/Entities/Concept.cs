@@ -27,7 +27,7 @@ public class Concept
                 nameof(notebookId));
         }
 
-        (Name, NormalizedName) = NormalizeName(name);
+        (Name, NormalizedName) = NormalizeNameParts(name);
         Definition = ValidateDefinition(definition);
         Id = Guid.NewGuid();
         NotebookId = notebookId;
@@ -37,7 +37,7 @@ public class Concept
 
     public void Rename(string name)
     {
-        (Name, NormalizedName) = NormalizeName(name);
+        (Name, NormalizedName) = NormalizeNameParts(name);
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -47,7 +47,23 @@ public class Concept
         UpdatedAt = DateTime.UtcNow;
     }
 
-    private static (string Name, string NormalizedName) NormalizeName(string name)
+    public void Update(string name, string definition)
+    {
+        var (displayName, normalizedName) = NormalizeNameParts(name);
+        var validDefinition = ValidateDefinition(definition);
+
+        Name = displayName;
+        NormalizedName = normalizedName;
+        Definition = validDefinition;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public static string NormalizeName(string name)
+    {
+        return NormalizeNameParts(name).NormalizedName;
+    }
+
+    private static (string Name, string NormalizedName) NormalizeNameParts(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
         {

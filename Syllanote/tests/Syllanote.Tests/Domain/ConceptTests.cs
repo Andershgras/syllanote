@@ -111,4 +111,19 @@ public class ConceptTests
         Assert.AreEqual("Definition", concept.Definition);
         Assert.AreEqual(originalUpdatedAt, concept.UpdatedAt);
     }
+
+    [TestMethod]
+    public void Update_WithBlankDefinition_LeavesNameAndDefinitionUnchanged()
+    {
+        var concept = new Concept(Guid.NewGuid(), "Singleton", "Definition");
+        var originalUpdatedAt = concept.UpdatedAt;
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            concept.Update("New name", "  "));
+
+        Assert.AreEqual("Singleton", concept.Name);
+        Assert.AreEqual("SINGLETON", concept.NormalizedName);
+        Assert.AreEqual("Definition", concept.Definition);
+        Assert.AreEqual(originalUpdatedAt, concept.UpdatedAt);
+    }
 }
