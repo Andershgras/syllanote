@@ -1,8 +1,11 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Syllanote.Desktop.ViewModels;
+using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
+using Syllanote.Domain.Entities;
 using System;
+using System.Linq;
 using System.Threading;
 
 namespace Syllanote.Desktop
@@ -11,6 +14,7 @@ namespace Syllanote.Desktop
     {
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
+        private bool _isConceptOperationInProgress;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
 
@@ -31,6 +35,7 @@ namespace Syllanote.Desktop
             ViewModel.Notebooks.CollectionChanged += (_, _) => UpdateNotebookEmptyState();
             ViewModel.Sections.CollectionChanged += (_, _) => UpdateSectionState();
             ViewModel.Pages.CollectionChanged += (_, _) => UpdatePageState();
+            ViewModel.Concepts.CollectionChanged += (_, _) => UpdateConceptEditorState();
             ViewModel.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(ViewModel.SelectedNotebook) ||
@@ -47,6 +52,45 @@ namespace Syllanote.Desktop
             UpdateNotebookEmptyState();
             UpdateSectionState();
             UpdatePageState();
+            UpdateConceptEditorState();
+        }
+
+        private void ShowPageEditor()
+        {
+            ConceptDictionaryPanel.Visibility = Visibility.Collapsed;
+            PageEditorPanel.Visibility = Visibility.Visible;
+        }
+
+        private void UpdateConceptEditorState()
+        {
+            var selected = ConceptsListView.SelectedItem as Concept;
+            var hasCurrentConcept = selected is not null &&
+                selected.NotebookId == ViewModel.SelectedNotebook?.Id;
+            SaveConceptButton.Content = hasCurrentConcept ? "Save" : "Create";
+            SaveConceptButton.IsEnabled = !_isConceptOperationInProgress &&
+                ViewModel.SelectedNotebook is not null &&
+                !string.IsNullOrWhiteSpace(ConceptNameTextBox.Text) &&
+                !string.IsNullOrWhiteSpace(ConceptDefinitionTextBox.Text);
+            DeleteConceptButton.IsEnabled = !_isConceptOperationInProgress &&
+                hasCurrentConcept;
+            ConceptEmptyState.Visibility = ViewModel.Concepts.Count == 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        private void SetConceptOperationInProgress(bool isInProgress)
+        {
+            _isConceptOperationInProgress = isInProgress;
+            SetNavigationEnabled(!isInProgress);
+            SearchButton.IsEnabled = !isInProgress;
+            SearchTextBox.IsEnabled = !isInProgress;
+            NotebookActionsButton.IsEnabled = !isInProgress &&
+                ViewModel.SelectedNotebook is not null;
+            NewConceptButton.IsEnabled = !isInProgress;
+            ConceptsListView.IsEnabled = !isInProgress;
+            ConceptNameTextBox.IsEnabled = !isInProgress;
+            ConceptDefinitionTextBox.IsEnabled = !isInProgress;
+            UpdateConceptEditorState();
         }
         private void UpdateNotebookEmptyState()
         {
@@ -100,6 +144,203 @@ namespace Syllanote.Desktop
         {
             await ViewModel.LoadNotebooksCommand.ExecuteAsync(null);
         }
+
+        private async void ConceptDictionaryMenuItem_Click(
+            object sender, RoutedEventArgs e)
+        {
+            if (_isRenamingSelection || _isSearchNavigationInProgress ||
+                _isConceptOperationInProgress ||
+                ViewModel.SelectedNotebook is not Notebook notebook)
+            {
+                return;
+            }
+
+            SetConceptOperationInProgress(true);
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                if (ViewModel.SelectedNotebook != notebook)
+                {
+                    return;
+                }
+
+                await ViewModel.SaveCurrentPageAsync();
+                await ViewModel.LoadConceptsAsync(notebook.Id);
+                if (ViewModel.SelectedNotebook != notebook)
+                {
+                    return;
+                }
+
+                ConceptsListView.SelectedItem = null;
+                ConceptNameTextBox.Text = string.Empty;
+                ConceptDefinitionTextBox.Text = string.Empty;
+                ConceptMessage.Text = string.Empty;
+                PageEditorPanel.Visibility = Visibility.Collapsed;
+                ConceptDictionaryPanel.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+                SetConceptOperationInProgress(false);
+            }
+        }
+
+        private void ConceptBackButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isConceptOperationInProgress)
+            {
+                ShowPageEditor();
+            }
+        }
+
+        private void NewConceptButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isConceptOperationInProgress)
+            {
+                return;
+            }
+
+            ConceptsListView.SelectedItem = null;
+            ConceptNameTextBox.Text = string.Empty;
+            ConceptDefinitionTextBox.Text = string.Empty;
+            ConceptMessage.Text = string.Empty;
+            UpdateConceptEditorState();
+        }
+
+        private void ConceptsListView_SelectionChanged(
+            object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewModel is null)
+            {
+                return;
+            }
+
+            if (ConceptsListView.SelectedItem is Concept concept)
+            {
+                ConceptNameTextBox.Text = concept.Name;
+                ConceptDefinitionTextBox.Text = concept.Definition;
+            }
+            else
+            {
+                ConceptNameTextBox.Text = string.Empty;
+                ConceptDefinitionTextBox.Text = string.Empty;
+            }
+
+            ConceptMessage.Text = string.Empty;
+            UpdateConceptEditorState();
+        }
+
+        private void ConceptInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (ViewModel is not null)
+            {
+                ConceptMessage.Text = string.Empty;
+                UpdateConceptEditorState();
+            }
+        }
+
+        private async void SaveConceptButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isConceptOperationInProgress ||
+                ViewModel.SelectedNotebook is not Notebook notebook)
+            {
+                return;
+            }
+
+            var selected = ConceptsListView.SelectedItem as Concept;
+            if (selected is not null && selected.NotebookId != notebook.Id)
+            {
+                return;
+            }
+
+            var name = ConceptNameTextBox.Text;
+            var definition = ConceptDefinitionTextBox.Text;
+            SetConceptOperationInProgress(true);
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                if (ViewModel.SelectedNotebook != notebook)
+                {
+                    return;
+                }
+
+                var saved = selected;
+                if (saved is null)
+                {
+                    saved = await ViewModel.CreateConceptAsync(
+                        notebook.Id, name, definition);
+                }
+                else
+                {
+                    await ViewModel.UpdateConceptAsync(saved, name, definition);
+                }
+
+                await ViewModel.LoadConceptsAsync(notebook.Id);
+                ConceptsListView.SelectedItem = ViewModel.Concepts
+                    .FirstOrDefault(concept => concept.Id == saved.Id);
+                ConceptMessage.Text = "Concept saved.";
+            }
+            catch (DuplicateConceptNameException ex)
+            {
+                ConceptMessage.Text = ex.Message;
+            }
+            catch (ArgumentException ex)
+            {
+                ConceptMessage.Text = ex.Message;
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+                SetConceptOperationInProgress(false);
+            }
+        }
+
+        private async void DeleteConceptButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isConceptOperationInProgress ||
+                ViewModel.SelectedNotebook is not Notebook notebook ||
+                ConceptsListView.SelectedItem is not Concept concept ||
+                concept.NotebookId != notebook.Id)
+            {
+                return;
+            }
+
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Delete concept?",
+                Content = $"Delete \"{concept.Name}\"? This cannot be undone.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary ||
+                ViewModel.SelectedNotebook != notebook ||
+                ConceptsListView.SelectedItem != concept)
+            {
+                return;
+            }
+
+            SetConceptOperationInProgress(true);
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                if (ViewModel.SelectedNotebook != notebook)
+                {
+                    return;
+                }
+
+                await ViewModel.DeleteConceptAsync(concept);
+                await ViewModel.LoadConceptsAsync(notebook.Id);
+                ConceptMessage.Text = "Concept deleted.";
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+                SetConceptOperationInProgress(false);
+            }
+        }
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress)
@@ -137,7 +378,10 @@ namespace Syllanote.Desktop
             await _selectionNavigationLock.WaitAsync();
             try
             {
-                await ViewModel.NavigateToSearchResultAsync(result);
+                if (await ViewModel.NavigateToSearchResultAsync(result))
+                {
+                    ShowPageEditor();
+                }
                 NotebookListView.SelectedItem = ViewModel.SelectedNotebook;
                 SectionListView.SelectedItem = ViewModel.SelectedSection;
                 PagesListView.SelectedItem = ViewModel.SelectedPage;
@@ -289,6 +533,7 @@ namespace Syllanote.Desktop
                     return;
                 }
 
+                ShowPageEditor();
                 NotebookActionsButton.IsEnabled = ViewModel.SelectedNotebook is not null;
                 await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
             }
@@ -463,6 +708,10 @@ namespace Syllanote.Desktop
                     return;
                 }
 
+                if (page is not null)
+                {
+                    ShowPageEditor();
+                }
                 UpdatePageState();
                 await ViewModel.SelectPageAsync(page);
             }
@@ -602,7 +851,7 @@ namespace Syllanote.Desktop
             {
                 XamlRoot = Content.XamlRoot,
                 Title = "Delete notebook?",
-                Content = $"Delete \"{notebook.Name}\" and all its sections and pages? This cannot be undone.",
+                Content = $"Delete \"{notebook.Name}\" and all its sections, pages, and concepts? This cannot be undone.",
                 PrimaryButtonText = "Delete",
                 CloseButtonText = "Cancel",
                 DefaultButton = ContentDialogButton.Close

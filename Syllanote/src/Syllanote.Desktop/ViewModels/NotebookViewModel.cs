@@ -1,6 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Syllanote.Application.Notebooks.CreateNotebook;
+using Syllanote.Application.Notebooks.Concepts.CreateConcept;
+using Syllanote.Application.Notebooks.Concepts.DeleteConcept;
+using Syllanote.Application.Notebooks.Concepts.GetConcepts;
+using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.RenameNotebook;
@@ -43,6 +47,10 @@ public partial class NotebookViewModel : ObservableObject
     private readonly RenamePageService _renamePageService;
     private readonly UpdatePageContentService _updatePageContentService;
     private readonly SearchPagesService _searchPagesService;
+    private readonly CreateConceptService _createConceptService;
+    private readonly GetConceptsService _getConceptsService;
+    private readonly UpdateConceptService _updateConceptService;
+    private readonly DeleteConceptService _deleteConceptService;
 
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
@@ -58,7 +66,11 @@ public partial class NotebookViewModel : ObservableObject
         DeletePageService deletePageService,
         RenamePageService renamePageService,
         UpdatePageContentService updatePageContentService,
-        SearchPagesService searchPagesService)
+        SearchPagesService searchPagesService,
+        CreateConceptService createConceptService,
+        GetConceptsService getConceptsService,
+        UpdateConceptService updateConceptService,
+        DeleteConceptService deleteConceptService)
     {
         _createNotebookService = createNotebookService;
         _deleteNotebookService = deleteNotebookService;
@@ -74,11 +86,16 @@ public partial class NotebookViewModel : ObservableObject
         _renamePageService = renamePageService;
         _updatePageContentService = updatePageContentService;
         _searchPagesService = searchPagesService;
+        _createConceptService = createConceptService;
+        _getConceptsService = getConceptsService;
+        _updateConceptService = updateConceptService;
+        _deleteConceptService = deleteConceptService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
     public ObservableCollection<Section> Sections { get; } = [];
     public ObservableCollection<Page> Pages { get; } = [];
     public ObservableCollection<SearchPageResult> SearchResults { get; } = [];
+    public ObservableCollection<Concept> Concepts { get; } = [];
 
     public string SearchText { get; set; } = string.Empty;
 
@@ -137,6 +154,38 @@ public partial class NotebookViewModel : ObservableObject
     partial void OnSelectedNotebookChanged(Notebook? value)
     {
         SelectedNotebookName = value?.Name ?? string.Empty;
+        Concepts.Clear();
+    }
+
+    public async Task LoadConceptsAsync(Guid notebookId)
+    {
+        var concepts = await _getConceptsService.GetByNotebookIdAsync(notebookId);
+        if (SelectedNotebook?.Id != notebookId)
+        {
+            return;
+        }
+
+        Concepts.Clear();
+        foreach (var concept in concepts)
+        {
+            Concepts.Add(concept);
+        }
+    }
+
+    public Task<Concept> CreateConceptAsync(
+        Guid notebookId, string name, string definition)
+    {
+        return _createConceptService.CreateAsync(notebookId, name, definition);
+    }
+
+    public Task UpdateConceptAsync(Concept concept, string name, string definition)
+    {
+        return _updateConceptService.UpdateAsync(concept, name, definition);
+    }
+
+    public Task DeleteConceptAsync(Concept concept)
+    {
+        return _deleteConceptService.DeleteAsync(concept);
     }
 
     [RelayCommand]
