@@ -2,12 +2,61 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Syllanote.Domain.Entities;
 using Syllanote.Infrastructure.Persistence;
+using Syllanote.Infrastructure.Repositories;
 
 namespace Syllanote.Tests.Infrastructure;
 
 [TestClass]
 public class ConceptPersistenceSqliteTests
 {
+    [TestMethod]
+    public async Task Repository_FiltersByNotebookAndPersistsEditsAndDeletion()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var context = CreateContext(connection);
+        await context.Database.MigrateAsync();
+
+        var firstNotebook = new Notebook("Programming");
+        var secondNotebook = new Notebook("Architecture");
+        context.Notebooks.AddRange(firstNotebook, secondNotebook);
+        await context.SaveChangesAsync();
+
+        var repository = new ConceptRepository(context);
+        var concept = new Concept(firstNotebook.Id, "Dependency Injection", "Old definition");
+        await repository.AddAsync(concept);
+        await repository.AddAsync(new Concept(secondNotebook.Id, "Dependency Injection", "Other definition"));
+        context.ChangeTracker.Clear();
+
+        var concepts = await repository.GetByNotebookIdAsync(firstNotebook.Id);
+        Assert.AreEqual(concept.Id, concepts.Single().Id);
+        var loaded = await repository.GetByNormalizedNameAsync(
+            firstNotebook.Id,
+            concept.NormalizedName);
+        Assert.IsNotNull(loaded);
+        Assert.AreEqual(concept.Id, loaded.Id);
+
+        loaded.Rename("Inversion of Control");
+        loaded.UpdateDefinition("New definition");
+        await repository.UpdateAsync(loaded);
+        context.ChangeTracker.Clear();
+
+        Assert.IsNull(await repository.GetByNormalizedNameAsync(
+            firstNotebook.Id,
+            concept.NormalizedName));
+        var renamed = await repository.GetByNormalizedNameAsync(
+            firstNotebook.Id,
+            "INVERSION OF CONTROL");
+        Assert.IsNotNull(renamed);
+        Assert.AreEqual("New definition", renamed.Definition);
+
+        await repository.DeleteAsync(renamed);
+        context.ChangeTracker.Clear();
+
+        Assert.AreEqual(0, (await repository.GetByNotebookIdAsync(firstNotebook.Id)).Count);
+        Assert.AreEqual(1, (await repository.GetByNotebookIdAsync(secondNotebook.Id)).Count);
+    }
+
     [TestMethod]
     public async Task SameNameWithDifferentCaseAndUnicodeForm_IsRejectedWithinNotebook()
     {
