@@ -202,13 +202,17 @@ namespace Syllanote.Desktop
 
                 if (isActive)
                 {
-                    foreach (var section in ViewModel.Sections.Where(
-                        item => item.NotebookId == selectedNotebookId))
+                    var sections = ViewModel.Sections.Where(
+                        item => item.NotebookId == selectedNotebookId).ToList();
+                    for (var index = 0; index < sections.Count; index++)
                     {
                         var sectionItem =
-                            NotebookNavigationItem.ForSection(section);
+                            NotebookNavigationItem.ForSection(
+                                sections[index],
+                                canMoveUp: index > 0,
+                                canMoveDown: index < sections.Count - 1);
                         sectionItem.IsSelectedSection =
-                            section.Id == ViewModel.SelectedSection?.Id;
+                            sections[index].Id == ViewModel.SelectedSection?.Id;
                         notebookItem.Children.Add(sectionItem);
                     }
                 }
@@ -1447,6 +1451,49 @@ namespace Syllanote.Desktop
                     SetNavigationEnabled(true);
                     _isRenamingSelection = false;
                 }
+            }
+        }
+
+        private async void MoveSectionUpMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            await MoveSelectedSectionAsync(moveUp: true);
+        }
+
+        private async void MoveSectionDownMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            await MoveSelectedSectionAsync(moveUp: false);
+        }
+
+        private async Task MoveSelectedSectionAsync(bool moveUp)
+        {
+            var section = _sectionActionTarget;
+            if (section is null ||
+                await EnsureSectionSelectedAsync(section) is not Section currentSection)
+            {
+                return;
+            }
+
+            SetNavigationEnabled(false);
+            try
+            {
+                ViewModel.SelectedSection = currentSection;
+                if (moveUp)
+                {
+                    await ViewModel.MoveSelectedSectionUpCommand.ExecuteAsync(null);
+                }
+                else
+                {
+                    await ViewModel.MoveSelectedSectionDownCommand.ExecuteAsync(null);
+                }
+                RefreshSectionNavigation();
+            }
+            finally
+            {
+                SetNavigationEnabled(true);
             }
         }
         private void PageContentRichEditBox_TextChanged(

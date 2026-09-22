@@ -13,6 +13,7 @@ using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.DeleteSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
+using Syllanote.Application.Notebooks.Sections.MoveSection;
 using Syllanote.Application.Notebooks.Sections.RenameSection;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
 using Syllanote.Application.Notebooks.Sections.Pages.DeletePage;
@@ -43,6 +44,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly GetSectionsService _getSectionsService;
     private readonly CreateSectionService _createSectionService;
     private readonly DeleteSectionService _deleteSectionService;
+    private readonly MoveSectionService _moveSectionService;
     private readonly RenameSectionService _renameSectionService;
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
@@ -65,6 +67,7 @@ public partial class NotebookViewModel : ObservableObject
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
         DeleteSectionService deleteSectionService,
+        MoveSectionService moveSectionService,
         RenameSectionService renameSectionService,
         GetPagesService getPagesService,
         CreatePageService createPageService,
@@ -86,6 +89,7 @@ public partial class NotebookViewModel : ObservableObject
         _getSectionsService = getSectionsService;
         _createSectionService = createSectionService;
         _deleteSectionService = deleteSectionService;
+        _moveSectionService = moveSectionService;
         _renameSectionService = renameSectionService;
         _getPagesService = getPagesService;
         _createPageService = createPageService;
@@ -372,6 +376,40 @@ public partial class NotebookViewModel : ObservableObject
     partial void OnSelectedSectionChanged(Section? value)
     {
         SelectedSectionName = value?.Name ?? string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task MoveSelectedSectionUpAsync()
+    {
+        var section = SelectedSection;
+        if (section is null)
+        {
+            return;
+        }
+
+        var index = Sections.IndexOf(section);
+        if (index > 0 && await _moveSectionService.MoveUpAsync(section))
+        {
+            Sections.Move(index, index - 1);
+        }
+    }
+
+    [RelayCommand]
+    private async Task MoveSelectedSectionDownAsync()
+    {
+        var section = SelectedSection;
+        if (section is null)
+        {
+            return;
+        }
+
+        var index = Sections.IndexOf(section);
+        if (index >= 0 &&
+            index < Sections.Count - 1 &&
+            await _moveSectionService.MoveDownAsync(section))
+        {
+            Sections.Move(index, index + 1);
+        }
     }
 
     [RelayCommand]

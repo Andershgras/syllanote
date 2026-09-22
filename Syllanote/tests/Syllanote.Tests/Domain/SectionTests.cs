@@ -19,6 +19,46 @@ namespace Syllanote.Tests.Domain
             Assert.AreEqual(notebookId, section.NotebookId);
             Assert.AreEqual("Classification", section.Name);
         }
+
+        [TestMethod]
+        public void Constructor_WithSortOrder_SetsSortOrder()
+        {
+            var section = new Section(
+                Guid.NewGuid(),
+                "Classification",
+                2);
+
+            Assert.AreEqual(2, section.SortOrder);
+        }
+
+        [TestMethod]
+        public void Constructor_WithNegativeSortOrder_ThrowsArgumentOutOfRangeException()
+        {
+            Assert.ThrowsException<ArgumentOutOfRangeException>(
+                () => new Section(
+                    Guid.NewGuid(),
+                    "Classification",
+                    -1));
+        }
+
+        [TestMethod]
+        public void ChangeSortOrder_WithValidValue_UpdatesSortOrder()
+        {
+            var section = new Section(Guid.NewGuid(), "Classification");
+
+            section.ChangeSortOrder(3);
+
+            Assert.AreEqual(3, section.SortOrder);
+        }
+
+        [TestMethod]
+        public void ChangeSortOrder_WithNegativeValue_ThrowsArgumentOutOfRangeException()
+        {
+            var section = new Section(Guid.NewGuid(), "Classification");
+
+            Assert.ThrowsException<ArgumentOutOfRangeException>(
+                () => section.ChangeSortOrder(-1));
+        }
         [DataTestMethod]
         [DataRow("")]
         [DataRow(" ")]

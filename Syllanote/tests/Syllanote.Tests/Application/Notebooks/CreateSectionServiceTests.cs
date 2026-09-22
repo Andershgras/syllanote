@@ -9,6 +9,8 @@ public class CreateSectionServiceTests
 {
     private class FakeSectionRepository : ISectionRepository
     {
+        public IReadOnlyList<Section> Sections { get; set; } = [];
+
         public Section? AddedSection { get; private set; }
 
         public int AddCallCount { get; private set; }
@@ -23,9 +25,7 @@ public class CreateSectionServiceTests
         public Task<IReadOnlyList<Section>> GetByNotebookIdAsync(
             Guid notebookId)
         {
-            IReadOnlyList<Section> sections = [];
-
-            return Task.FromResult(sections);
+            return Task.FromResult(Sections);
         }
 
         public Task UpdateAsync(Section section)
@@ -54,6 +54,25 @@ public class CreateSectionServiceTests
         Assert.AreEqual(notebookId, section.NotebookId);
         Assert.AreSame(section, repository.AddedSection);
         Assert.AreEqual(1, repository.AddCallCount);
+    }
+
+    [TestMethod]
+    public async Task CreateAsync_WithExistingSections_AppendsSection()
+    {
+        var notebookId = Guid.NewGuid();
+        var repository = new FakeSectionRepository
+        {
+            Sections =
+            [
+                new Section(notebookId, "First", 0),
+                new Section(notebookId, "Second", 3)
+            ]
+        };
+        var service = new CreateSectionService(repository);
+
+        var section = await service.CreateAsync(notebookId, "Third");
+
+        Assert.AreEqual(4, section.SortOrder);
     }
     [DataTestMethod]
     [DataRow("")]

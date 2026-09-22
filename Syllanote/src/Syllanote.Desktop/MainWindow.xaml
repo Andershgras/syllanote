@@ -170,6 +170,15 @@
                                                 <Grid.ContextFlyout>
                                                     <MenuFlyout Opening="SectionContextMenu_Opening">
                                                         <MenuFlyoutItem
+                                                            Text="Move up"
+                                                            IsEnabled="{x:Bind CanMoveUp}"
+                                                            Click="MoveSectionUpMenuItem_Click" />
+                                                        <MenuFlyoutItem
+                                                            Text="Move down"
+                                                            IsEnabled="{x:Bind CanMoveDown}"
+                                                            Click="MoveSectionDownMenuItem_Click" />
+                                                        <MenuFlyoutSeparator />
+                                                        <MenuFlyoutItem
                                                             Text="Rename"
                                                             Click="RenameSectionMenuItem_Click" />
                                                         <MenuFlyoutItem
@@ -247,7 +256,6 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -276,14 +284,9 @@
                     Click="NewPageButton_Click" />
             </Grid>
 
-            <TextBlock
-                Grid.Row="1"
-                Text="{Binding SelectedSection.Name}"
-                FontSize="16"
-                Opacity="0.7" />
             <ListView
                 x:Name="PagesListView"
-                Grid.Row="2"
+                Grid.Row="1"
                 ItemsSource="{Binding Pages}"
                 SelectionChanged="PageListView_SelectionChanged">
 
@@ -318,7 +321,7 @@
 
             <TextBlock
                 x:Name="PageEmptyState"
-                Grid.Row="2"
+                Grid.Row="1"
                 TextWrapping="Wrap"
                 Opacity="0.7" />
 

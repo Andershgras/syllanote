@@ -1,4 +1,4 @@
-﻿namespace Syllanote.Domain.Entities;
+namespace Syllanote.Domain.Entities;
 
 public class Section
 {
@@ -8,9 +8,11 @@ public class Section
 
     public string Name { get; private set; }
 
+    public int SortOrder { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
-    public Section(Guid notebookId, string name)
+    public Section(Guid notebookId, string name, int sortOrder = 0)
     {
         if (notebookId == Guid.Empty)
         {
@@ -26,9 +28,17 @@ public class Section
                 nameof(name));
         }
 
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                "Sort order cannot be negative.");
+        }
+
         Id = Guid.NewGuid();
         NotebookId = notebookId;
         Name = name;
+        SortOrder = sortOrder;
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -42,5 +52,17 @@ public class Section
         }
 
         Name = name;
+    }
+
+    public void ChangeSortOrder(int sortOrder)
+    {
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                "Sort order cannot be negative.");
+        }
+
+        SortOrder = sortOrder;
     }
 }
