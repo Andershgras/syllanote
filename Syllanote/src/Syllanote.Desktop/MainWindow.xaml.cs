@@ -1203,8 +1203,19 @@ namespace Syllanote.Desktop
             object sender,
             object e)
         {
-            _pageActionTarget = (sender as FlyoutBase)?.Target?.DataContext
+            var flyout = sender as MenuFlyout;
+            _pageActionTarget = flyout?.Target?.DataContext
                 as Syllanote.Domain.Entities.Page;
+
+            var index = _pageActionTarget is null
+                ? -1
+                : ViewModel.Pages.IndexOf(_pageActionTarget);
+            if (flyout?.Items.Count >= 2)
+            {
+                flyout.Items[0].IsEnabled = index > 0;
+                flyout.Items[1].IsEnabled =
+                    index >= 0 && index < ViewModel.Pages.Count - 1;
+            }
         }
 
         private async Task<bool> EnsureNotebookSelectedAsync(Notebook notebook)
@@ -1555,6 +1566,56 @@ namespace Syllanote.Desktop
             finally
             {
                 _selectionNavigationLock.Release();
+            }
+        }
+
+        private async void MovePageUpMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            await MoveSelectedPageAsync(moveUp: true);
+        }
+
+        private async void MovePageDownMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            await MoveSelectedPageAsync(moveUp: false);
+        }
+
+        private async Task MoveSelectedPageAsync(bool moveUp)
+        {
+            if (_isRenamingSelection)
+            {
+                return;
+            }
+
+            var page = _pageActionTarget;
+            if (page is null ||
+                await EnsurePageSelectedAsync(page) is not
+                    Syllanote.Domain.Entities.Page currentPage)
+            {
+                return;
+            }
+
+            SetNavigationEnabled(false);
+            try
+            {
+                await ViewModel.SaveCurrentPageAsync();
+                if (moveUp)
+                {
+                    await ViewModel.MoveSelectedPageUpCommand.ExecuteAsync(null);
+                }
+                else
+                {
+                    await ViewModel.MoveSelectedPageDownCommand.ExecuteAsync(null);
+                }
+                PagesListView.SelectedItem = currentPage;
+                UpdatePageState();
+            }
+            finally
+            {
+                SetNavigationEnabled(true);
             }
         }
 

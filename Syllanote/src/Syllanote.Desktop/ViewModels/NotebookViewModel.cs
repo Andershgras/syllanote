@@ -18,6 +18,7 @@ using Syllanote.Application.Notebooks.Sections.RenameSection;
 using Syllanote.Application.Notebooks.Sections.Pages.CreatePage;
 using Syllanote.Application.Notebooks.Sections.Pages.DeletePage;
 using Syllanote.Application.Notebooks.Sections.Pages.GetPages;
+using Syllanote.Application.Notebooks.Sections.Pages.MovePage;
 using Syllanote.Application.Notebooks.Sections.Pages.RenamePage;
 using Syllanote.Application.Notebooks.Sections.Pages.UpdatePageContent;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
@@ -49,6 +50,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly GetPagesService _getPagesService;
     private readonly CreatePageService _createPageService;
     private readonly DeletePageService _deletePageService;
+    private readonly MovePageService _movePageService;
     private readonly RenamePageService _renamePageService;
     private readonly UpdatePageContentService _updatePageContentService;
     private readonly SearchPagesService _searchPagesService;
@@ -72,6 +74,7 @@ public partial class NotebookViewModel : ObservableObject
         GetPagesService getPagesService,
         CreatePageService createPageService,
         DeletePageService deletePageService,
+        MovePageService movePageService,
         RenamePageService renamePageService,
         UpdatePageContentService updatePageContentService,
         SearchPagesService searchPagesService,
@@ -94,6 +97,7 @@ public partial class NotebookViewModel : ObservableObject
         _getPagesService = getPagesService;
         _createPageService = createPageService;
         _deletePageService = deletePageService;
+        _movePageService = movePageService;
         _renamePageService = renamePageService;
         _updatePageContentService = updatePageContentService;
         _searchPagesService = searchPagesService;
@@ -538,6 +542,40 @@ public partial class NotebookViewModel : ObservableObject
         if (value is not null)
         {
             RefreshConceptMatches(value, PageContent);
+        }
+    }
+
+    [RelayCommand]
+    private async Task MoveSelectedPageUpAsync()
+    {
+        var page = SelectedPage;
+        if (page is null)
+        {
+            return;
+        }
+
+        var index = Pages.IndexOf(page);
+        if (index > 0 && await _movePageService.MoveUpAsync(page))
+        {
+            Pages.Move(index, index - 1);
+        }
+    }
+
+    [RelayCommand]
+    private async Task MoveSelectedPageDownAsync()
+    {
+        var page = SelectedPage;
+        if (page is null)
+        {
+            return;
+        }
+
+        var index = Pages.IndexOf(page);
+        if (index >= 0 &&
+            index < Pages.Count - 1 &&
+            await _movePageService.MoveDownAsync(page))
+        {
+            Pages.Move(index, index + 1);
         }
     }
 
