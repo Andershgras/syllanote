@@ -59,6 +59,7 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -346,22 +347,72 @@
         <Grid x:Name="PageEditorPanel" Grid.Row="2" Grid.Column="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock
+            <TextBox
                 x:Name="EditorPageTitle"
+                Grid.Row="1"
                 Text="{Binding SelectedPageTitle}"
                 FontSize="28"
                 FontWeight="SemiBold"
                 TextWrapping="Wrap"
-                Margin="0,0,0,16"
+                IsReadOnly="True"
+                IsTabStop="False"
+                MinHeight="56"
+                Padding="12,8"
+                Margin="0,0,0,8"
+                AutomationProperties.Name="Page title"
                 Visibility="Collapsed" />
+
+            <StackPanel
+                x:Name="FormattingToolbar"
+                Grid.Row="0"
+                Orientation="Horizontal"
+                Spacing="4"
+                Margin="0,0,0,8"
+                Visibility="Collapsed">
+                <ToggleButton
+                    x:Name="BoldButton"
+                    Width="40"
+                    Height="36"
+                    Padding="0"
+                    AllowFocusOnInteraction="False"
+                    AutomationProperties.Name="Bold"
+                    ToolTipService.ToolTip="Bold"
+                    Click="BoldButton_Click">
+                    <TextBlock Text="B" FontWeight="Bold" />
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="ItalicButton"
+                    Width="40"
+                    Height="36"
+                    Padding="0"
+                    AllowFocusOnInteraction="False"
+                    AutomationProperties.Name="Italic"
+                    ToolTipService.ToolTip="Italic"
+                    Click="ItalicButton_Click">
+                    <TextBlock Text="I" FontStyle="Italic" />
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="UnderlineButton"
+                    Width="40"
+                    Height="36"
+                    Padding="0"
+                    AllowFocusOnInteraction="False"
+                    AutomationProperties.Name="Underline"
+                    ToolTipService.ToolTip="Underline"
+                    Click="UnderlineButton_Click">
+                    <TextBlock Text="U" TextDecorations="Underline" />
+                </ToggleButton>
+            </StackPanel>
 
             <RichEditBox
                 x:Name="PageContentRichEditBox"
-                Grid.Row="1"
+                Grid.Row="2"
                 PlaceholderText="Start writing..."
+                SelectionChanged="PageContentRichEditBox_SelectionChanged"
                 TextChanged="PageContentRichEditBox_TextChanged"
                 TextWrapping="Wrap"
                 MinHeight="200"
@@ -386,7 +437,7 @@
 
             <TextBlock
                 x:Name="EditorEmptyState"
-                Grid.RowSpan="2"
+                Grid.RowSpan="3"
                 Text="Select a page to start writing."
                 TextWrapping="Wrap"
                 TextAlignment="Center"

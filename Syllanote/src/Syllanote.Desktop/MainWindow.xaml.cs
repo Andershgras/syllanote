@@ -1,4 +1,5 @@
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -22,7 +23,10 @@ namespace Syllanote.Desktop
         private bool _isConceptOperationInProgress;
         private bool _isUpdatingPageEditorContent;
         private bool _isApplyingConceptHighlighting;
+        private bool _isSuppressingEditorChanges;
+        private bool _isUpdatingFormattingToolbar;
         private bool _isConceptHighlightUpdateQueued;
+        private int _editorChangeSuppressionVersion;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
 
@@ -105,6 +109,29 @@ namespace Syllanote.Desktop
                 : Visibility.Collapsed;
         }
 
+        private void BeginInternalEditorChange()
+        {
+            _isSuppressingEditorChanges = true;
+            _editorChangeSuppressionVersion++;
+        }
+
+        private void EndInternalEditorChange()
+        {
+            var suppressionVersion = _editorChangeSuppressionVersion;
+            if (!DispatcherQueue.TryEnqueue(
+                DispatcherQueuePriority.Low,
+                () =>
+                {
+                    if (_editorChangeSuppressionVersion == suppressionVersion)
+                    {
+                        _isSuppressingEditorChanges = false;
+                    }
+                }))
+            {
+                _isSuppressingEditorChanges = false;
+            }
+        }
+
         private void SetConceptOperationInProgress(bool isInProgress)
         {
             _isConceptOperationInProgress = isInProgress;
@@ -154,6 +181,7 @@ namespace Syllanote.Desktop
                 ? Visibility.Visible
                 : Visibility.Collapsed;
             EditorPageTitle.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
+            FormattingToolbar.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             PageContentRichEditBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             EditorEmptyState.Visibility = hasPage ? Visibility.Collapsed : Visibility.Visible;
         }
@@ -170,6 +198,7 @@ namespace Syllanote.Desktop
             }
 
             _isUpdatingPageEditorContent = true;
+            BeginInternalEditorChange();
             try
             {
                 if (string.IsNullOrEmpty(ViewModel.PageFormattedContent))
@@ -188,9 +217,11 @@ namespace Syllanote.Desktop
             finally
             {
                 _isUpdatingPageEditorContent = false;
+                EndInternalEditorChange();
             }
 
             QueueConceptHighlightRefresh();
+            UpdateFormattingToolbarState();
         }
 
         private void GetPersistedPageEditorContent(
@@ -202,6 +233,7 @@ namespace Syllanote.Desktop
                 out content);
 
             _isApplyingConceptHighlighting = true;
+            BeginInternalEditorChange();
             PageContentRichEditBox.Document.BatchDisplayUpdates();
             try
             {
@@ -223,9 +255,99 @@ namespace Syllanote.Desktop
             {
                 PageContentRichEditBox.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
+                EndInternalEditorChange();
             }
 
             QueueConceptHighlightRefresh();
+        }
+
+        private void UpdatePageContentFromEditor()
+        {
+            HideConceptDefinition();
+            GetPersistedPageEditorContent(
+                out var content,
+                out var formattedContent);
+            ViewModel.PageContent = content;
+            ViewModel.PageFormattedContent = formattedContent;
+        }
+
+        private void BoldButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Bold = BoldButton.IsChecked == true
+                ? FormatEffect.On
+                : FormatEffect.Off;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void ItalicButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Italic = ItalicButton.IsChecked == true
+                ? FormatEffect.On
+                : FormatEffect.Off;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void UnderlineButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Underline = UnderlineButton.IsChecked == true
+                ? UnderlineType.Single
+                : UnderlineType.None;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void UpdateFormattingToolbarState()
+        {
+            if (!IsSelectedPageCurrent())
+            {
+                return;
+            }
+
+            var characterFormat =
+                PageContentRichEditBox.Document.Selection.CharacterFormat;
+
+            _isUpdatingFormattingToolbar = true;
+            try
+            {
+                BoldButton.IsChecked = characterFormat.Bold == FormatEffect.On;
+                ItalicButton.IsChecked = characterFormat.Italic == FormatEffect.On;
+                UnderlineButton.IsChecked =
+                    characterFormat.Underline != UnderlineType.None &&
+                    characterFormat.Underline != UnderlineType.Undefined;
+            }
+            finally
+            {
+                _isUpdatingFormattingToolbar = false;
+            }
         }
 
         private void QueueConceptHighlightRefresh()
@@ -257,6 +379,7 @@ namespace Syllanote.Desktop
             var selectionEnd = selection.EndPosition;
 
             _isApplyingConceptHighlighting = true;
+            BeginInternalEditorChange();
             PageContentRichEditBox.Document.BatchDisplayUpdates();
             try
             {
@@ -294,6 +417,7 @@ namespace Syllanote.Desktop
             {
                 PageContentRichEditBox.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
+                EndInternalEditorChange();
             }
 
             if (selection.StartPosition != selectionStart ||
@@ -976,17 +1100,21 @@ namespace Syllanote.Desktop
         {
             if (_isUpdatingPageEditorContent ||
                 _isApplyingConceptHighlighting ||
+                _isSuppressingEditorChanges ||
                 sender is not RichEditBox richEditBox)
             {
                 return;
             }
 
-            HideConceptDefinition();
-            GetPersistedPageEditorContent(
-                out var content,
-                out var formattedContent);
-            ViewModel.PageContent = content;
-            ViewModel.PageFormattedContent = formattedContent;
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+        }
+
+        private void PageContentRichEditBox_SelectionChanged(
+            object sender,
+            RoutedEventArgs e)
+        {
+            UpdateFormattingToolbarState();
         }
         private async void PageListView_SelectionChanged(
             object sender,
