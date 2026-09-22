@@ -236,6 +236,26 @@ public class RecognizeConceptsServiceTests
     }
 
     [TestMethod]
+    public void Recognize_WhenConceptListChanges_UsesCurrentNameAndMembership()
+    {
+        var concept = CreateConcept("Singleton");
+        const string content = "Singleton and Polymorphism";
+
+        var original = _service.Recognize(content, [concept]).Single();
+
+        concept.Rename("Polymorphism");
+        var renamed = _service.Recognize(content, [concept]).Single();
+        var deleted = _service.Recognize(content, []);
+
+        Assert.AreEqual(concept.Id, original.ConceptId);
+        Assert.AreEqual(0, original.StartIndex);
+        Assert.AreEqual(concept.Id, renamed.ConceptId);
+        Assert.AreEqual("Polymorphism", renamed.ConceptName);
+        Assert.AreEqual(14, renamed.StartIndex);
+        Assert.AreEqual(0, deleted.Count);
+    }
+
+    [TestMethod]
     public void Recognize_WithNullArguments_ThrowsArgumentNullException()
     {
         Assert.ThrowsException<ArgumentNullException>(() =>

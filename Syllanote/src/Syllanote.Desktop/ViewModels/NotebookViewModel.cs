@@ -176,6 +176,11 @@ public partial class NotebookViewModel : ObservableObject
         {
             Concepts.Add(concept);
         }
+
+        if (SelectedPage is not null)
+        {
+            RefreshConceptMatches(SelectedPage, PageContent);
+        }
     }
 
     public Task<Concept> CreateConceptAsync(
