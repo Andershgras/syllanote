@@ -302,6 +302,13 @@
                             <Grid.ContextFlyout>
                                 <MenuFlyout Opening="PageContextMenu_Opening">
                                     <MenuFlyoutItem
+                                        Text="Move up"
+                                        Click="MovePageUpMenuItem_Click" />
+                                    <MenuFlyoutItem
+                                        Text="Move down"
+                                        Click="MovePageDownMenuItem_Click" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem
                                         Text="Rename"
                                         Click="RenamePageMenuItem_Click" />
                                     <MenuFlyoutItem

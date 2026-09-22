@@ -24,6 +24,40 @@ public class PageTests
         Assert.AreEqual(string.Empty, page.FormattedContent);
         Assert.AreEqual(page.CreatedAt, page.UpdatedAt);
     }
+
+    [TestMethod]
+    public void Constructor_WithSortOrder_SetsSortOrder()
+    {
+        var page = new Page(Guid.NewGuid(), "Page", 2);
+
+        Assert.AreEqual(2, page.SortOrder);
+    }
+
+    [TestMethod]
+    public void Constructor_WithNegativeSortOrder_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.ThrowsException<ArgumentOutOfRangeException>(
+            () => new Page(Guid.NewGuid(), "Page", -1));
+    }
+
+    [TestMethod]
+    public void ChangeSortOrder_WithValidValue_UpdatesSortOrder()
+    {
+        var page = new Page(Guid.NewGuid(), "Page");
+
+        page.ChangeSortOrder(3);
+
+        Assert.AreEqual(3, page.SortOrder);
+    }
+
+    [TestMethod]
+    public void ChangeSortOrder_WithNegativeValue_ThrowsArgumentOutOfRangeException()
+    {
+        var page = new Page(Guid.NewGuid(), "Page");
+
+        Assert.ThrowsException<ArgumentOutOfRangeException>(
+            () => page.ChangeSortOrder(-1));
+    }
     [DataTestMethod]
     [DataRow("")]
     [DataRow(" ")]

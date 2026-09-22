@@ -27,7 +27,8 @@ public class PageRepository : IPageRepository
     {
         return await _dbContext.Pages
             .Where(page => page.SectionId == sectionId)
-            .OrderBy(page => page.CreatedAt)
+            .OrderBy(page => page.SortOrder)
+            .ThenBy(page => page.CreatedAt)
             .ToListAsync();
     }
     public async Task<IReadOnlyList<SearchPageResult>> SearchAsync(string searchText)

@@ -12,11 +12,13 @@ public class Page
 
     public string FormattedContent { get; private set; }
 
+    public int SortOrder { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
     public DateTime UpdatedAt { get; private set; }
 
-    public Page(Guid sectionId, string title) 
+    public Page(Guid sectionId, string title, int sortOrder = 0)
     {
         if (sectionId == Guid.Empty)
         {
@@ -32,11 +34,19 @@ public class Page
                 nameof(title));
         }
 
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                "Sort order cannot be negative.");
+        }
+
         Id = Guid.NewGuid();
         SectionId = sectionId;
         Title = title;
         Content = string.Empty;
         FormattedContent = string.Empty;
+        SortOrder = sortOrder;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = CreatedAt;
     }
@@ -58,5 +68,17 @@ public class Page
 
         Title = title;
         UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void ChangeSortOrder(int sortOrder)
+    {
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                "Sort order cannot be negative.");
+        }
+
+        SortOrder = sortOrder;
     }
 }
