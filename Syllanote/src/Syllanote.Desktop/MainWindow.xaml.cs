@@ -11,8 +11,10 @@ using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Syllanote.Desktop
 {
@@ -33,12 +35,15 @@ namespace Syllanote.Desktop
         private int _editorChangeSuppressionVersion;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
+        private Notebook? _notebookActionTarget;
+        private Section? _sectionActionTarget;
 
         public NotebookViewModel ViewModel { get; }
+        public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
+
         private void SetNavigationEnabled(bool isEnabled)
         {
-            NotebookListView.IsEnabled = isEnabled;
-            SectionListView.IsEnabled = isEnabled;
+            NotebookItemsControl.IsEnabled = isEnabled;
             PagesListView.IsEnabled = isEnabled;
         }
 
@@ -54,8 +59,12 @@ namespace Syllanote.Desktop
                 UIElement.TappedEvent,
                 new TappedEventHandler(PageContentRichEditBox_Tapped),
                 true);
-            ViewModel.Notebooks.CollectionChanged += (_, _) => UpdateNotebookEmptyState();
-            ViewModel.Sections.CollectionChanged += (_, _) => UpdateSectionState();
+            ViewModel.Notebooks.CollectionChanged += (_, _) =>
+            {
+                RebuildNotebookNavigation();
+                UpdateNotebookEmptyState();
+            };
+            ViewModel.Sections.CollectionChanged += (_, _) => RefreshSectionNavigation();
             ViewModel.Pages.CollectionChanged += (_, _) => UpdatePageState();
             ViewModel.Concepts.CollectionChanged += (_, _) => UpdateConceptEditorState();
             ViewModel.ConceptMatches.CollectionChanged += (_, _) =>
@@ -69,7 +78,7 @@ namespace Syllanote.Desktop
                     e.PropertyName == nameof(ViewModel.SelectedSection))
                 {
                     HideConceptDefinition();
-                    UpdateSectionState();
+                    RefreshSectionNavigation();
                     UpdatePageState();
                 }
                 else if (e.PropertyName == nameof(ViewModel.SelectedPage))
@@ -85,7 +94,7 @@ namespace Syllanote.Desktop
                 }
             };
             UpdateNotebookEmptyState();
-            UpdateSectionState();
+            RebuildNotebookNavigation();
             UpdatePageState();
             UpdateConceptEditorState();
         }
@@ -142,8 +151,6 @@ namespace Syllanote.Desktop
             SetNavigationEnabled(!isInProgress);
             SearchButton.IsEnabled = !isInProgress;
             SearchTextBox.IsEnabled = !isInProgress;
-            NotebookActionsButton.IsEnabled = !isInProgress &&
-                ViewModel.SelectedNotebook is not null;
             NewConceptButton.IsEnabled = !isInProgress;
             ConceptsListView.IsEnabled = !isInProgress;
             ConceptNameTextBox.IsEnabled = !isInProgress;
@@ -156,19 +163,71 @@ namespace Syllanote.Desktop
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         }
-        private void UpdateSectionState()
+
+        private void RebuildNotebookNavigation()
         {
-            var hasNotebook = ViewModel.SelectedNotebook is not null;
-            NewSectionButton.IsEnabled = hasNotebook;
-            SectionActionsButton.IsEnabled =
-                ViewModel.SelectedSection is not null &&
-                ViewModel.SelectedSection.NotebookId == ViewModel.SelectedNotebook?.Id;
-            SectionEmptyState.Text = hasNotebook
-                ? "No sections yet. Create one to get started."
-                : "Select a notebook to see its sections.";
-            SectionEmptyState.Visibility = !hasNotebook || ViewModel.Sections.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            NotebookNavigationItems.Clear();
+
+            for (var index = 0; index < ViewModel.Notebooks.Count; index++)
+            {
+                NotebookNavigationItems.Add(
+                    NotebookNavigationItem.ForNotebook(
+                        ViewModel.Notebooks[index],
+                        canMoveUp: index > 0,
+                        canMoveDown: index < ViewModel.Notebooks.Count - 1));
+            }
+
+            RefreshSectionNavigation();
+        }
+
+        private void RefreshSectionNavigation()
+        {
+            var selectedNotebookId = ViewModel.SelectedNotebook?.Id;
+
+            foreach (var notebookItem in NotebookNavigationItems)
+            {
+                var isActive = notebookItem.Notebook?.Id == selectedNotebookId;
+                var wasActive = notebookItem.IsActiveNotebook;
+                notebookItem.IsActiveNotebook = isActive;
+                if (!isActive)
+                {
+                    notebookItem.IsExpanded = false;
+                }
+                else if (!wasActive)
+                {
+                    notebookItem.IsExpanded = true;
+                }
+                notebookItem.Children.Clear();
+
+                if (isActive)
+                {
+                    foreach (var section in ViewModel.Sections.Where(
+                        item => item.NotebookId == selectedNotebookId))
+                    {
+                        var sectionItem =
+                            NotebookNavigationItem.ForSection(section);
+                        sectionItem.IsSelectedSection =
+                            section.Id == ViewModel.SelectedSection?.Id;
+                        notebookItem.Children.Add(sectionItem);
+                    }
+                }
+
+                notebookItem.RefreshEmptySectionsVisibility();
+            }
+
+            SyncNavigationSelection();
+        }
+
+        private void SyncNavigationSelection()
+        {
+            var selectedSectionId = ViewModel.SelectedSection?.Id;
+
+            foreach (var item in NotebookNavigationItems.SelectMany(
+                item => item.Children))
+            {
+                item.IsSelectedSection = item.Section?.Id == selectedSectionId;
+            }
+
         }
         private void UpdatePageState()
         {
@@ -636,10 +695,14 @@ namespace Syllanote.Desktop
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress ||
                 _isConceptOperationInProgress ||
-                ViewModel.SelectedNotebook is not Notebook notebook)
+                _notebookActionTarget is not Notebook notebook ||
+                !await EnsureNotebookSelectedAsync(notebook) ||
+                ViewModel.SelectedNotebook is not Notebook selectedNotebook)
             {
                 return;
             }
+
+            notebook = selectedNotebook;
 
             SetConceptOperationInProgress(true);
             await _selectionNavigationLock.WaitAsync();
@@ -868,10 +931,8 @@ namespace Syllanote.Desktop
                 {
                     ShowPageEditor();
                 }
-                NotebookListView.SelectedItem = ViewModel.SelectedNotebook;
-                SectionListView.SelectedItem = ViewModel.SelectedSection;
+                RefreshSectionNavigation();
                 PagesListView.SelectedItem = ViewModel.SelectedPage;
-                NotebookActionsButton.IsEnabled = ViewModel.SelectedNotebook is not null;
                 UpdatePageState();
                 SearchResultsListView.SelectedItem = null;
             }
@@ -924,8 +985,11 @@ namespace Syllanote.Desktop
         {
             if (_isRenamingSelection) return;
 
-            var notebook = ViewModel.SelectedNotebook;
-            if (notebook is null)
+            var notebook = (sender as FrameworkElement)?.DataContext
+                is NotebookNavigationItem navigationItem
+                    ? navigationItem.Notebook
+                    : ViewModel.SelectedNotebook;
+            if (notebook is null || !await EnsureNotebookSelectedAsync(notebook))
             {
                 return;
             }
@@ -1000,16 +1064,22 @@ namespace Syllanote.Desktop
                 await ViewModel.CreatePageCommand.ExecuteAsync(null);
             }
         }
-        private async void NotebookListView_SelectionChanged(
+        private async void NotebookNavigationButton_Click(
             object sender,
-            SelectionChangedEventArgs e)
+            RoutedEventArgs e)
         {
-            if (_isRenamingSelection || _isSearchNavigationInProgress)
+            if (_isRenamingSelection || _isSearchNavigationInProgress ||
+                (sender as FrameworkElement)?.DataContext
+                    is not NotebookNavigationItem navigationItem ||
+                navigationItem.Notebook is not Notebook notebook)
             {
                 return;
             }
 
-            var navigationVersion = _selectionNavigationVersion;
+            var navigationVersion = ++_selectionNavigationVersion;
+            navigationItem.IsExpanded = true;
+            ViewModel.SelectedNotebook = notebook;
+            ShowPageEditor();
             await _selectionNavigationLock.WaitAsync();
             try
             {
@@ -1019,26 +1089,188 @@ namespace Syllanote.Desktop
                     return;
                 }
 
-                ShowPageEditor();
-                NotebookActionsButton.IsEnabled = ViewModel.SelectedNotebook is not null;
                 await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
+                if (navigationVersion == _selectionNavigationVersion &&
+                    ViewModel.SelectedNotebook?.Id == notebook.Id)
+                {
+                    RefreshSectionNavigation();
+                }
             }
             finally
             {
                 _selectionNavigationLock.Release();
             }
         }
+
+        private async void SectionNavigationButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (_isRenamingSelection || _isSearchNavigationInProgress ||
+                (sender as FrameworkElement)?.DataContext
+                    is not NotebookNavigationItem navigationItem ||
+                navigationItem.Section is not Section section)
+            {
+                return;
+            }
+
+            var currentSection = ViewModel.Sections.FirstOrDefault(
+                item => item.Id == section.Id);
+            if (currentSection is null ||
+                currentSection.NotebookId != ViewModel.SelectedNotebook?.Id)
+            {
+                return;
+            }
+
+            var navigationVersion = ++_selectionNavigationVersion;
+            ViewModel.SelectedSection = currentSection;
+            ShowPageEditor();
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                if (navigationVersion != _selectionNavigationVersion ||
+                    _isSearchNavigationInProgress)
+                {
+                    return;
+                }
+
+                await ViewModel.LoadPagesCommand.ExecuteAsync(null);
+                if (navigationVersion == _selectionNavigationVersion &&
+                    ViewModel.SelectedSection?.Id == currentSection.Id)
+                {
+                    SyncNavigationSelection();
+                }
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+            }
+        }
+
+        private async void NotebookExpandCollapseButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (_isRenamingSelection || _isSearchNavigationInProgress ||
+                (sender as FrameworkElement)?.DataContext
+                    is not NotebookNavigationItem navigationItem ||
+                navigationItem.Notebook is not Notebook notebook)
+            {
+                return;
+            }
+
+            var shouldExpand = !navigationItem.IsActiveNotebook ||
+                !navigationItem.IsExpanded;
+            if (!await EnsureNotebookSelectedAsync(notebook))
+            {
+                return;
+            }
+
+            var currentItem = NotebookNavigationItems.FirstOrDefault(
+                item => item.Notebook?.Id == notebook.Id);
+            if (currentItem is not null)
+            {
+                currentItem.IsExpanded = shouldExpand;
+                currentItem.RefreshEmptySectionsVisibility();
+            }
+        }
+
+        private void NotebookActionsButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            _notebookActionTarget = (sender as FrameworkElement)?.DataContext
+                is NotebookNavigationItem navigationItem
+                    ? navigationItem.Notebook
+                    : null;
+        }
+
+        private void SectionActionsButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            _sectionActionTarget = (sender as FrameworkElement)?.DataContext
+                is NotebookNavigationItem navigationItem
+                    ? navigationItem.Section
+                    : null;
+        }
+
+        private async Task<bool> EnsureNotebookSelectedAsync(Notebook notebook)
+        {
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                var currentNotebook = ViewModel.Notebooks.FirstOrDefault(
+                    item => item.Id == notebook.Id);
+                if (currentNotebook is null)
+                {
+                    return false;
+                }
+
+                if (ViewModel.SelectedNotebook?.Id != currentNotebook.Id)
+                {
+                    ViewModel.SelectedNotebook = currentNotebook;
+                    await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
+                }
+
+                ShowPageEditor();
+                RefreshSectionNavigation();
+                return ViewModel.SelectedNotebook?.Id == currentNotebook.Id;
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+            }
+        }
+
+        private async Task<Section?> EnsureSectionSelectedAsync(Section section)
+        {
+            var notebook = ViewModel.Notebooks.FirstOrDefault(
+                item => item.Id == section.NotebookId);
+            if (notebook is null || !await EnsureNotebookSelectedAsync(notebook))
+            {
+                return null;
+            }
+
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                var currentSection = ViewModel.Sections.FirstOrDefault(
+                    item => item.Id == section.Id);
+                if (currentSection is null)
+                {
+                    return null;
+                }
+
+                if (ViewModel.SelectedSection?.Id != currentSection.Id)
+                {
+                    ViewModel.SelectedSection = currentSection;
+                    await ViewModel.LoadPagesCommand.ExecuteAsync(null);
+                }
+
+                SyncNavigationSelection();
+                return currentSection;
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+            }
+        }
+
         private async void RenameNotebookMenuItem_Click(
             object sender,
             RoutedEventArgs e)
         {
             if (_isRenamingSelection) return;
 
-            var notebook = ViewModel.SelectedNotebook;
-            if (notebook is null)
+            var notebook = _notebookActionTarget;
+            if (notebook is null || !await EnsureNotebookSelectedAsync(notebook))
             {
                 return;
             }
+
+            notebook = ViewModel.SelectedNotebook;
+            if (notebook is null) return;
 
             var nameTextBox = new TextBox
             {
@@ -1069,8 +1301,8 @@ namespace Syllanote.Desktop
                 try
                 {
                     await ViewModel.RenameNotebookCommand.ExecuteAsync(null);
-                    NotebookListView.SelectedItem = notebook;
                     ViewModel.SelectedNotebook = notebook;
+                    RebuildNotebookNavigation();
                 }
                 finally
                 {
@@ -1078,18 +1310,6 @@ namespace Syllanote.Desktop
                     _isRenamingSelection = false;
                 }
             }
-        }
-
-        private void NotebookActionsFlyout_Opening(object sender, object e)
-        {
-            var notebook = ViewModel.SelectedNotebook;
-            var index = notebook is null
-                ? -1
-                : ViewModel.Notebooks.IndexOf(notebook);
-
-            MoveNotebookUpMenuItem.IsEnabled = index > 0;
-            MoveNotebookDownMenuItem.IsEnabled =
-                index >= 0 && index < ViewModel.Notebooks.Count - 1;
         }
 
         private async void MoveNotebookUpMenuItem_Click(
@@ -1106,17 +1326,16 @@ namespace Syllanote.Desktop
             await MoveSelectedNotebookAsync(moveUp: false);
         }
 
-        private async System.Threading.Tasks.Task MoveSelectedNotebookAsync(
+        private async Task MoveSelectedNotebookAsync(
             bool moveUp)
         {
-            var notebook = ViewModel.SelectedNotebook;
-            if (notebook is null)
+            var notebook = _notebookActionTarget;
+            if (notebook is null || !await EnsureNotebookSelectedAsync(notebook))
             {
                 return;
             }
 
             SetNavigationEnabled(false);
-            NotebookActionsButton.IsEnabled = false;
             try
             {
                 if (moveUp)
@@ -1127,55 +1346,28 @@ namespace Syllanote.Desktop
                 {
                     await ViewModel.MoveSelectedNotebookDownCommand.ExecuteAsync(null);
                 }
-
-                NotebookListView.SelectedItem = notebook;
+                RebuildNotebookNavigation();
             }
             finally
             {
                 SetNavigationEnabled(true);
-                NotebookActionsButton.IsEnabled =
-                    ViewModel.SelectedNotebook is not null;
             }
         }
 
-        private async void SectionListView_SelectionChanged(
-            object sender,
-            SelectionChangedEventArgs e)
-        {
-            if (_isRenamingSelection || _isSearchNavigationInProgress)
-            {
-                return;
-            }
-
-            var navigationVersion = _selectionNavigationVersion;
-            await _selectionNavigationLock.WaitAsync();
-            try
-            {
-                if (navigationVersion != _selectionNavigationVersion ||
-                    _isSearchNavigationInProgress)
-                {
-                    return;
-                }
-
-                await ViewModel.LoadPagesCommand.ExecuteAsync(null);
-            }
-            finally
-            {
-                _selectionNavigationLock.Release();
-            }
-        }
         private async void RenameSectionMenuItem_Click(
             object sender,
             RoutedEventArgs e)
         {
             if (_isRenamingSelection) return;
 
-            var section = ViewModel.SelectedSection;
+            var section = _sectionActionTarget;
             if (section is null ||
-                section.NotebookId != ViewModel.SelectedNotebook?.Id)
+                await EnsureSectionSelectedAsync(section) is not Section currentSection)
             {
                 return;
             }
+
+            section = currentSection;
 
             var nameTextBox = new TextBox
             {
@@ -1207,8 +1399,8 @@ namespace Syllanote.Desktop
                 try
                 {
                     await ViewModel.RenameSectionCommand.ExecuteAsync(null);
-                    SectionListView.SelectedItem = section;
                     ViewModel.SelectedSection = section;
+                    RefreshSectionNavigation();
                 }
                 finally
                 {
@@ -1368,12 +1560,14 @@ namespace Syllanote.Desktop
         {
             if (_isRenamingSelection) return;
 
-            var section = ViewModel.SelectedSection;
+            var section = _sectionActionTarget;
             if (section is null ||
-                section.NotebookId != ViewModel.SelectedNotebook?.Id)
+                await EnsureSectionSelectedAsync(section) is not Section currentSection)
             {
                 return;
             }
+
+            section = currentSection;
 
             var dialog = new ContentDialog
             {
@@ -1386,10 +1580,11 @@ namespace Syllanote.Desktop
             };
 
             if (await dialog.ShowAsync() == ContentDialogResult.Primary &&
-                ViewModel.SelectedSection == section &&
+                ViewModel.SelectedSection?.Id == section.Id &&
                 ViewModel.SelectedNotebook?.Id == section.NotebookId)
             {
                 await ViewModel.DeleteSectionCommand.ExecuteAsync(null);
+                RefreshSectionNavigation();
             }
         }
 
@@ -1399,11 +1594,14 @@ namespace Syllanote.Desktop
         {
             if (_isRenamingSelection) return;
 
-            var notebook = ViewModel.SelectedNotebook;
-            if (notebook is null)
+            var notebook = _notebookActionTarget;
+            if (notebook is null || !await EnsureNotebookSelectedAsync(notebook))
             {
                 return;
             }
+
+            notebook = ViewModel.SelectedNotebook;
+            if (notebook is null) return;
 
             var dialog = new ContentDialog
             {
@@ -1416,9 +1614,10 @@ namespace Syllanote.Desktop
             };
 
             if (await dialog.ShowAsync() == ContentDialogResult.Primary &&
-                ViewModel.SelectedNotebook == notebook)
+                ViewModel.SelectedNotebook?.Id == notebook.Id)
             {
                 await ViewModel.DeleteNotebookCommand.ExecuteAsync(null);
+                RebuildNotebookNavigation();
             }
         }
     }

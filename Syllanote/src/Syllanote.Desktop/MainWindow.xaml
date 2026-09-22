@@ -4,7 +4,8 @@
     x:Class="Syllanote.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
+    xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"
+    xmlns:viewModels="using:Syllanote.Desktop.ViewModels">
 
     <Grid
         Padding="24"
@@ -18,18 +19,17 @@
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
-            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="280" />
             <ColumnDefinition Width="240" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
             <TextBox x:Name="SearchTextBox" Width="360" PlaceholderText="Search pages in all notebooks" AutomationProperties.Name="Search pages" />
             <Button x:Name="SearchButton" Content="Search" Click="SearchButton_Click" />
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Margin="0,0,0,12">
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,0,0,12">
             <TextBlock Text="{Binding SearchMessage}" TextWrapping="Wrap" />
             <ListView x:Name="SearchResultsListView"
                       ItemsSource="{Binding SearchResults}"
@@ -48,7 +48,7 @@
         </StackPanel>
 
         <!-- ==================== -->
-        <!-- NOTEBOOKS            -->
+        <!-- NOTEBOOKS + SECTIONS -->
         <!-- ==================== -->
 
         <Grid
@@ -59,14 +59,12 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <Grid ColumnSpacing="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
@@ -85,59 +83,172 @@
                     AutomationProperties.Name="New notebook"
                     ToolTipService.ToolTip="New notebook"
                     Click="NewNotebookButton_Click" />
-
-                <Button
-                    x:Name="NotebookActionsButton"
-                    Grid.Column="2"
-                    Content="..."
-                    FontSize="18"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    IsEnabled="False"
-                    AutomationProperties.Name="Notebook actions"
-                    ToolTipService.ToolTip="Notebook actions">
-                    <Button.Flyout>
-                        <MenuFlyout Opening="NotebookActionsFlyout_Opening">
-                            <MenuFlyoutItem
-                                x:Name="MoveNotebookUpMenuItem"
-                                Text="Move up"
-                                Click="MoveNotebookUpMenuItem_Click" />
-                            <MenuFlyoutItem
-                                x:Name="MoveNotebookDownMenuItem"
-                                Text="Move down"
-                                Click="MoveNotebookDownMenuItem_Click" />
-                            <MenuFlyoutSeparator />
-                            <MenuFlyoutItem
-                                Text="Concept Dictionary"
-                                Click="ConceptDictionaryMenuItem_Click" />
-                            <MenuFlyoutItem
-                                Text="Rename"
-                                Click="RenameNotebookMenuItem_Click" />
-                            <MenuFlyoutItem
-                                Text="Delete"
-                                Click="DeleteNotebookButton_Click" />
-                        </MenuFlyout>
-                    </Button.Flyout>
-                </Button>
             </Grid>
 
-            <ListView
-                x:Name="NotebookListView"
+            <ItemsControl
+                x:Name="NotebookItemsControl"
                 Grid.Row="1"
-                ItemsSource="{Binding Notebooks}"
-                SelectedItem="{Binding SelectedNotebook, Mode=TwoWay}"
-                SelectionChanged="NotebookListView_SelectionChanged">
+                ItemsSource="{x:Bind NotebookNavigationItems}">
 
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock
-                            Text="{Binding Name}"
-                            FontSize="16" />
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
+                        <StackPanel>
+                            <Grid MinHeight="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Width="3"
+                                    Height="24"
+                                    CornerRadius="2"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    Visibility="{x:Bind SelectedNotebookIndicatorVisibility, Mode=OneWay}" />
+
+                                <Button
+                                    Grid.Column="1"
+                                    Width="28"
+                                    Height="28"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Content="{x:Bind ExpandCollapseGlyph, Mode=OneWay}"
+                                    FontSize="14"
+                                    AutomationProperties.Name="Expand or collapse notebook sections"
+                                    ToolTipService.ToolTip="Expand or collapse sections"
+                                    Click="NotebookExpandCollapseButton_Click" />
+
+                                <Button
+                                    Grid.Column="2"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    MinHeight="36"
+                                    Padding="8,4"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Content="{x:Bind Name}"
+                                    FontSize="16"
+                                    AutomationProperties.Name="{x:Bind Name}"
+                                    Click="NotebookNavigationButton_Click" />
+
+                                <Button
+                                    Grid.Column="3"
+                                    Content="..."
+                                    FontSize="18"
+                                    Width="32"
+                                    Height="32"
+                                    Padding="0"
+                                    Visibility="{x:Bind NotebookActionsVisibility}"
+                                    AutomationProperties.Name="Notebook actions"
+                                    ToolTipService.ToolTip="Notebook actions"
+                                    Click="NotebookActionsButton_Click">
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem
+                                                Text="Move up"
+                                                IsEnabled="{x:Bind CanMoveUp}"
+                                                Click="MoveNotebookUpMenuItem_Click" />
+                                            <MenuFlyoutItem
+                                                Text="Move down"
+                                                IsEnabled="{x:Bind CanMoveDown}"
+                                                Click="MoveNotebookDownMenuItem_Click" />
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem
+                                                Text="Concept Dictionary"
+                                                Click="ConceptDictionaryMenuItem_Click" />
+                                            <MenuFlyoutItem
+                                                Text="Rename"
+                                                Click="RenameNotebookMenuItem_Click" />
+                                            <MenuFlyoutItem
+                                                Text="Delete"
+                                                Click="DeleteNotebookButton_Click" />
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </Grid>
+
+                            <StackPanel Visibility="{x:Bind SectionControlsVisibility, Mode=OneWay}">
+                                <ItemsControl ItemsSource="{x:Bind Children}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
+                                            <Grid MinHeight="38" Margin="28,0,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="4" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border
+                                                    Width="3"
+                                                    Height="22"
+                                                    CornerRadius="2"
+                                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                    Visibility="{x:Bind SelectedSectionIndicatorVisibility, Mode=OneWay}" />
+
+                                                <Button
+                                                    Grid.Column="1"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left"
+                                                    MinHeight="36"
+                                                    Padding="10,4"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Content="{x:Bind Name}"
+                                                    AutomationProperties.Name="{x:Bind Name}"
+                                                    Click="SectionNavigationButton_Click" />
+
+                                                <Button
+                                                    Grid.Column="2"
+                                                    Content="..."
+                                                    FontSize="18"
+                                                    Width="32"
+                                                    Height="32"
+                                                    Padding="0"
+                                                    AutomationProperties.Name="Section actions"
+                                                    ToolTipService.ToolTip="Section actions"
+                                                    Click="SectionActionsButton_Click">
+                                                    <Button.Flyout>
+                                                        <MenuFlyout>
+                                                            <MenuFlyoutItem
+                                                                Text="Rename"
+                                                                Click="RenameSectionMenuItem_Click" />
+                                                            <MenuFlyoutItem
+                                                                Text="Delete"
+                                                                Click="DeleteSectionButton_Click" />
+                                                        </MenuFlyout>
+                                                    </Button.Flyout>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock
+                                    Margin="42,4,0,4"
+                                    Text="No sections yet. Create one to get started."
+                                    TextWrapping="Wrap"
+                                    Opacity="0.7"
+                                    Visibility="{x:Bind EmptySectionsVisibility, Mode=OneWay}" />
+
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Margin="28,4,0,4"
+                                    Padding="10,6"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Content="+  New section"
+                                    AutomationProperties.Name="New section"
+                                    ToolTipService.ToolTip="New section"
+                                    Click="NewSectionButton_Click" />
+                            </StackPanel>
+                        </StackPanel>
                     </DataTemplate>
-                </ListView.ItemTemplate>
-
-            </ListView>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <TextBlock
                 x:Name="NotebookEmptyState"
@@ -150,109 +261,12 @@
 
 
         <!-- ==================== -->
-        <!-- SECTIONS             -->
-        <!-- ==================== -->
-
-        <Grid
-            Grid.Row="2"
-            Grid.Column="1"
-            RowSpacing="12"
-            Margin="0,0,24,0">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <Grid ColumnSpacing="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock
-                    Text="Sections"
-                    FontSize="20"
-                    FontWeight="SemiBold" />
-
-                <Button
-                    x:Name="NewSectionButton"
-                    Grid.Column="1"
-                    Content="+"
-                    FontSize="18"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    IsEnabled="False"
-                    AutomationProperties.Name="New section"
-                    ToolTipService.ToolTip="New section"
-                    Click="NewSectionButton_Click" />
-
-                <Button
-                    x:Name="SectionActionsButton"
-                    Grid.Column="2"
-                    Content="..."
-                    FontSize="18"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    IsEnabled="False"
-                    AutomationProperties.Name="Section actions"
-                    ToolTipService.ToolTip="Section actions">
-                    <Button.Flyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem
-                                Text="Rename"
-                                Click="RenameSectionMenuItem_Click" />
-                            <MenuFlyoutItem
-                                Text="Delete"
-                                Click="DeleteSectionButton_Click" />
-                        </MenuFlyout>
-                    </Button.Flyout>
-                </Button>
-            </Grid>
-
-            <TextBlock
-                Grid.Row="1"
-                Text="{Binding SelectedNotebook.Name}"
-                FontSize="16"
-                Opacity="0.7" />
-
-            <ListView
-                x:Name="SectionListView"
-                Grid.Row="2"
-                ItemsSource="{Binding Sections}"
-                SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
-                SelectionChanged="SectionListView_SelectionChanged">
-
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock
-                            Text="{Binding Name}"
-                            FontSize="16" />
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-
-            </ListView>
-
-            <TextBlock
-                x:Name="SectionEmptyState"
-                Grid.Row="2"
-                TextWrapping="Wrap"
-                Opacity="0.7" />
-
-        </Grid>
-
-
-        <!-- ==================== -->
         <!-- PAGES                -->
         <!-- ==================== -->
 
         <Grid
             Grid.Row="2"
-            Grid.Column="2"
+            Grid.Column="1"
             RowSpacing="12"
             Margin="0,0,24,0">
 
@@ -344,7 +358,7 @@
         <!-- NOTE EDITOR          -->
         <!-- ==================== -->
 
-        <Grid x:Name="PageEditorPanel" Grid.Row="2" Grid.Column="3">
+        <Grid x:Name="PageEditorPanel" Grid.Row="2" Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -483,7 +497,7 @@
         <!-- CONCEPT DICTIONARY -->
         <Grid x:Name="ConceptDictionaryPanel"
               Grid.Row="2"
-              Grid.Column="3"
+              Grid.Column="2"
               RowSpacing="12"
               Visibility="Collapsed">
             <Grid.RowDefinitions>
