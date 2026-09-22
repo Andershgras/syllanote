@@ -4,6 +4,7 @@ using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.Concepts.CreateConcept;
 using Syllanote.Application.Notebooks.Concepts.DeleteConcept;
 using Syllanote.Application.Notebooks.Concepts.GetConcepts;
+using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
@@ -96,6 +97,7 @@ public partial class NotebookViewModel : ObservableObject
     public ObservableCollection<Page> Pages { get; } = [];
     public ObservableCollection<SearchPageResult> SearchResults { get; } = [];
     public ObservableCollection<Concept> Concepts { get; } = [];
+    public ObservableCollection<ConceptMatch> ConceptMatches { get; } = [];
 
     public string SearchText { get; set; } = string.Empty;
 
@@ -155,6 +157,7 @@ public partial class NotebookViewModel : ObservableObject
     {
         SelectedNotebookName = value?.Name ?? string.Empty;
         Concepts.Clear();
+        ConceptMatches.Clear();
     }
 
     public async Task LoadConceptsAsync(Guid notebookId)
@@ -270,6 +273,8 @@ public partial class NotebookViewModel : ObservableObject
         {
             return;
         }
+
+        await LoadConceptsAsync(SelectedNotebook.Id);
 
         var sections =
             await _getSectionsService.GetByNotebookIdAsync(
@@ -402,6 +407,7 @@ public partial class NotebookViewModel : ObservableObject
     partial void OnSelectedPageChanged(Page? value)
     {
         _autoSaveCancellationTokenSource?.Cancel();
+        ConceptMatches.Clear();
 
         _isLoadingPage = true;
 
