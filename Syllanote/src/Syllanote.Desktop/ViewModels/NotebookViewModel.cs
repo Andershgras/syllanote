@@ -312,22 +312,38 @@ public partial class NotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadSectionsAsync()
     {
+        var notebook = SelectedNotebook;
         await SaveCurrentPageAsync();
+
+        if (SelectedNotebook != notebook)
+        {
+            return;
+        }
 
         SelectedSection = null;
         Sections.Clear();
         Pages.Clear();
 
-        if (SelectedNotebook is null)
+        if (notebook is null)
         {
             return;
         }
 
-        await LoadConceptsAsync(SelectedNotebook.Id);
+        await LoadConceptsAsync(notebook.Id);
+
+        if (SelectedNotebook != notebook)
+        {
+            return;
+        }
 
         var sections =
             await _getSectionsService.GetByNotebookIdAsync(
-                SelectedNotebook.Id);
+                notebook.Id);
+
+        if (SelectedNotebook != notebook)
+        {
+            return;
+        }
 
         foreach (var section in sections)
         {
@@ -416,19 +432,32 @@ public partial class NotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadPagesAsync()
     {
+        var section = SelectedSection;
         await SaveCurrentPageAsync();
+
+        if (SelectedSection != section)
+        {
+            return;
+        }
 
         SelectedPage = null;
         Pages.Clear();
 
-        if (SelectedSection is null)
+        if (section is null ||
+            section.NotebookId != SelectedNotebook?.Id)
         {
             return;
         }
 
         var pages =
             await _getPagesService.GetBySectionIdAsync(
-                SelectedSection.Id);
+                section.Id);
+
+        if (SelectedSection != section ||
+            section.NotebookId != SelectedNotebook?.Id)
+        {
+            return;
+        }
 
         foreach (var page in pages)
         {
