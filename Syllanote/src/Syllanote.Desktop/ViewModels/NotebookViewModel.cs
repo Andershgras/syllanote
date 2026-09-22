@@ -4,6 +4,7 @@ using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.Concepts.CreateConcept;
 using Syllanote.Application.Notebooks.Concepts.DeleteConcept;
 using Syllanote.Application.Notebooks.Concepts.GetConcepts;
+using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
@@ -51,6 +52,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly GetConceptsService _getConceptsService;
     private readonly UpdateConceptService _updateConceptService;
     private readonly DeleteConceptService _deleteConceptService;
+    private readonly RecognizeConceptsService _recognizeConceptsService;
 
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
@@ -70,7 +72,8 @@ public partial class NotebookViewModel : ObservableObject
         CreateConceptService createConceptService,
         GetConceptsService getConceptsService,
         UpdateConceptService updateConceptService,
-        DeleteConceptService deleteConceptService)
+        DeleteConceptService deleteConceptService,
+        RecognizeConceptsService recognizeConceptsService)
     {
         _createNotebookService = createNotebookService;
         _deleteNotebookService = deleteNotebookService;
@@ -90,12 +93,14 @@ public partial class NotebookViewModel : ObservableObject
         _getConceptsService = getConceptsService;
         _updateConceptService = updateConceptService;
         _deleteConceptService = deleteConceptService;
+        _recognizeConceptsService = recognizeConceptsService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
     public ObservableCollection<Section> Sections { get; } = [];
     public ObservableCollection<Page> Pages { get; } = [];
     public ObservableCollection<SearchPageResult> SearchResults { get; } = [];
     public ObservableCollection<Concept> Concepts { get; } = [];
+    public ObservableCollection<ConceptMatch> ConceptMatches { get; } = [];
 
     public string SearchText { get; set; } = string.Empty;
 
@@ -155,6 +160,7 @@ public partial class NotebookViewModel : ObservableObject
     {
         SelectedNotebookName = value?.Name ?? string.Empty;
         Concepts.Clear();
+        ConceptMatches.Clear();
     }
 
     public async Task LoadConceptsAsync(Guid notebookId)
@@ -169,6 +175,11 @@ public partial class NotebookViewModel : ObservableObject
         foreach (var concept in concepts)
         {
             Concepts.Add(concept);
+        }
+
+        if (SelectedPage is not null)
+        {
+            RefreshConceptMatches(SelectedPage, PageContent);
         }
     }
 
@@ -270,6 +281,8 @@ public partial class NotebookViewModel : ObservableObject
         {
             return;
         }
+
+        await LoadConceptsAsync(SelectedNotebook.Id);
 
         var sections =
             await _getSectionsService.GetByNotebookIdAsync(
@@ -402,6 +415,7 @@ public partial class NotebookViewModel : ObservableObject
     partial void OnSelectedPageChanged(Page? value)
     {
         _autoSaveCancellationTokenSource?.Cancel();
+        ConceptMatches.Clear();
 
         _isLoadingPage = true;
 
@@ -411,6 +425,11 @@ public partial class NotebookViewModel : ObservableObject
         _isLoadingPage = false;
 
         IsPageDirty = false;
+
+        if (value is not null)
+        {
+            RefreshConceptMatches(value, PageContent);
+        }
     }
 
     [RelayCommand]
@@ -498,11 +517,27 @@ public partial class NotebookViewModel : ObservableObject
             if (SelectedPage == page && PageContent == content)
             {
                 IsPageDirty = false;
+                RefreshConceptMatches(page, content);
             }
         }
         finally
         {
             _pagePersistenceLock.Release();
+        }
+    }
+    private void RefreshConceptMatches(Page page, string content)
+    {
+        if (SelectedPage != page || PageContent != content)
+        {
+            return;
+        }
+
+        var matches = _recognizeConceptsService.Recognize(content, Concepts);
+
+        ConceptMatches.Clear();
+        foreach (var match in matches)
+        {
+            ConceptMatches.Add(match);
         }
     }
     private async Task ScheduleAutoSaveAsync()

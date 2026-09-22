@@ -348,13 +348,11 @@
                 Margin="0,0,0,16"
                 Visibility="Collapsed" />
 
-            <TextBox
-                x:Name="PageContentTextBox"
+            <RichEditBox
+                x:Name="PageContentRichEditBox"
                 Grid.Row="1"
                 PlaceholderText="Start writing..."
-                Text="{Binding PageContent, Mode=TwoWay}"
-                TextChanged="PageContentTextBox_TextChanged"
-                AcceptsReturn="True"
+                TextChanged="PageContentRichEditBox_TextChanged"
                 TextWrapping="Wrap"
                 MinHeight="200"
                 Visibility="Collapsed" />

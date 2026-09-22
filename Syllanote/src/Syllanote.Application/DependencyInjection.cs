@@ -3,6 +3,7 @@ using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.Concepts.CreateConcept;
 using Syllanote.Application.Notebooks.Concepts.DeleteConcept;
 using Syllanote.Application.Notebooks.Concepts.GetConcepts;
+using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<GetConceptsService>();
         services.AddScoped<UpdateConceptService>();
         services.AddScoped<DeleteConceptService>();
+        services.AddScoped<RecognizeConceptsService>();
 
         return services;
     }
