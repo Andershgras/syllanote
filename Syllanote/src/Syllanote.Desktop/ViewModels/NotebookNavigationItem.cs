@@ -76,9 +76,16 @@ public partial class NotebookNavigationItem : ObservableObject
         };
     }
 
-    public static NotebookNavigationItem ForSection(Section section)
+    public static NotebookNavigationItem ForSection(
+        Section section,
+        bool canMoveUp,
+        bool canMoveDown)
     {
-        return new NotebookNavigationItem(null, section);
+        return new NotebookNavigationItem(null, section)
+        {
+            CanMoveUp = canMoveUp,
+            CanMoveDown = canMoveDown
+        };
     }
 
     public void RefreshEmptySectionsVisibility()

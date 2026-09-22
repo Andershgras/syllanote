@@ -25,7 +25,8 @@ public class SectionRepository : ISectionRepository
     {
         return await _dbContext.Sections
             .Where(section => section.NotebookId == notebookId)
-            .OrderBy(section => section.CreatedAt)
+            .OrderBy(section => section.SortOrder)
+            .ThenBy(section => section.CreatedAt)
             .ToListAsync();
     }
 
