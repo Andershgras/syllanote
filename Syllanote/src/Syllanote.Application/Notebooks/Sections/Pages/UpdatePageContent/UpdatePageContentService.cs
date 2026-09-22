@@ -12,9 +12,12 @@ public class UpdatePageContentService
         _pageRepository = pageRepository;
     }
 
-    public async Task UpdateAsync(Page page, string content)
+    public async Task UpdateAsync(
+        Page page,
+        string content,
+        string formattedContent)
     {
-        page.UpdateContent(content);
+        page.UpdateContent(content, formattedContent);
 
         await _pageRepository.UpdateAsync(page);
     }

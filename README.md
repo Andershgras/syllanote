@@ -15,7 +15,7 @@ A local-first desktop note-taking application for students with organized notebo
 ## Features
 
 - Create, rename, and delete notebooks, sections, and pages
-- Edit and autosave page content as plain text
+- Edit and autosave page content with persistent rich-text formatting
 - Search page titles and content across all notebooks
 - Create, update, and delete Concepts for each notebook
 - Recognize Concepts in page content

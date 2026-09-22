@@ -68,7 +68,7 @@ namespace Syllanote.Desktop
                 {
                     HideConceptDefinition();
                     UpdatePageState();
-                    SyncPageEditorContent();
+                    SyncPageEditorContent(force: true);
                 }
                 else if (e.PropertyName == nameof(ViewModel.PageContent))
                 {
@@ -158,13 +158,13 @@ namespace Syllanote.Desktop
             EditorEmptyState.Visibility = hasPage ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        private void SyncPageEditorContent()
+        private void SyncPageEditorContent(bool force = false)
         {
             PageContentRichEditBox.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
 
-            if (editorContent == ViewModel.PageContent)
+            if (!force && editorContent == ViewModel.PageContent)
             {
                 return;
             }
@@ -172,14 +172,60 @@ namespace Syllanote.Desktop
             _isUpdatingPageEditorContent = true;
             try
             {
-                PageContentRichEditBox.Document.SetText(
-                    TextSetOptions.None,
-                    ViewModel.PageContent);
+                if (string.IsNullOrEmpty(ViewModel.PageFormattedContent))
+                {
+                    PageContentRichEditBox.Document.SetText(
+                        TextSetOptions.None,
+                        ViewModel.PageContent);
+                }
+                else
+                {
+                    PageContentRichEditBox.Document.SetText(
+                        TextSetOptions.FormatRtf,
+                        ViewModel.PageFormattedContent);
+                }
             }
             finally
             {
                 _isUpdatingPageEditorContent = false;
             }
+
+            QueueConceptHighlightRefresh();
+        }
+
+        private void GetPersistedPageEditorContent(
+            out string content,
+            out string formattedContent)
+        {
+            PageContentRichEditBox.Document.GetText(
+                TextGetOptions.None,
+                out content);
+
+            _isApplyingConceptHighlighting = true;
+            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            try
+            {
+                if (content.Length > 0)
+                {
+                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                        0,
+                        content.Length);
+                    var documentFormat = documentRange.CharacterFormat;
+                    documentFormat.BackgroundColor = Colors.Transparent;
+                    documentRange.CharacterFormat = documentFormat;
+                }
+
+                PageContentRichEditBox.Document.GetText(
+                    TextGetOptions.FormatRtf,
+                    out formattedContent);
+            }
+            finally
+            {
+                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                _isApplyingConceptHighlighting = false;
+            }
+
+            QueueConceptHighlightRefresh();
         }
 
         private void QueueConceptHighlightRefresh()
@@ -936,10 +982,11 @@ namespace Syllanote.Desktop
             }
 
             HideConceptDefinition();
-            richEditBox.Document.GetText(
-                TextGetOptions.None,
-                out var content);
+            GetPersistedPageEditorContent(
+                out var content,
+                out var formattedContent);
             ViewModel.PageContent = content;
+            ViewModel.PageFormattedContent = formattedContent;
         }
         private async void PageListView_SelectionChanged(
             object sender,

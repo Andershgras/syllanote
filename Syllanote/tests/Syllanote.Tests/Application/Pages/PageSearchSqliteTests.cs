@@ -26,7 +26,9 @@ public class PageSearchSqliteTests
         var secondSection = new Section(secondNotebook.Id, "SQL");
         var titleMatch = new Page(firstSection.Id, "Confusion Matrix");
         var contentMatch = new Page(secondSection.Id, "Indexes");
-        contentMatch.UpdateContent("A confusion matrix example.");
+        contentMatch.UpdateContent(
+            "A confusion matrix example.",
+            @"{\rtf1 A \b confusion matrix\b0 example.}");
         var otherPage = new Page(secondSection.Id, "Transactions");
         context.Notebooks.AddRange(firstNotebook, secondNotebook);
         context.Sections.AddRange(firstSection, secondSection);
