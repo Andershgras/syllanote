@@ -3,7 +3,8 @@
 <Window
     x:Class="Syllanote.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
 
     <Grid
         Padding="24"
@@ -355,7 +356,24 @@
                 TextChanged="PageContentRichEditBox_TextChanged"
                 TextWrapping="Wrap"
                 MinHeight="200"
-                Visibility="Collapsed" />
+                Visibility="Collapsed">
+                <primitives:FlyoutBase.AttachedFlyout>
+                    <Flyout x:Name="ConceptDefinitionFlyout"
+                            Placement="Bottom"
+                            ShowMode="Transient">
+                        <StackPanel Width="340" Spacing="8">
+                            <TextBlock
+                                x:Name="ConceptDefinitionNameTextBlock"
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                x:Name="ConceptDefinitionTextBlock"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Flyout>
+                </primitives:FlyoutBase.AttachedFlyout>
+            </RichEditBox>
 
             <TextBlock
                 x:Name="EditorEmptyState"
