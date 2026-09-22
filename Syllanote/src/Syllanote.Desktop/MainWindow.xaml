@@ -98,6 +98,9 @@
                     <Button.Flyout>
                         <MenuFlyout>
                             <MenuFlyoutItem
+                                Text="Concept Dictionary"
+                                Click="ConceptDictionaryMenuItem_Click" />
+                            <MenuFlyoutItem
                                 Text="Rename"
                                 Click="RenameNotebookMenuItem_Click" />
                             <MenuFlyoutItem
@@ -330,7 +333,7 @@
         <!-- NOTE EDITOR          -->
         <!-- ==================== -->
 
-        <Grid Grid.Row="2" Grid.Column="3">
+        <Grid x:Name="PageEditorPanel" Grid.Row="2" Grid.Column="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -365,6 +368,83 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Opacity="0.7" />
+        </Grid>
+
+        <!-- CONCEPT DICTIONARY -->
+        <Grid x:Name="ConceptDictionaryPanel"
+              Grid.Row="2"
+              Grid.Column="3"
+              RowSpacing="12"
+              Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Concept Dictionary"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+                <Button Grid.Column="1"
+                        Content="Back to page"
+                        Click="ConceptBackButton_Click" />
+            </Grid>
+
+            <TextBlock Grid.Row="1"
+                       Text="{Binding SelectedNotebook.Name}"
+                       Opacity="0.7" />
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12">
+                    <Button x:Name="NewConceptButton"
+                            Content="New concept"
+                            Click="NewConceptButton_Click" />
+                    <Grid Height="140">
+                        <ListView x:Name="ConceptsListView"
+                                  ItemsSource="{Binding Concepts}"
+                                  SelectionChanged="ConceptsListView_SelectionChanged"
+                                  AutomationProperties.Name="Concepts">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <TextBlock x:Name="ConceptEmptyState"
+                                   Text="No concepts yet. Create one to get started."
+                                   TextWrapping="Wrap"
+                                   Opacity="0.7" />
+                    </Grid>
+                    <TextBox x:Name="ConceptNameTextBox"
+                             Header="Name"
+                             PlaceholderText="e.g. Dependency Injection"
+                             TextChanged="ConceptInput_TextChanged" />
+                    <TextBox x:Name="ConceptDefinitionTextBox"
+                             Header="Definition"
+                             PlaceholderText="Write your own definition..."
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             Height="160"
+                             TextChanged="ConceptInput_TextChanged" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="SaveConceptButton"
+                                Content="Create"
+                                IsEnabled="False"
+                                Click="SaveConceptButton_Click" />
+                        <Button x:Name="DeleteConceptButton"
+                                Content="Delete"
+                                IsEnabled="False"
+                                Click="DeleteConceptButton_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="ConceptMessage" TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
 
     </Grid>

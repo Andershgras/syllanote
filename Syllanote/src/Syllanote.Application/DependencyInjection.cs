@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Syllanote.Application.Notebooks.CreateNotebook;
+using Syllanote.Application.Notebooks.Concepts.CreateConcept;
+using Syllanote.Application.Notebooks.Concepts.DeleteConcept;
+using Syllanote.Application.Notebooks.Concepts.GetConcepts;
+using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.RenameNotebook;
@@ -35,6 +39,10 @@ public static class DependencyInjection
         services.AddScoped<RenamePageService>();
         services.AddScoped<UpdatePageContentService>();
         services.AddScoped<SearchPagesService>();
+        services.AddScoped<CreateConceptService>();
+        services.AddScoped<GetConceptsService>();
+        services.AddScoped<UpdateConceptService>();
+        services.AddScoped<DeleteConceptService>();
 
         return services;
     }
