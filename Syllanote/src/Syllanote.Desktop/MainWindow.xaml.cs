@@ -37,6 +37,7 @@ namespace Syllanote.Desktop
         private int _selectionNavigationVersion;
         private Notebook? _notebookActionTarget;
         private Section? _sectionActionTarget;
+        private Syllanote.Domain.Entities.Page? _pageActionTarget;
 
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
@@ -236,7 +237,6 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedSection.NotebookId == ViewModel.SelectedNotebook?.Id;
             var hasPage = IsSelectedPageCurrent();
             NewPageButton.IsEnabled = hasSection;
-            PageActionsButton.IsEnabled = hasPage;
             PageEmptyState.Text = hasSection
                 ? "No pages yet. Create one to get started."
                 : "Select a section to see its pages.";
@@ -1195,6 +1195,14 @@ namespace Syllanote.Desktop
                     : null;
         }
 
+        private void PageContextMenu_Opening(
+            object sender,
+            object e)
+        {
+            _pageActionTarget = (sender as FlyoutBase)?.Target?.DataContext
+                as Syllanote.Domain.Entities.Page;
+        }
+
         private async Task<bool> EnsureNotebookSelectedAsync(Notebook notebook)
         {
             await _selectionNavigationLock.WaitAsync();
@@ -1250,6 +1258,38 @@ namespace Syllanote.Desktop
 
                 SyncNavigationSelection();
                 return currentSection;
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+            }
+        }
+
+        private async Task<Syllanote.Domain.Entities.Page?>
+            EnsurePageSelectedAsync(Syllanote.Domain.Entities.Page page)
+        {
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                var currentPage = ViewModel.Pages.FirstOrDefault(
+                    item => item.Id == page.Id);
+                if (currentPage is null ||
+                    currentPage.SectionId != ViewModel.SelectedSection?.Id ||
+                    ViewModel.SelectedSection?.NotebookId !=
+                        ViewModel.SelectedNotebook?.Id)
+                {
+                    return null;
+                }
+
+                if (ViewModel.SelectedPage != currentPage)
+                {
+                    await ViewModel.SelectPageAsync(currentPage);
+                }
+
+                PagesListView.SelectedItem = currentPage;
+                ShowPageEditor();
+                UpdatePageState();
+                return currentPage;
             }
             finally
             {
@@ -1477,11 +1517,15 @@ namespace Syllanote.Desktop
         {
             if (_isRenamingSelection) return;
 
-            var page = ViewModel.SelectedPage;
-            if (page is null || !IsSelectedPageCurrent())
+            var page = _pageActionTarget;
+            if (page is null ||
+                await EnsurePageSelectedAsync(page) is not
+                    Syllanote.Domain.Entities.Page currentPage)
             {
                 return;
             }
+
+            page = currentPage;
 
             var titleTextBox = new TextBox
             {
@@ -1524,17 +1568,21 @@ namespace Syllanote.Desktop
             }
         }
 
-        private async void DeletePageButton_Click(
+        private async void DeletePageMenuItem_Click(
             object sender,
             RoutedEventArgs e)
         {
             if (_isRenamingSelection) return;
 
-            var page = ViewModel.SelectedPage;
-            if (page is null || !IsSelectedPageCurrent())
+            var page = _pageActionTarget;
+            if (page is null ||
+                await EnsurePageSelectedAsync(page) is not
+                    Syllanote.Domain.Entities.Page currentPage)
             {
                 return;
             }
+
+            page = currentPage;
 
             var dialog = new ContentDialog
             {

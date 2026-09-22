@@ -255,7 +255,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBlock
@@ -275,29 +274,6 @@
                     AutomationProperties.Name="New page"
                     ToolTipService.ToolTip="New page"
                     Click="NewPageButton_Click" />
-
-                <Button
-                    x:Name="PageActionsButton"
-                    Grid.Column="2"
-                    Content="..."
-                    FontSize="18"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    IsEnabled="False"
-                    AutomationProperties.Name="Page actions"
-                    ToolTipService.ToolTip="Page actions">
-                    <Button.Flyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem
-                                Text="Rename"
-                                Click="RenamePageMenuItem_Click" />
-                            <MenuFlyoutItem
-                                Text="Delete"
-                                Click="DeletePageButton_Click" />
-                        </MenuFlyout>
-                    </Button.Flyout>
-                </Button>
             </Grid>
 
             <TextBlock
@@ -311,11 +287,30 @@
                 ItemsSource="{Binding Pages}"
                 SelectionChanged="PageListView_SelectionChanged">
 
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock
-                            Text="{Binding Title}"
-                            FontSize="16" />
+                        <Grid Background="Transparent">
+                            <Grid.ContextFlyout>
+                                <MenuFlyout Opening="PageContextMenu_Opening">
+                                    <MenuFlyoutItem
+                                        Text="Rename"
+                                        Click="RenamePageMenuItem_Click" />
+                                    <MenuFlyoutItem
+                                        Text="Delete"
+                                        Click="DeletePageMenuItem_Click" />
+                                </MenuFlyout>
+                            </Grid.ContextFlyout>
+
+                            <TextBlock
+                                Text="{Binding Title}"
+                                FontSize="16" />
+                        </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
 
