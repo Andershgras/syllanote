@@ -165,8 +165,18 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="4" />
                                                     <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
+
+                                                <Grid.ContextFlyout>
+                                                    <MenuFlyout Opening="SectionContextMenu_Opening">
+                                                        <MenuFlyoutItem
+                                                            Text="Rename"
+                                                            Click="RenameSectionMenuItem_Click" />
+                                                        <MenuFlyoutItem
+                                                            Text="Delete"
+                                                            Click="DeleteSectionButton_Click" />
+                                                    </MenuFlyout>
+                                                </Grid.ContextFlyout>
 
                                                 <Border
                                                     Width="3"
@@ -186,28 +196,6 @@
                                                     Content="{x:Bind Name}"
                                                     AutomationProperties.Name="{x:Bind Name}"
                                                     Click="SectionNavigationButton_Click" />
-
-                                                <Button
-                                                    Grid.Column="2"
-                                                    Content="..."
-                                                    FontSize="18"
-                                                    Width="32"
-                                                    Height="32"
-                                                    Padding="0"
-                                                    AutomationProperties.Name="Section actions"
-                                                    ToolTipService.ToolTip="Section actions"
-                                                    Click="SectionActionsButton_Click">
-                                                    <Button.Flyout>
-                                                        <MenuFlyout>
-                                                            <MenuFlyoutItem
-                                                                Text="Rename"
-                                                                Click="RenameSectionMenuItem_Click" />
-                                                            <MenuFlyoutItem
-                                                                Text="Delete"
-                                                                Click="DeleteSectionButton_Click" />
-                                                        </MenuFlyout>
-                                                    </Button.Flyout>
-                                                </Button>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
