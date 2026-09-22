@@ -8,6 +8,7 @@ using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
+using Syllanote.Application.Notebooks.MoveNotebook;
 using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.DeleteSection;
@@ -37,6 +38,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly CreateNotebookService _createNotebookService;
     private readonly DeleteNotebookService _deleteNotebookService;
     private readonly GetNotebooksService _getNotebooksService;
+    private readonly MoveNotebookService _moveNotebookService;
     private readonly RenameNotebookService _renameNotebookService;
     private readonly GetSectionsService _getSectionsService;
     private readonly CreateSectionService _createSectionService;
@@ -58,6 +60,7 @@ public partial class NotebookViewModel : ObservableObject
         CreateNotebookService createNotebookService,
         DeleteNotebookService deleteNotebookService,
         GetNotebooksService getNotebooksService,
+        MoveNotebookService moveNotebookService,
         RenameNotebookService renameNotebookService,
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
@@ -78,6 +81,7 @@ public partial class NotebookViewModel : ObservableObject
         _createNotebookService = createNotebookService;
         _deleteNotebookService = deleteNotebookService;
         _getNotebooksService = getNotebooksService;
+        _moveNotebookService = moveNotebookService;
         _renameNotebookService = renameNotebookService;
         _getSectionsService = getSectionsService;
         _createSectionService = createSectionService;
@@ -161,6 +165,40 @@ public partial class NotebookViewModel : ObservableObject
         SelectedNotebookName = value?.Name ?? string.Empty;
         Concepts.Clear();
         ConceptMatches.Clear();
+    }
+
+    [RelayCommand]
+    private async Task MoveSelectedNotebookUpAsync()
+    {
+        var notebook = SelectedNotebook;
+        if (notebook is null)
+        {
+            return;
+        }
+
+        var index = Notebooks.IndexOf(notebook);
+        if (index > 0 && await _moveNotebookService.MoveUpAsync(notebook))
+        {
+            Notebooks.Move(index, index - 1);
+        }
+    }
+
+    [RelayCommand]
+    private async Task MoveSelectedNotebookDownAsync()
+    {
+        var notebook = SelectedNotebook;
+        if (notebook is null)
+        {
+            return;
+        }
+
+        var index = Notebooks.IndexOf(notebook);
+        if (index >= 0 &&
+            index < Notebooks.Count - 1 &&
+            await _moveNotebookService.MoveDownAsync(notebook))
+        {
+            Notebooks.Move(index, index + 1);
+        }
     }
 
     public async Task LoadConceptsAsync(Guid notebookId)

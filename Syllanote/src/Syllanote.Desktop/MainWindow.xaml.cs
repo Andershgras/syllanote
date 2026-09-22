@@ -786,6 +786,65 @@ namespace Syllanote.Desktop
                 }
             }
         }
+
+        private void NotebookActionsFlyout_Opening(object sender, object e)
+        {
+            var notebook = ViewModel.SelectedNotebook;
+            var index = notebook is null
+                ? -1
+                : ViewModel.Notebooks.IndexOf(notebook);
+
+            MoveNotebookUpMenuItem.IsEnabled = index > 0;
+            MoveNotebookDownMenuItem.IsEnabled =
+                index >= 0 && index < ViewModel.Notebooks.Count - 1;
+        }
+
+        private async void MoveNotebookUpMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            await MoveSelectedNotebookAsync(moveUp: true);
+        }
+
+        private async void MoveNotebookDownMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            await MoveSelectedNotebookAsync(moveUp: false);
+        }
+
+        private async System.Threading.Tasks.Task MoveSelectedNotebookAsync(
+            bool moveUp)
+        {
+            var notebook = ViewModel.SelectedNotebook;
+            if (notebook is null)
+            {
+                return;
+            }
+
+            SetNavigationEnabled(false);
+            NotebookActionsButton.IsEnabled = false;
+            try
+            {
+                if (moveUp)
+                {
+                    await ViewModel.MoveSelectedNotebookUpCommand.ExecuteAsync(null);
+                }
+                else
+                {
+                    await ViewModel.MoveSelectedNotebookDownCommand.ExecuteAsync(null);
+                }
+
+                NotebookListView.SelectedItem = notebook;
+            }
+            finally
+            {
+                SetNavigationEnabled(true);
+                NotebookActionsButton.IsEnabled =
+                    ViewModel.SelectedNotebook is not null;
+            }
+        }
+
         private async void SectionListView_SelectionChanged(
             object sender,
             SelectionChangedEventArgs e)

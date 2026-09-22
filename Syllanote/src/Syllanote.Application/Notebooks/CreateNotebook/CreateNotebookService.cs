@@ -15,6 +15,11 @@ public class CreateNotebookService
     public async Task<Notebook> CreateAsync(string name)
     {
         var notebook = new Notebook(name);
+        var notebooks = await _notebookRepository.GetAllAsync();
+        var sortOrder = notebooks.Count == 0
+            ? 0
+            : notebooks.Max(notebook => notebook.SortOrder) + 1;
+        notebook.ChangeSortOrder(sortOrder);
 
         await _notebookRepository.AddAsync(notebook);
 

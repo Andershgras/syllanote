@@ -45,6 +45,24 @@ public class CreateNotebookServiceTests
         Assert.AreEqual("My notebook", notebook.Name);
         Assert.AreSame(notebook, repository.AddedNotebook);
     }
+
+    [TestMethod]
+    public async Task CreateAsync_WithExistingNotebooks_AppendsNotebook()
+    {
+        var repository = new FakeNotebookRepository
+        {
+            NotebooksToReturn =
+            [
+                new Notebook("First", 0),
+                new Notebook("Second", 2)
+            ]
+        };
+        var service = new CreateNotebookService(repository);
+
+        var notebook = await service.CreateAsync("Third");
+
+        Assert.AreEqual(3, notebook.SortOrder);
+    }
     [TestMethod]
     public async Task CreateAsync_WithInvalidName_DoesNotAddNotebook()
     {

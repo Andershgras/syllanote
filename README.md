@@ -22,3 +22,4 @@ A local-first desktop note-taking application for students with organized notebo
 - Highlight recognized Concepts in the page editor
 - Click a highlighted Concept to view its definition
 - Persist notebooks, sections, pages, and Concepts locally in SQLite
+- Manually reorder notebooks and persist their order locally

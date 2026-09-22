@@ -97,7 +97,16 @@
                     AutomationProperties.Name="Notebook actions"
                     ToolTipService.ToolTip="Notebook actions">
                     <Button.Flyout>
-                        <MenuFlyout>
+                        <MenuFlyout Opening="NotebookActionsFlyout_Opening">
+                            <MenuFlyoutItem
+                                x:Name="MoveNotebookUpMenuItem"
+                                Text="Move up"
+                                Click="MoveNotebookUpMenuItem_Click" />
+                            <MenuFlyoutItem
+                                x:Name="MoveNotebookDownMenuItem"
+                                Text="Move down"
+                                Click="MoveNotebookDownMenuItem_Click" />
+                            <MenuFlyoutSeparator />
                             <MenuFlyoutItem
                                 Text="Concept Dictionary"
                                 Click="ConceptDictionaryMenuItem_Click" />

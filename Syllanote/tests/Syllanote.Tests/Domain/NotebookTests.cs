@@ -35,6 +35,33 @@ public class NotebookTests
         Assert.IsTrue(notebook.CreatedAt <= afterCreation);
     }
 
+    [TestMethod]
+    public void Constructor_WithSortOrder_SetsSortOrder()
+    {
+        var notebook = new Notebook("My Notebook", 2);
+
+        Assert.AreEqual(2, notebook.SortOrder);
+    }
+
+    [TestMethod]
+    public void ChangeSortOrder_WithValidValue_UpdatesSortOrder()
+    {
+        var notebook = new Notebook("My Notebook");
+
+        notebook.ChangeSortOrder(3);
+
+        Assert.AreEqual(3, notebook.SortOrder);
+    }
+
+    [TestMethod]
+    public void ChangeSortOrder_WithNegativeValue_ThrowsArgumentOutOfRangeException()
+    {
+        var notebook = new Notebook("My Notebook");
+
+        Assert.ThrowsException<ArgumentOutOfRangeException>(
+            () => notebook.ChangeSortOrder(-1));
+    }
+
     [DataTestMethod]
     [DataRow("")]
     [DataRow(" ")]

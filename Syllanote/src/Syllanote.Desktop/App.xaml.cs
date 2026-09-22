@@ -6,7 +6,6 @@ using Syllanote.Desktop.ViewModels;
 using Syllanote.Infrastructure;
 using Syllanote.Infrastructure.Persistence;
 using System;
-using Syllanote.Desktop.ViewModels;
 
 namespace Syllanote.Desktop
 {

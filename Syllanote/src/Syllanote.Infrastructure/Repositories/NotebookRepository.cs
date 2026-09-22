@@ -23,7 +23,8 @@ public class NotebookRepository : INotebookRepository
     public async Task<IReadOnlyList<Notebook>> GetAllAsync()
     {
         return await _dbContext.Notebooks
-            .OrderBy(notebook => notebook.CreatedAt)
+            .OrderBy(notebook => notebook.SortOrder)
+            .ThenBy(notebook => notebook.CreatedAt)
             .ToListAsync();
     }
 

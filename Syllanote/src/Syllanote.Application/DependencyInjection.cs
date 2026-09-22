@@ -7,6 +7,7 @@ using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
 using Syllanote.Application.Notebooks.DeleteNotebook;
 using Syllanote.Application.Notebooks.GetNotebooks;
+using Syllanote.Application.Notebooks.MoveNotebook;
 using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
 using Syllanote.Application.Notebooks.Sections.DeleteSection;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<CreateNotebookService>();
         services.AddScoped<DeleteNotebookService>();
         services.AddScoped<GetNotebooksService>();
+        services.AddScoped<MoveNotebookService>();
         services.AddScoped<RenameNotebookService>();
         services.AddScoped<CreateSectionService>();
         services.AddScoped<DeleteSectionService>();

@@ -5,8 +5,9 @@ public class Notebook
     public Guid Id { get; private set; }
     public string Name { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public int SortOrder { get; private set; }
 
-    public Notebook(string name)
+    public Notebook(string name, int sortOrder = 0)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -15,9 +16,17 @@ public class Notebook
                 nameof(name));
         }
 
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                "Sort order cannot be negative.");
+        }
+
         Id = Guid.NewGuid();
         Name = name;
         CreatedAt = DateTime.UtcNow;
+        SortOrder = sortOrder;
     }
 
     public void Rename(string name)
@@ -30,5 +39,17 @@ public class Notebook
         }
 
         Name = name;
+    }
+
+    public void ChangeSortOrder(int sortOrder)
+    {
+        if (sortOrder < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                "Sort order cannot be negative.");
+        }
+
+        SortOrder = sortOrder;
     }
 }
