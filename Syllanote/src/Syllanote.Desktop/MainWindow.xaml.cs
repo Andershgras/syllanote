@@ -1,3 +1,4 @@
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Text;
@@ -17,6 +18,8 @@ namespace Syllanote.Desktop
         private bool _isSearchNavigationInProgress;
         private bool _isConceptOperationInProgress;
         private bool _isUpdatingPageEditorContent;
+        private bool _isApplyingConceptHighlighting;
+        private bool _isConceptHighlightUpdateQueued;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
 
@@ -38,6 +41,8 @@ namespace Syllanote.Desktop
             ViewModel.Sections.CollectionChanged += (_, _) => UpdateSectionState();
             ViewModel.Pages.CollectionChanged += (_, _) => UpdatePageState();
             ViewModel.Concepts.CollectionChanged += (_, _) => UpdateConceptEditorState();
+            ViewModel.ConceptMatches.CollectionChanged += (_, _) =>
+                QueueConceptHighlightRefresh();
             ViewModel.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(ViewModel.SelectedNotebook) ||
@@ -159,6 +164,88 @@ namespace Syllanote.Desktop
             finally
             {
                 _isUpdatingPageEditorContent = false;
+            }
+        }
+
+        private void QueueConceptHighlightRefresh()
+        {
+            if (_isConceptHighlightUpdateQueued)
+            {
+                return;
+            }
+
+            _isConceptHighlightUpdateQueued = true;
+            if (!DispatcherQueue.TryEnqueue(() =>
+            {
+                _isConceptHighlightUpdateQueued = false;
+                ApplyConceptHighlights();
+            }))
+            {
+                _isConceptHighlightUpdateQueued = false;
+            }
+        }
+
+        private void ApplyConceptHighlights()
+        {
+            PageContentRichEditBox.Document.GetText(
+                TextGetOptions.None,
+                out var editorContent);
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var selectionStart = selection.StartPosition;
+            var selectionEnd = selection.EndPosition;
+
+            _isApplyingConceptHighlighting = true;
+            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            try
+            {
+                if (editorContent.Length > 0)
+                {
+                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                        0,
+                        editorContent.Length);
+                    var documentFormat = documentRange.CharacterFormat;
+                    documentFormat.BackgroundColor = Colors.Transparent;
+                    documentRange.CharacterFormat = documentFormat;
+                }
+
+                foreach (var match in ViewModel.ConceptMatches)
+                {
+                    if (match.StartIndex < 0 ||
+                        match.Length <= 0 ||
+                        match.StartIndex > editorContent.Length ||
+                        match.Length > editorContent.Length - match.StartIndex ||
+                        !string.Equals(
+                            editorContent.Substring(match.StartIndex, match.Length),
+                            match.ConceptName,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var endIndex = match.StartIndex + match.Length;
+                    var conceptRange = PageContentRichEditBox.Document.GetRange(
+                        match.StartIndex,
+                        endIndex);
+                    var conceptFormat = conceptRange.CharacterFormat;
+                    conceptFormat.BackgroundColor = ColorHelper.FromArgb(
+                        96,
+                        0,
+                        120,
+                        212);
+                    conceptRange.CharacterFormat = conceptFormat;
+                }
+            }
+            finally
+            {
+                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                _isApplyingConceptHighlighting = false;
+            }
+
+            if (selection.StartPosition != selectionStart ||
+                selection.EndPosition != selectionEnd)
+            {
+                selection.SetRange(selectionStart, selectionEnd);
             }
         }
         private bool IsSelectedPageCurrent()
@@ -707,7 +794,9 @@ namespace Syllanote.Desktop
             object sender,
             RoutedEventArgs e)
         {
-            if (_isUpdatingPageEditorContent || sender is not RichEditBox richEditBox)
+            if (_isUpdatingPageEditorContent ||
+                _isApplyingConceptHighlighting ||
+                sender is not RichEditBox richEditBox)
             {
                 return;
             }
