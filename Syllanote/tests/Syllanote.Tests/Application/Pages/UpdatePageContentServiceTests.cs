@@ -21,12 +21,16 @@ public class UpdatePageContentServiceTests
         // Act
         await service.UpdateAsync(
             page,
-            "A confusion matrix contains TP, TN, FP and FN.");
+            "A confusion matrix contains TP, TN, FP and FN.",
+            @"{\rtf1 A confusion matrix contains \b TP\b0, TN, FP and FN.}");
 
         // Assert
         Assert.AreEqual(
             "A confusion matrix contains TP, TN, FP and FN.",
             page.Content);
+        Assert.AreEqual(
+            @"{\rtf1 A confusion matrix contains \b TP\b0, TN, FP and FN.}",
+            page.FormattedContent);
 
         Assert.AreEqual(1, repository.UpdateCallCount);
         Assert.AreSame(page, repository.UpdatedPage);

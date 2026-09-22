@@ -21,6 +21,7 @@ public class PageTests
         Assert.AreEqual(sectionId, page.SectionId);
         Assert.AreEqual("Confusion Matrix", page.Title);
         Assert.AreEqual(string.Empty, page.Content);
+        Assert.AreEqual(string.Empty, page.FormattedContent);
         Assert.AreEqual(page.CreatedAt, page.UpdatedAt);
     }
     [DataTestMethod]
@@ -53,12 +54,16 @@ public class PageTests
 
         // Act
         page.UpdateContent(
-            "A confusion matrix contains TP, TN, FP and FN.");
+            "A confusion matrix contains TP, TN, FP and FN.",
+            @"{\rtf1 A confusion matrix contains \b TP\b0, TN, FP and FN.}");
 
         // Assert
         Assert.AreEqual(
             "A confusion matrix contains TP, TN, FP and FN.",
             page.Content);
+        Assert.AreEqual(
+            @"{\rtf1 A confusion matrix contains \b TP\b0, TN, FP and FN.}",
+            page.FormattedContent);
     }
     [TestMethod]
     public void UpdateContent_ShouldUpdateUpdatedAt()
@@ -72,7 +77,8 @@ public class PageTests
 
         // Act
         page.UpdateContent(
-            "A confusion matrix contains TP, TN, FP and FN.");
+            "A confusion matrix contains TP, TN, FP and FN.",
+            @"{\rtf1 A confusion matrix contains TP, TN, FP and FN.}");
 
         // Assert
         Assert.IsTrue(
@@ -83,13 +89,14 @@ public class PageTests
     public void Rename_WithValidTitle_UpdatesTitleAndUpdatedAt()
     {
         var page = new Page(Guid.NewGuid(), "Old title");
-        page.UpdateContent("Existing note");
+        page.UpdateContent("Existing note", @"{\rtf1 Existing note}");
         var originalUpdatedAt = page.UpdatedAt;
 
         page.Rename("New title");
 
         Assert.AreEqual("New title", page.Title);
         Assert.AreEqual("Existing note", page.Content);
+        Assert.AreEqual(@"{\rtf1 Existing note}", page.FormattedContent);
         Assert.IsTrue(page.UpdatedAt >= originalUpdatedAt);
     }
 

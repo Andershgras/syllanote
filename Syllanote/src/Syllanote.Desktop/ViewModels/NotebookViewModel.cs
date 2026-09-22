@@ -132,6 +132,9 @@ public partial class NotebookViewModel : ObservableObject
     private string _pageContent = string.Empty;
 
     [ObservableProperty]
+    private string _pageFormattedContent = string.Empty;
+
+    [ObservableProperty]
     private string _selectedPageTitle = string.Empty;
 
     [ObservableProperty]
@@ -459,6 +462,7 @@ public partial class NotebookViewModel : ObservableObject
 
         SelectedPageTitle = value?.Title ?? string.Empty;
         PageContent = value?.Content ?? string.Empty;
+        PageFormattedContent = value?.FormattedContent ?? string.Empty;
 
         _isLoadingPage = false;
 
@@ -533,6 +537,18 @@ public partial class NotebookViewModel : ObservableObject
         _ = ScheduleAutoSaveAsync();
     }
 
+    partial void OnPageFormattedContentChanged(string value)
+    {
+        if (_isLoadingPage)
+        {
+            return;
+        }
+
+        IsPageDirty = true;
+
+        _ = ScheduleAutoSaveAsync();
+    }
+
     [RelayCommand]
     private async Task SavePageAsync()
     {
@@ -550,9 +566,15 @@ public partial class NotebookViewModel : ObservableObject
 
             var page = SelectedPage;
             var content = PageContent;
-            await _updatePageContentService.UpdateAsync(page, content);
+            var formattedContent = PageFormattedContent;
+            await _updatePageContentService.UpdateAsync(
+                page,
+                content,
+                formattedContent);
 
-            if (SelectedPage == page && PageContent == content)
+            if (SelectedPage == page &&
+                PageContent == content &&
+                PageFormattedContent == formattedContent)
             {
                 IsPageDirty = false;
                 RefreshConceptMatches(page, content);

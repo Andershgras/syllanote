@@ -1,4 +1,5 @@
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,12 +18,19 @@ namespace Syllanote.Desktop
 {
     public sealed partial class MainWindow : Window
     {
+        private const float NormalFontSizeInPoints = 10.5f;
+        private const float Heading1FontSizeInPoints = 18;
+        private const float Heading2FontSizeInPoints = 15;
+
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
         private bool _isConceptOperationInProgress;
         private bool _isUpdatingPageEditorContent;
         private bool _isApplyingConceptHighlighting;
+        private bool _isSuppressingEditorChanges;
+        private bool _isUpdatingFormattingToolbar;
         private bool _isConceptHighlightUpdateQueued;
+        private int _editorChangeSuppressionVersion;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
 
@@ -68,7 +76,7 @@ namespace Syllanote.Desktop
                 {
                     HideConceptDefinition();
                     UpdatePageState();
-                    SyncPageEditorContent();
+                    SyncPageEditorContent(force: true);
                 }
                 else if (e.PropertyName == nameof(ViewModel.PageContent))
                 {
@@ -103,6 +111,29 @@ namespace Syllanote.Desktop
             ConceptEmptyState.Visibility = ViewModel.Concepts.Count == 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        }
+
+        private void BeginInternalEditorChange()
+        {
+            _isSuppressingEditorChanges = true;
+            _editorChangeSuppressionVersion++;
+        }
+
+        private void EndInternalEditorChange()
+        {
+            var suppressionVersion = _editorChangeSuppressionVersion;
+            if (!DispatcherQueue.TryEnqueue(
+                DispatcherQueuePriority.Low,
+                () =>
+                {
+                    if (_editorChangeSuppressionVersion == suppressionVersion)
+                    {
+                        _isSuppressingEditorChanges = false;
+                    }
+                }))
+            {
+                _isSuppressingEditorChanges = false;
+            }
         }
 
         private void SetConceptOperationInProgress(bool isInProgress)
@@ -154,31 +185,291 @@ namespace Syllanote.Desktop
                 ? Visibility.Visible
                 : Visibility.Collapsed;
             EditorPageTitle.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
+            FormattingToolbar.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             PageContentRichEditBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             EditorEmptyState.Visibility = hasPage ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        private void SyncPageEditorContent()
+        private void SyncPageEditorContent(bool force = false)
         {
             PageContentRichEditBox.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
 
-            if (editorContent == ViewModel.PageContent)
+            if (!force && editorContent == ViewModel.PageContent)
             {
                 return;
             }
 
             _isUpdatingPageEditorContent = true;
+            BeginInternalEditorChange();
             try
             {
-                PageContentRichEditBox.Document.SetText(
-                    TextSetOptions.None,
-                    ViewModel.PageContent);
+                if (string.IsNullOrEmpty(ViewModel.PageFormattedContent))
+                {
+                    PageContentRichEditBox.Document.SetText(
+                        TextSetOptions.None,
+                        ViewModel.PageContent);
+                }
+                else
+                {
+                    PageContentRichEditBox.Document.SetText(
+                        TextSetOptions.FormatRtf,
+                        ViewModel.PageFormattedContent);
+                }
             }
             finally
             {
                 _isUpdatingPageEditorContent = false;
+                EndInternalEditorChange();
+            }
+
+            QueueConceptHighlightRefresh();
+            UpdateFormattingToolbarState();
+        }
+
+        private void GetPersistedPageEditorContent(
+            out string content,
+            out string formattedContent)
+        {
+            PageContentRichEditBox.Document.GetText(
+                TextGetOptions.None,
+                out content);
+
+            _isApplyingConceptHighlighting = true;
+            BeginInternalEditorChange();
+            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            try
+            {
+                if (content.Length > 0)
+                {
+                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                        0,
+                        content.Length);
+                    var documentFormat = documentRange.CharacterFormat;
+                    documentFormat.BackgroundColor = Colors.Transparent;
+                    documentRange.CharacterFormat = documentFormat;
+                }
+
+                PageContentRichEditBox.Document.GetText(
+                    TextGetOptions.FormatRtf,
+                    out formattedContent);
+            }
+            finally
+            {
+                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                _isApplyingConceptHighlighting = false;
+                EndInternalEditorChange();
+            }
+
+            QueueConceptHighlightRefresh();
+        }
+
+        private void UpdatePageContentFromEditor()
+        {
+            HideConceptDefinition();
+            GetPersistedPageEditorContent(
+                out var content,
+                out var formattedContent);
+            ViewModel.PageContent = content;
+            ViewModel.PageFormattedContent = formattedContent;
+        }
+
+        private void ParagraphStyleComboBox_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar ||
+                !IsSelectedPageCurrent() ||
+                ParagraphStyleComboBox.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            var selectedStyle = ParagraphStyleComboBox.SelectedIndex;
+            var selection = PageContentRichEditBox.Document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+
+            var paragraphFormat = paragraphRange.ParagraphFormat;
+            paragraphFormat.Style = selectedStyle switch
+            {
+                1 => ParagraphStyle.Heading1,
+                2 => ParagraphStyle.Heading2,
+                _ => ParagraphStyle.Normal
+            };
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+
+            var fontSize = selectedStyle switch
+            {
+                1 => Heading1FontSizeInPoints,
+                2 => Heading2FontSizeInPoints,
+                _ => NormalFontSizeInPoints
+            };
+            var bold = selectedStyle == 0
+                ? FormatEffect.Off
+                : FormatEffect.On;
+            var characterFormat = paragraphRange.CharacterFormat;
+            characterFormat.Size = fontSize;
+            characterFormat.Bold = bold;
+            paragraphRange.CharacterFormat = characterFormat;
+
+            var insertionFormat = selection.CharacterFormat;
+            insertionFormat.Size = fontSize;
+            insertionFormat.Bold = bold;
+            selection.CharacterFormat = insertionFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void BoldButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Bold = BoldButton.IsChecked == true
+                ? FormatEffect.On
+                : FormatEffect.Off;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void ItalicButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Italic = ItalicButton.IsChecked == true
+                ? FormatEffect.On
+                : FormatEffect.Off;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void UnderlineButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            var selection = PageContentRichEditBox.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Underline = UnderlineButton.IsChecked == true
+                ? UnderlineType.Single
+                : UnderlineType.None;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void BulletedListButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            ApplyListFormatting(
+                MarkerType.Bullet,
+                BulletedListButton.IsChecked == true);
+        }
+
+        private void NumberedListButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            ApplyListFormatting(
+                MarkerType.Arabic,
+                NumberedListButton.IsChecked == true);
+        }
+
+        private void ApplyListFormatting(MarkerType listType, bool isEnabled)
+        {
+            var selection = PageContentRichEditBox.Document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+
+            var paragraphFormat = paragraphRange.ParagraphFormat;
+            if (isEnabled)
+            {
+                paragraphFormat.ListType = listType;
+                paragraphFormat.ListLevelIndex = 1;
+                if (listType == MarkerType.Arabic)
+                {
+                    paragraphFormat.ListStart = 1;
+                }
+            }
+            else
+            {
+                paragraphFormat.ListType = MarkerType.None;
+                paragraphFormat.ListLevelIndex = 0;
+                paragraphFormat.SetIndents(0, 0, 0);
+                paragraphFormat.ClearAllTabs();
+            }
+
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
+        private void UpdateFormattingToolbarState()
+        {
+            if (!IsSelectedPageCurrent())
+            {
+                return;
+            }
+
+            var characterFormat =
+                PageContentRichEditBox.Document.Selection.CharacterFormat;
+            var paragraphStyle =
+                PageContentRichEditBox.Document.Selection.ParagraphFormat.Style;
+            var listType =
+                PageContentRichEditBox.Document.Selection.ParagraphFormat.ListType;
+
+            _isUpdatingFormattingToolbar = true;
+            try
+            {
+                ParagraphStyleComboBox.SelectedIndex = paragraphStyle switch
+                {
+                    ParagraphStyle.Heading1 => 1,
+                    ParagraphStyle.Heading2 => 2,
+                    ParagraphStyle.Normal or ParagraphStyle.None => 0,
+                    _ => -1
+                };
+                BoldButton.IsChecked = characterFormat.Bold == FormatEffect.On;
+                ItalicButton.IsChecked = characterFormat.Italic == FormatEffect.On;
+                UnderlineButton.IsChecked =
+                    characterFormat.Underline != UnderlineType.None &&
+                    characterFormat.Underline != UnderlineType.Undefined;
+                BulletedListButton.IsChecked = listType == MarkerType.Bullet;
+                NumberedListButton.IsChecked = listType == MarkerType.Arabic;
+            }
+            finally
+            {
+                _isUpdatingFormattingToolbar = false;
             }
         }
 
@@ -211,6 +502,7 @@ namespace Syllanote.Desktop
             var selectionEnd = selection.EndPosition;
 
             _isApplyingConceptHighlighting = true;
+            BeginInternalEditorChange();
             PageContentRichEditBox.Document.BatchDisplayUpdates();
             try
             {
@@ -248,6 +540,7 @@ namespace Syllanote.Desktop
             {
                 PageContentRichEditBox.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
+                EndInternalEditorChange();
             }
 
             if (selection.StartPosition != selectionStart ||
@@ -930,16 +1223,21 @@ namespace Syllanote.Desktop
         {
             if (_isUpdatingPageEditorContent ||
                 _isApplyingConceptHighlighting ||
+                _isSuppressingEditorChanges ||
                 sender is not RichEditBox richEditBox)
             {
                 return;
             }
 
-            HideConceptDefinition();
-            richEditBox.Document.GetText(
-                TextGetOptions.None,
-                out var content);
-            ViewModel.PageContent = content;
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+        }
+
+        private void PageContentRichEditBox_SelectionChanged(
+            object sender,
+            RoutedEventArgs e)
+        {
+            UpdateFormattingToolbarState();
         }
         private async void PageListView_SelectionChanged(
             object sender,

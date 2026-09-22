@@ -10,6 +10,8 @@ public class Page
 
     public string Content { get; private set; }
 
+    public string FormattedContent { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
     public DateTime UpdatedAt { get; private set; }
@@ -34,12 +36,14 @@ public class Page
         SectionId = sectionId;
         Title = title;
         Content = string.Empty;
+        FormattedContent = string.Empty;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = CreatedAt;
     }
-    public void UpdateContent(string content)
+    public void UpdateContent(string content, string formattedContent)
     {
         Content = content;
+        FormattedContent = formattedContent;
         UpdatedAt = DateTime.UtcNow;
     }
 
