@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Text;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
@@ -15,6 +16,7 @@ namespace Syllanote.Desktop
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
         private bool _isConceptOperationInProgress;
+        private bool _isUpdatingPageEditorContent;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
 
@@ -47,6 +49,11 @@ namespace Syllanote.Desktop
                 else if (e.PropertyName == nameof(ViewModel.SelectedPage))
                 {
                     UpdatePageState();
+                    SyncPageEditorContent();
+                }
+                else if (e.PropertyName == nameof(ViewModel.PageContent))
+                {
+                    SyncPageEditorContent();
                 }
             };
             UpdateNotebookEmptyState();
@@ -127,8 +134,32 @@ namespace Syllanote.Desktop
                 ? Visibility.Visible
                 : Visibility.Collapsed;
             EditorPageTitle.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            PageContentTextBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
+            PageContentRichEditBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             EditorEmptyState.Visibility = hasPage ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void SyncPageEditorContent()
+        {
+            PageContentRichEditBox.Document.GetText(
+                TextGetOptions.None,
+                out var editorContent);
+
+            if (editorContent == ViewModel.PageContent)
+            {
+                return;
+            }
+
+            _isUpdatingPageEditorContent = true;
+            try
+            {
+                PageContentRichEditBox.Document.SetText(
+                    TextSetOptions.None,
+                    ViewModel.PageContent);
+            }
+            finally
+            {
+                _isUpdatingPageEditorContent = false;
+            }
         }
         private bool IsSelectedPageCurrent()
         {
@@ -672,14 +703,19 @@ namespace Syllanote.Desktop
                 }
             }
         }
-        private void PageContentTextBox_TextChanged(
+        private void PageContentRichEditBox_TextChanged(
             object sender,
-            TextChangedEventArgs e)
+            RoutedEventArgs e)
         {
-            if (sender is TextBox textBox)
+            if (_isUpdatingPageEditorContent || sender is not RichEditBox richEditBox)
             {
-                ViewModel.PageContent = textBox.Text;
+                return;
             }
+
+            richEditBox.Document.GetText(
+                TextGetOptions.None,
+                out var content);
+            ViewModel.PageContent = content;
         }
         private async void PageListView_SelectionChanged(
             object sender,
