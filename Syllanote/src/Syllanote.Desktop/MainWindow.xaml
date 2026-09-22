@@ -417,6 +417,28 @@
                     Click="UnderlineButton_Click">
                     <TextBlock Text="U" TextDecorations="Underline" />
                 </ToggleButton>
+                <ToggleButton
+                    x:Name="BulletedListButton"
+                    Width="40"
+                    Height="36"
+                    Padding="0"
+                    AllowFocusOnInteraction="False"
+                    AutomationProperties.Name="Bulleted list"
+                    ToolTipService.ToolTip="Bulleted list"
+                    Click="BulletedListButton_Click">
+                    <TextBlock Text="•" FontSize="20" />
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="NumberedListButton"
+                    Width="40"
+                    Height="36"
+                    Padding="0"
+                    AllowFocusOnInteraction="False"
+                    AutomationProperties.Name="Numbered list"
+                    ToolTipService.ToolTip="Numbered list"
+                    Click="NumberedListButton_Click">
+                    <TextBlock Text="1." FontWeight="SemiBold" />
+                </ToggleButton>
             </StackPanel>
 
             <RichEditBox

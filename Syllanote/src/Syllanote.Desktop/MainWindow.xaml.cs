@@ -379,6 +379,62 @@ namespace Syllanote.Desktop
             PageContentRichEditBox.Focus(FocusState.Programmatic);
         }
 
+        private void BulletedListButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            ApplyListFormatting(
+                MarkerType.Bullet,
+                BulletedListButton.IsChecked == true);
+        }
+
+        private void NumberedListButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar)
+            {
+                return;
+            }
+
+            ApplyListFormatting(
+                MarkerType.Arabic,
+                NumberedListButton.IsChecked == true);
+        }
+
+        private void ApplyListFormatting(MarkerType listType, bool isEnabled)
+        {
+            var selection = PageContentRichEditBox.Document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+
+            var paragraphFormat = paragraphRange.ParagraphFormat;
+            if (isEnabled)
+            {
+                paragraphFormat.ListType = listType;
+                paragraphFormat.ListLevelIndex = 1;
+                if (listType == MarkerType.Arabic)
+                {
+                    paragraphFormat.ListStart = 1;
+                }
+            }
+            else
+            {
+                paragraphFormat.ListType = MarkerType.None;
+                paragraphFormat.ListLevelIndex = 0;
+                paragraphFormat.SetIndents(0, 0, 0);
+                paragraphFormat.ClearAllTabs();
+            }
+
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
         private void UpdateFormattingToolbarState()
         {
             if (!IsSelectedPageCurrent())
@@ -390,6 +446,8 @@ namespace Syllanote.Desktop
                 PageContentRichEditBox.Document.Selection.CharacterFormat;
             var paragraphStyle =
                 PageContentRichEditBox.Document.Selection.ParagraphFormat.Style;
+            var listType =
+                PageContentRichEditBox.Document.Selection.ParagraphFormat.ListType;
 
             _isUpdatingFormattingToolbar = true;
             try
@@ -406,6 +464,8 @@ namespace Syllanote.Desktop
                 UnderlineButton.IsChecked =
                     characterFormat.Underline != UnderlineType.None &&
                     characterFormat.Underline != UnderlineType.Undefined;
+                BulletedListButton.IsChecked = listType == MarkerType.Bullet;
+                NumberedListButton.IsChecked = listType == MarkerType.Arabic;
             }
             finally
             {
