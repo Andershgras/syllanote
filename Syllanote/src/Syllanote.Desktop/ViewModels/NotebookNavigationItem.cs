@@ -21,10 +21,6 @@ public partial class NotebookNavigationItem : ObservableObject
 
     public ObservableCollection<NotebookNavigationItem> Children { get; } = [];
 
-    public Visibility NotebookActionsVisibility => Notebook is not null
-        ? Visibility.Visible
-        : Visibility.Collapsed;
-
     public Visibility SectionActionsVisibility => Section is not null
         ? Visibility.Visible
         : Visibility.Collapsed;

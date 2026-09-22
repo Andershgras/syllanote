@@ -98,8 +98,30 @@
                                     <ColumnDefinition Width="4" />
                                     <ColumnDefinition Width="32" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
+
+                                <Grid.ContextFlyout>
+                                    <MenuFlyout Opening="NotebookContextMenu_Opening">
+                                        <MenuFlyoutItem
+                                            Text="Move up"
+                                            IsEnabled="{x:Bind CanMoveUp}"
+                                            Click="MoveNotebookUpMenuItem_Click" />
+                                        <MenuFlyoutItem
+                                            Text="Move down"
+                                            IsEnabled="{x:Bind CanMoveDown}"
+                                            Click="MoveNotebookDownMenuItem_Click" />
+                                        <MenuFlyoutSeparator />
+                                        <MenuFlyoutItem
+                                            Text="Concept Dictionary"
+                                            Click="ConceptDictionaryMenuItem_Click" />
+                                        <MenuFlyoutItem
+                                            Text="Rename"
+                                            Click="RenameNotebookMenuItem_Click" />
+                                        <MenuFlyoutItem
+                                            Text="Delete"
+                                            Click="DeleteNotebookButton_Click" />
+                                    </MenuFlyout>
+                                </Grid.ContextFlyout>
 
                                 <Border
                                     Width="3"
@@ -133,41 +155,6 @@
                                     FontSize="16"
                                     AutomationProperties.Name="{x:Bind Name}"
                                     Click="NotebookNavigationButton_Click" />
-
-                                <Button
-                                    Grid.Column="3"
-                                    Content="..."
-                                    FontSize="18"
-                                    Width="32"
-                                    Height="32"
-                                    Padding="0"
-                                    Visibility="{x:Bind NotebookActionsVisibility}"
-                                    AutomationProperties.Name="Notebook actions"
-                                    ToolTipService.ToolTip="Notebook actions"
-                                    Click="NotebookActionsButton_Click">
-                                    <Button.Flyout>
-                                        <MenuFlyout>
-                                            <MenuFlyoutItem
-                                                Text="Move up"
-                                                IsEnabled="{x:Bind CanMoveUp}"
-                                                Click="MoveNotebookUpMenuItem_Click" />
-                                            <MenuFlyoutItem
-                                                Text="Move down"
-                                                IsEnabled="{x:Bind CanMoveDown}"
-                                                Click="MoveNotebookDownMenuItem_Click" />
-                                            <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem
-                                                Text="Concept Dictionary"
-                                                Click="ConceptDictionaryMenuItem_Click" />
-                                            <MenuFlyoutItem
-                                                Text="Rename"
-                                                Click="RenameNotebookMenuItem_Click" />
-                                            <MenuFlyoutItem
-                                                Text="Delete"
-                                                Click="DeleteNotebookButton_Click" />
-                                        </MenuFlyout>
-                                    </Button.Flyout>
-                                </Button>
                             </Grid>
 
                             <StackPanel Visibility="{x:Bind SectionControlsVisibility, Mode=OneWay}">

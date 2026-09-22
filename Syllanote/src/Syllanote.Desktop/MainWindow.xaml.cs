@@ -1175,11 +1175,11 @@ namespace Syllanote.Desktop
             }
         }
 
-        private void NotebookActionsButton_Click(
+        private void NotebookContextMenu_Opening(
             object sender,
-            RoutedEventArgs e)
+            object e)
         {
-            _notebookActionTarget = (sender as FrameworkElement)?.DataContext
+            _notebookActionTarget = (sender as FlyoutBase)?.Target?.DataContext
                 is NotebookNavigationItem navigationItem
                     ? navigationItem.Notebook
                     : null;
