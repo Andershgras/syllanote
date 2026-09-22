@@ -18,6 +18,10 @@ namespace Syllanote.Desktop
 {
     public sealed partial class MainWindow : Window
     {
+        private const float NormalFontSizeInPoints = 10.5f;
+        private const float Heading1FontSizeInPoints = 18;
+        private const float Heading2FontSizeInPoints = 15;
+
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
         private bool _isConceptOperationInProgress;
@@ -271,6 +275,56 @@ namespace Syllanote.Desktop
             ViewModel.PageFormattedContent = formattedContent;
         }
 
+        private void ParagraphStyleComboBox_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar ||
+                !IsSelectedPageCurrent() ||
+                ParagraphStyleComboBox.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            var selectedStyle = ParagraphStyleComboBox.SelectedIndex;
+            var selection = PageContentRichEditBox.Document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+
+            var paragraphFormat = paragraphRange.ParagraphFormat;
+            paragraphFormat.Style = selectedStyle switch
+            {
+                1 => ParagraphStyle.Heading1,
+                2 => ParagraphStyle.Heading2,
+                _ => ParagraphStyle.Normal
+            };
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+
+            var fontSize = selectedStyle switch
+            {
+                1 => Heading1FontSizeInPoints,
+                2 => Heading2FontSizeInPoints,
+                _ => NormalFontSizeInPoints
+            };
+            var bold = selectedStyle == 0
+                ? FormatEffect.Off
+                : FormatEffect.On;
+            var characterFormat = paragraphRange.CharacterFormat;
+            characterFormat.Size = fontSize;
+            characterFormat.Bold = bold;
+            paragraphRange.CharacterFormat = characterFormat;
+
+            var insertionFormat = selection.CharacterFormat;
+            insertionFormat.Size = fontSize;
+            insertionFormat.Bold = bold;
+            selection.CharacterFormat = insertionFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            PageContentRichEditBox.Focus(FocusState.Programmatic);
+        }
+
         private void BoldButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isUpdatingFormattingToolbar)
@@ -334,10 +388,19 @@ namespace Syllanote.Desktop
 
             var characterFormat =
                 PageContentRichEditBox.Document.Selection.CharacterFormat;
+            var paragraphStyle =
+                PageContentRichEditBox.Document.Selection.ParagraphFormat.Style;
 
             _isUpdatingFormattingToolbar = true;
             try
             {
+                ParagraphStyleComboBox.SelectedIndex = paragraphStyle switch
+                {
+                    ParagraphStyle.Heading1 => 1,
+                    ParagraphStyle.Heading2 => 2,
+                    ParagraphStyle.Normal or ParagraphStyle.None => 0,
+                    _ => -1
+                };
                 BoldButton.IsChecked = characterFormat.Bold == FormatEffect.On;
                 ItalicButton.IsChecked = characterFormat.Italic == FormatEffect.On;
                 UnderlineButton.IsChecked =

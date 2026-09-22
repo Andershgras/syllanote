@@ -373,6 +373,17 @@
                 Spacing="4"
                 Margin="0,0,0,8"
                 Visibility="Collapsed">
+                <ComboBox
+                    x:Name="ParagraphStyleComboBox"
+                    Width="140"
+                    Height="36"
+                    PlaceholderText="Normal"
+                    AutomationProperties.Name="Paragraph style"
+                    SelectionChanged="ParagraphStyleComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Normal" />
+                    <ComboBoxItem Content="Heading 1" />
+                    <ComboBoxItem Content="Heading 2" />
+                </ComboBox>
                 <ToggleButton
                     x:Name="BoldButton"
                     Width="40"
@@ -412,6 +423,7 @@
                 x:Name="PageContentRichEditBox"
                 Grid.Row="2"
                 PlaceholderText="Start writing..."
+                FontSize="14"
                 SelectionChanged="PageContentRichEditBox_SelectionChanged"
                 TextChanged="PageContentRichEditBox_TextChanged"
                 TextWrapping="Wrap"
