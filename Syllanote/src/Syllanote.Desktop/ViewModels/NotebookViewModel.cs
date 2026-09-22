@@ -52,6 +52,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly GetConceptsService _getConceptsService;
     private readonly UpdateConceptService _updateConceptService;
     private readonly DeleteConceptService _deleteConceptService;
+    private readonly RecognizeConceptsService _recognizeConceptsService;
 
     public NotebookViewModel(
         CreateNotebookService createNotebookService,
@@ -71,7 +72,8 @@ public partial class NotebookViewModel : ObservableObject
         CreateConceptService createConceptService,
         GetConceptsService getConceptsService,
         UpdateConceptService updateConceptService,
-        DeleteConceptService deleteConceptService)
+        DeleteConceptService deleteConceptService,
+        RecognizeConceptsService recognizeConceptsService)
     {
         _createNotebookService = createNotebookService;
         _deleteNotebookService = deleteNotebookService;
@@ -91,6 +93,7 @@ public partial class NotebookViewModel : ObservableObject
         _getConceptsService = getConceptsService;
         _updateConceptService = updateConceptService;
         _deleteConceptService = deleteConceptService;
+        _recognizeConceptsService = recognizeConceptsService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
     public ObservableCollection<Section> Sections { get; } = [];
@@ -417,6 +420,11 @@ public partial class NotebookViewModel : ObservableObject
         _isLoadingPage = false;
 
         IsPageDirty = false;
+
+        if (value is not null)
+        {
+            RefreshConceptMatches(value, PageContent);
+        }
     }
 
     [RelayCommand]
@@ -504,11 +512,27 @@ public partial class NotebookViewModel : ObservableObject
             if (SelectedPage == page && PageContent == content)
             {
                 IsPageDirty = false;
+                RefreshConceptMatches(page, content);
             }
         }
         finally
         {
             _pagePersistenceLock.Release();
+        }
+    }
+    private void RefreshConceptMatches(Page page, string content)
+    {
+        if (SelectedPage != page || PageContent != content)
+        {
+            return;
+        }
+
+        var matches = _recognizeConceptsService.Recognize(content, Concepts);
+
+        ConceptMatches.Clear();
+        foreach (var match in matches)
+        {
+            ConceptMatches.Add(match);
         }
     }
     private async Task ScheduleAutoSaveAsync()
