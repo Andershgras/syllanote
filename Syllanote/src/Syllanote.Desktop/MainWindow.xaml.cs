@@ -1,9 +1,12 @@
 using Microsoft.UI;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Text;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
+using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
 using System;
@@ -37,27 +40,39 @@ namespace Syllanote.Desktop
             Title = "Syllanote";
 
             ViewModel = viewModel;
+            ConceptDefinitionFlyout.OverlayInputPassThroughElement =
+                PageContentRichEditBox;
+            PageContentRichEditBox.AddHandler(
+                UIElement.TappedEvent,
+                new TappedEventHandler(PageContentRichEditBox_Tapped),
+                true);
             ViewModel.Notebooks.CollectionChanged += (_, _) => UpdateNotebookEmptyState();
             ViewModel.Sections.CollectionChanged += (_, _) => UpdateSectionState();
             ViewModel.Pages.CollectionChanged += (_, _) => UpdatePageState();
             ViewModel.Concepts.CollectionChanged += (_, _) => UpdateConceptEditorState();
             ViewModel.ConceptMatches.CollectionChanged += (_, _) =>
+            {
+                HideConceptDefinition();
                 QueueConceptHighlightRefresh();
+            };
             ViewModel.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(ViewModel.SelectedNotebook) ||
                     e.PropertyName == nameof(ViewModel.SelectedSection))
                 {
+                    HideConceptDefinition();
                     UpdateSectionState();
                     UpdatePageState();
                 }
                 else if (e.PropertyName == nameof(ViewModel.SelectedPage))
                 {
+                    HideConceptDefinition();
                     UpdatePageState();
                     SyncPageEditorContent();
                 }
                 else if (e.PropertyName == nameof(ViewModel.PageContent))
                 {
+                    HideConceptDefinition();
                     SyncPageEditorContent();
                 }
             };
@@ -211,14 +226,7 @@ namespace Syllanote.Desktop
 
                 foreach (var match in ViewModel.ConceptMatches)
                 {
-                    if (match.StartIndex < 0 ||
-                        match.Length <= 0 ||
-                        match.StartIndex > editorContent.Length ||
-                        match.Length > editorContent.Length - match.StartIndex ||
-                        !string.Equals(
-                            editorContent.Substring(match.StartIndex, match.Length),
-                            match.ConceptName,
-                            StringComparison.OrdinalIgnoreCase))
+                    if (!IsCurrentConceptMatch(match, editorContent))
                     {
                         continue;
                     }
@@ -246,6 +254,73 @@ namespace Syllanote.Desktop
                 selection.EndPosition != selectionEnd)
             {
                 selection.SetRange(selectionStart, selectionEnd);
+            }
+        }
+
+        private static bool IsCurrentConceptMatch(
+            ConceptMatch match,
+            string editorContent)
+        {
+            return match.StartIndex >= 0 &&
+                match.Length > 0 &&
+                match.StartIndex <= editorContent.Length &&
+                match.Length <= editorContent.Length - match.StartIndex &&
+                string.Equals(
+                    editorContent.Substring(match.StartIndex, match.Length),
+                    match.ConceptName,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void PageContentRichEditBox_Tapped(
+            object sender,
+            TappedRoutedEventArgs e)
+        {
+            var selection = PageContentRichEditBox.Document.Selection;
+            if (ViewModel.SelectedPage is null ||
+                selection.StartPosition != selection.EndPosition)
+            {
+                HideConceptDefinition();
+                return;
+            }
+
+            PageContentRichEditBox.Document.GetText(
+                TextGetOptions.None,
+                out var editorContent);
+            var caretPosition = selection.StartPosition;
+            var match = ViewModel.ConceptMatches.FirstOrDefault(candidate =>
+                IsCurrentConceptMatch(candidate, editorContent) &&
+                caretPosition >= candidate.StartIndex &&
+                caretPosition < candidate.StartIndex + candidate.Length);
+            var concept = match is null
+                ? null
+                : ViewModel.Concepts.FirstOrDefault(candidate =>
+                    candidate.Id == match.ConceptId &&
+                    candidate.NotebookId == ViewModel.SelectedNotebook?.Id);
+
+            if (concept is null)
+            {
+                HideConceptDefinition();
+                return;
+            }
+
+            HideConceptDefinition();
+            ConceptDefinitionNameTextBlock.Text = concept.Name;
+            ConceptDefinitionTextBlock.Text = concept.Definition;
+            ConceptDefinitionFlyout.ShowAt(
+                PageContentRichEditBox,
+                new FlyoutShowOptions
+                {
+                    Placement = FlyoutPlacementMode.Bottom,
+                    Position = e.GetPosition(PageContentRichEditBox),
+                    ShowMode = FlyoutShowMode.Transient
+                });
+        }
+
+        private void HideConceptDefinition()
+        {
+            if (ConceptDefinitionFlyout.IsOpen)
+            {
+                ConceptDefinitionFlyout.Hide();
             }
         }
         private bool IsSelectedPageCurrent()
@@ -801,6 +876,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
+            HideConceptDefinition();
             richEditBox.Document.GetText(
                 TextGetOptions.None,
                 out var content);
