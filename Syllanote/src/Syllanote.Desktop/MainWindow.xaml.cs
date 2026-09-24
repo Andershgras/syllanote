@@ -68,6 +68,8 @@ namespace Syllanote.Desktop
             ViewModel.Sections.CollectionChanged += (_, _) => RefreshSectionNavigation();
             ViewModel.Pages.CollectionChanged += (_, _) => UpdatePageState();
             ViewModel.Concepts.CollectionChanged += (_, _) => UpdateConceptEditorState();
+            ViewModel.ConceptReferences.CollectionChanged +=
+                (_, _) => UpdateConceptEditorState();
             ViewModel.ConceptMatches.CollectionChanged += (_, _) =>
             {
                 HideConceptDefinition();
@@ -121,6 +123,13 @@ namespace Syllanote.Desktop
             ConceptEmptyState.Visibility = ViewModel.Concepts.Count == 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+            ConceptReferencesEmptyState.Text = hasCurrentConcept
+                ? "This concept is not referenced on any pages."
+                : "Select a concept to view references.";
+            ConceptReferencesEmptyState.Visibility =
+                ViewModel.ConceptReferences.Count == 0
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
         }
 
         private void BeginInternalEditorChange()
@@ -760,7 +769,7 @@ namespace Syllanote.Desktop
             UpdateConceptEditorState();
         }
 
-        private void ConceptsListView_SelectionChanged(
+        private async void ConceptsListView_SelectionChanged(
             object sender, SelectionChangedEventArgs e)
         {
             if (ViewModel is null)
@@ -780,6 +789,9 @@ namespace Syllanote.Desktop
             }
 
             ConceptMessage.Text = string.Empty;
+            UpdateConceptEditorState();
+            await ViewModel.LoadConceptReferencesAsync(
+                ConceptsListView.SelectedItem as Concept);
             UpdateConceptEditorState();
         }
 

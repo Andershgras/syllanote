@@ -547,6 +547,36 @@
                                 Click="DeleteConceptButton_Click" />
                     </StackPanel>
                     <TextBlock x:Name="ConceptMessage" TextWrapping="Wrap" />
+                    <TextBlock Text="Referenced on pages"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Margin="0,8,0,0" />
+                    <Grid Height="180">
+                        <ListView x:Name="ConceptReferencesListView"
+                                  ItemsSource="{Binding ConceptReferences}"
+                                  SelectionMode="None"
+                                  AutomationProperties.Name="Concept references">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="{Binding PageTitle}"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding SectionName}"
+                                                   Opacity="0.7"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <TextBlock x:Name="ConceptReferencesEmptyState"
+                                   Text="Select a concept to view references."
+                                   TextWrapping="Wrap"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   TextAlignment="Center"
+                                   Opacity="0.7" />
+                    </Grid>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
