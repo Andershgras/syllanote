@@ -25,6 +25,7 @@ A local-first desktop note-taking application for students with organized notebo
 - Recognize Concepts in page content
 - Highlight recognized Concepts in the page editor
 - Click a highlighted Concept to view its definition
+- View which pages reference a Concept and navigate to them from the Concept Dictionary
 - Persist notebooks, sections, pages, and Concepts locally in SQLite
 - Manually reorder notebooks, sections, and pages and persist their order locally
 
