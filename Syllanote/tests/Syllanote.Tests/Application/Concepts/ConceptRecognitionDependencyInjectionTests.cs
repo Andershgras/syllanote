@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Syllanote.Application;
+using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
 using Syllanote.Application.Notebooks.Concepts.Recognition;
 
 namespace Syllanote.Tests.Application.Concepts;
@@ -30,5 +31,17 @@ public class ConceptRecognitionDependencyInjectionTests
             .GetRequiredService<RecognizeConceptsService>();
 
         Assert.AreNotSame(first, fromSecondScope);
+    }
+
+    [TestMethod]
+    public void AddApplication_RegistersFindConceptReferencesServiceAsScoped()
+    {
+        var services = new ServiceCollection();
+
+        services.AddApplication();
+
+        var registration = services.Single(descriptor =>
+            descriptor.ServiceType == typeof(FindConceptReferencesService));
+        Assert.AreEqual(ServiceLifetime.Scoped, registration.Lifetime);
     }
 }
