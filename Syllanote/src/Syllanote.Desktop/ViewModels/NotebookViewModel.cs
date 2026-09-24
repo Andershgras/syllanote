@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Syllanote.Application.Notebooks.CreateNotebook;
 using Syllanote.Application.Notebooks.Concepts.CreateConcept;
 using Syllanote.Application.Notebooks.Concepts.DeleteConcept;
+using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
 using Syllanote.Application.Notebooks.Concepts.GetConcepts;
 using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Concepts.UpdateConcept;
@@ -36,6 +37,7 @@ public partial class NotebookViewModel : ObservableObject
     private CancellationTokenSource? _autoSaveCancellationTokenSource;
     private readonly SemaphoreSlim _pagePersistenceLock = new(1, 1);
     private bool _isLoadingPage;
+    private int _conceptReferencesLoadVersion;
 
     private readonly CreateNotebookService _createNotebookService;
     private readonly DeleteNotebookService _deleteNotebookService;
@@ -58,6 +60,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly GetConceptsService _getConceptsService;
     private readonly UpdateConceptService _updateConceptService;
     private readonly DeleteConceptService _deleteConceptService;
+    private readonly FindConceptReferencesService _findConceptReferencesService;
     private readonly RecognizeConceptsService _recognizeConceptsService;
 
     public NotebookViewModel(
@@ -82,6 +85,7 @@ public partial class NotebookViewModel : ObservableObject
         GetConceptsService getConceptsService,
         UpdateConceptService updateConceptService,
         DeleteConceptService deleteConceptService,
+        FindConceptReferencesService findConceptReferencesService,
         RecognizeConceptsService recognizeConceptsService)
     {
         _createNotebookService = createNotebookService;
@@ -105,6 +109,7 @@ public partial class NotebookViewModel : ObservableObject
         _getConceptsService = getConceptsService;
         _updateConceptService = updateConceptService;
         _deleteConceptService = deleteConceptService;
+        _findConceptReferencesService = findConceptReferencesService;
         _recognizeConceptsService = recognizeConceptsService;
     }
     public ObservableCollection<Notebook> Notebooks { get; } = [];
@@ -112,6 +117,7 @@ public partial class NotebookViewModel : ObservableObject
     public ObservableCollection<Page> Pages { get; } = [];
     public ObservableCollection<SearchPageResult> SearchResults { get; } = [];
     public ObservableCollection<Concept> Concepts { get; } = [];
+    public ObservableCollection<ConceptReference> ConceptReferences { get; } = [];
     public ObservableCollection<ConceptMatch> ConceptMatches { get; } = [];
 
     public string SearchText { get; set; } = string.Empty;
@@ -175,6 +181,8 @@ public partial class NotebookViewModel : ObservableObject
     {
         SelectedNotebookName = value?.Name ?? string.Empty;
         Concepts.Clear();
+        _conceptReferencesLoadVersion++;
+        ConceptReferences.Clear();
         ConceptMatches.Clear();
     }
 
@@ -246,6 +254,32 @@ public partial class NotebookViewModel : ObservableObject
     public Task DeleteConceptAsync(Concept concept)
     {
         return _deleteConceptService.DeleteAsync(concept);
+    }
+
+    public async Task LoadConceptReferencesAsync(Concept? concept)
+    {
+        var loadVersion = ++_conceptReferencesLoadVersion;
+        ConceptReferences.Clear();
+
+        if (concept is null ||
+            SelectedNotebook?.Id != concept.NotebookId ||
+            !Concepts.Any(item => item.Id == concept.Id))
+        {
+            return;
+        }
+
+        var references = await _findConceptReferencesService.FindAsync(concept);
+        if (loadVersion != _conceptReferencesLoadVersion ||
+            SelectedNotebook?.Id != concept.NotebookId ||
+            !Concepts.Any(item => item.Id == concept.Id))
+        {
+            return;
+        }
+
+        foreach (var reference in references)
+        {
+            ConceptReferences.Add(reference);
+        }
     }
 
     [RelayCommand]
