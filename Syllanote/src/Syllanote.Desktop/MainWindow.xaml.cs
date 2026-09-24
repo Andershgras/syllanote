@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
+using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
 using Syllanote.Application.Notebooks.Concepts.Recognition;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
@@ -163,6 +164,7 @@ namespace Syllanote.Desktop
             SearchTextBox.IsEnabled = !isInProgress;
             NewConceptButton.IsEnabled = !isInProgress;
             ConceptsListView.IsEnabled = !isInProgress;
+            ConceptReferencesListView.IsEnabled = !isInProgress;
             ConceptNameTextBox.IsEnabled = !isInProgress;
             ConceptDefinitionTextBox.IsEnabled = !isInProgress;
             UpdateConceptEditorState();
@@ -793,6 +795,43 @@ namespace Syllanote.Desktop
             await ViewModel.LoadConceptReferencesAsync(
                 ConceptsListView.SelectedItem as Concept);
             UpdateConceptEditorState();
+        }
+
+        private async void ConceptReferencesListView_SelectionChanged(
+            object sender, SelectionChangedEventArgs e)
+        {
+            if (_isConceptOperationInProgress ||
+                ConceptReferencesListView.SelectedItem
+                    is not ConceptReference reference)
+            {
+                return;
+            }
+
+            SetConceptOperationInProgress(true);
+            _selectionNavigationVersion++;
+            await _selectionNavigationLock.WaitAsync();
+            try
+            {
+                if (await ViewModel.NavigateToConceptReferenceAsync(reference))
+                {
+                    ShowPageEditor();
+                    RefreshSectionNavigation();
+                    PagesListView.SelectedItem = ViewModel.SelectedPage;
+                    UpdatePageState();
+                }
+                else
+                {
+                    ConceptMessage.Text =
+                        "This page is no longer available.";
+                }
+
+                ConceptReferencesListView.SelectedItem = null;
+            }
+            finally
+            {
+                _selectionNavigationLock.Release();
+                SetConceptOperationInProgress(false);
+            }
         }
 
         private void ConceptInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -1545,7 +1584,8 @@ namespace Syllanote.Desktop
             object sender,
             SelectionChangedEventArgs e)
         {
-            if (_isRenamingSelection || _isSearchNavigationInProgress)
+            if (_isRenamingSelection || _isSearchNavigationInProgress ||
+                _isConceptOperationInProgress)
             {
                 return;
             }

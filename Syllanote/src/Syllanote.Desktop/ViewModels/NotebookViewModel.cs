@@ -827,4 +827,44 @@ public partial class NotebookViewModel : ObservableObject
         SearchMessage = string.Empty;
         return true;
     }
+
+    public async Task<bool> NavigateToConceptReferenceAsync(
+        ConceptReference reference)
+    {
+        var notebook = SelectedNotebook;
+        if (notebook is null)
+        {
+            return false;
+        }
+
+        var section = Sections.FirstOrDefault(item =>
+            item.Id == reference.SectionId &&
+            item.NotebookId == notebook.Id);
+        if (section is null)
+        {
+            return false;
+        }
+
+        await SaveCurrentPageAsync();
+        if (SelectedNotebook != notebook)
+        {
+            return false;
+        }
+
+        SelectedSection = section;
+        await LoadPagesAsync();
+        if (SelectedNotebook != notebook || SelectedSection != section)
+        {
+            return false;
+        }
+
+        var page = Pages.FirstOrDefault(item => item.Id == reference.PageId);
+        if (page is null)
+        {
+            return false;
+        }
+
+        await SelectPageAsync(page);
+        return true;
+    }
 }

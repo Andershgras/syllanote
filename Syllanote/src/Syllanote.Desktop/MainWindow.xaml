@@ -554,7 +554,8 @@
                     <Grid Height="180">
                         <ListView x:Name="ConceptReferencesListView"
                                   ItemsSource="{Binding ConceptReferences}"
-                                  SelectionMode="None"
+                                  SelectionMode="Single"
+                                  SelectionChanged="ConceptReferencesListView_SelectionChanged"
                                   AutomationProperties.Name="Concept references">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
