@@ -54,6 +54,27 @@
                 ItemsSource="{Binding Pages}"
                 SelectionChanged="PagesListView_SelectionChanged">
 
+                <ListView.Resources>
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundPointerOver"
+                        ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundPressed"
+                        ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundSelected"
+                        ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundSelectedPointerOver"
+                        ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemSelectionIndicatorBrush"
+                        ResourceKey="AccentFillColorDefaultBrush" />
+                    <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">True</x:Boolean>
+                    <CornerRadius x:Key="ListViewItemCornerRadius">6</CornerRadius>
+                    <CornerRadius x:Key="ListViewItemSelectionIndicatorCornerRadius">2</CornerRadius>
+                </ListView.Resources>
+
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -63,6 +84,7 @@
                         <Setter Property="CornerRadius" Value="6" />
                         <Setter Property="UseSystemFocusVisuals" Value="True" />
                         <Setter Property="FocusVisualMargin" Value="-1" />
+                        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
                     </Style>
                 </ListView.ItemContainerStyle>
 
