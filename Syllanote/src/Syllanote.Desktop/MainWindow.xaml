@@ -4,7 +4,8 @@
     x:Class="Syllanote.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Syllanote.Desktop.Controls">
+    xmlns:controls="using:Syllanote.Desktop.Controls"
+    xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
 
     <Grid
         x:Name="RootGrid"
@@ -19,21 +20,33 @@
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />
-            <ColumnDefinition Width="240" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition
+                x:Name="NotebookColumn"
+                Width="280"
+                MinWidth="220"
+                MaxWidth="420" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition
+                x:Name="PageColumn"
+                Width="240"
+                MinWidth="180"
+                MaxWidth="360" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition
+                Width="*"
+                MinWidth="360" />
         </Grid.ColumnDefinitions>
 
         <controls:TopBar
             x:Name="TopBar"
             Grid.Row="0"
-            Grid.ColumnSpan="3"
+            Grid.ColumnSpan="5"
             SearchRequested="TopBar_SearchRequested"
             SearchResultSelectionChanged="TopBar_SearchResultSelectionChanged" />
 
         <Border
             Grid.Row="1"
-            Grid.ColumnSpan="3"
+            Grid.ColumnSpan="5"
             Style="{StaticResource SyllanotePanelCardStyle}" />
 
         <!-- ==================== -->
@@ -68,7 +81,7 @@
         <controls:PageSidebar
             x:Name="PageSidebar"
             Grid.Row="1"
-            Grid.Column="1"
+            Grid.Column="2"
             NewPageRequested="NewPageButton_Click"
             PageSelectionChanged="PageListView_SelectionChanged"
             PageContextMenuOpening="PageContextMenu_Opening"
@@ -84,7 +97,7 @@
         <controls:EditorView
             x:Name="EditorView"
             Grid.Row="1"
-            Grid.Column="2"
+            Grid.Column="4"
             ParagraphStyleSelectionChanged="ParagraphStyleComboBox_SelectionChanged"
             BoldRequested="BoldButton_Click"
             ItalicRequested="ItalicButton_Click"
@@ -97,7 +110,7 @@
         <controls:ConceptDictionaryView
             x:Name="ConceptDictionaryView"
             Grid.Row="1"
-            Grid.Column="2"
+            Grid.Column="4"
             Margin="16"
             Visibility="Collapsed"
             BackRequested="ConceptBackButton_Click"
@@ -108,23 +121,19 @@
             SaveRequested="SaveConceptButton_Click"
             DeleteRequested="DeleteConceptButton_Click" />
 
-        <Border
-            Grid.Row="1"
-            Grid.Column="0"
-            Width="1"
-            Margin="0,12"
-            HorizontalAlignment="Right"
-            Background="{ThemeResource DividerStrokeColorDefaultBrush}"
-            IsHitTestVisible="False" />
-
-        <Border
+        <primitives:Thumb
             Grid.Row="1"
             Grid.Column="1"
-            Width="1"
-            Margin="0,12"
-            HorizontalAlignment="Right"
-            Background="{ThemeResource DividerStrokeColorDefaultBrush}"
-            IsHitTestVisible="False" />
+            Style="{StaticResource SyllanoteColumnSplitterStyle}"
+            AutomationProperties.Name="Resize notebook panel"
+            DragDelta="NotebookColumnSplitter_DragDelta" />
+
+        <primitives:Thumb
+            Grid.Row="1"
+            Grid.Column="3"
+            Style="{StaticResource SyllanoteColumnSplitterStyle}"
+            AutomationProperties.Name="Resize page panel"
+            DragDelta="PageColumnSplitter_DragDelta" />
 
     </Grid>
 

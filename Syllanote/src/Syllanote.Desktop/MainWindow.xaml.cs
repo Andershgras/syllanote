@@ -45,6 +45,28 @@ namespace Syllanote.Desktop
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
 
+        private void NotebookColumnSplitter_DragDelta(
+            object sender,
+            DragDeltaEventArgs e)
+        {
+            NotebookColumn.Width = new GridLength(
+                Math.Clamp(
+                    NotebookColumn.ActualWidth + e.HorizontalChange,
+                    NotebookColumn.MinWidth,
+                    NotebookColumn.MaxWidth));
+        }
+
+        private void PageColumnSplitter_DragDelta(
+            object sender,
+            DragDeltaEventArgs e)
+        {
+            PageColumn.Width = new GridLength(
+                Math.Clamp(
+                    PageColumn.ActualWidth + e.HorizontalChange,
+                    PageColumn.MinWidth,
+                    PageColumn.MaxWidth));
+        }
+
         private void SetNavigationEnabled(bool isEnabled)
         {
             NotebookSidebar.SetNavigationEnabled(isEnabled);
