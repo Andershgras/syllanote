@@ -7,10 +7,7 @@
 
     <Border
         Padding="12"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        BorderThickness="1"
-        CornerRadius="8">
+        Style="{StaticResource SyllanotePanelCardStyle}">
         <Grid RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
