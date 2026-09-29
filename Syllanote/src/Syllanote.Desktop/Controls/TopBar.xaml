@@ -14,7 +14,9 @@
                 x:Name="SearchTextBox"
                 Width="360"
                 PlaceholderText="Search pages in all notebooks"
-                AutomationProperties.Name="Search pages" />
+                AutomationProperties.Name="Search pages"
+                AutomationProperties.HelpText="Press Enter to search"
+                KeyDown="SearchTextBox_KeyDown" />
             <Button
                 x:Name="SearchButton"
                 Content="Search"

@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
+using Windows.System;
 
 namespace Syllanote.Desktop.Controls
 {
@@ -44,6 +46,17 @@ namespace Syllanote.Desktop.Controls
 
         private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
+            SearchRequested?.Invoke(this, e);
+        }
+
+        private void SearchTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key != VirtualKey.Enter)
+            {
+                return;
+            }
+
+            e.Handled = true;
             SearchRequested?.Invoke(this, e);
         }
 
