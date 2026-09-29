@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Graphics;
 using Windows.Storage;
 
 namespace Syllanote.Desktop
@@ -31,6 +32,10 @@ namespace Syllanote.Desktop
             "Workspace.NotebookColumnWidth";
         private const string PageColumnWidthSettingKey =
             "Workspace.PageColumnWidth";
+        private const string WindowWidthSettingKey = "Window.Width";
+        private const string WindowHeightSettingKey = "Window.Height";
+        private const int MinimumWindowWidth = 900;
+        private const int MinimumWindowHeight = 600;
 
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
@@ -120,6 +125,46 @@ namespace Syllanote.Desktop
             ApplicationData.Current.LocalSettings.Values[settingKey] = width;
         }
 
+        private void RestoreWindowSize()
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            if (!settings.TryGetValue(WindowWidthSettingKey, out var storedWidth) ||
+                storedWidth is not int width ||
+                !settings.TryGetValue(WindowHeightSettingKey, out var storedHeight) ||
+                storedHeight is not int height)
+            {
+                return;
+            }
+
+            var displayArea = DisplayArea.GetFromWindowId(
+                AppWindow.Id,
+                DisplayAreaFallback.Primary);
+            var workArea = displayArea.WorkArea;
+            var minimumWidth = Math.Min(MinimumWindowWidth, workArea.Width);
+            var minimumHeight = Math.Min(MinimumWindowHeight, workArea.Height);
+
+            AppWindow.Resize(new SizeInt32(
+                Math.Clamp(width, minimumWidth, workArea.Width),
+                Math.Clamp(height, minimumHeight, workArea.Height)));
+        }
+
+        private static void MainWindow_Closing(
+            AppWindow sender,
+            AppWindowClosingEventArgs args)
+        {
+            if (sender.Presenter is not OverlappedPresenter
+                {
+                    State: OverlappedPresenterState.Restored
+                })
+            {
+                return;
+            }
+
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            settings[WindowWidthSettingKey] = sender.Size.Width;
+            settings[WindowHeightSettingKey] = sender.Size.Height;
+        }
+
         private void SetNavigationEnabled(bool isEnabled)
         {
             NotebookSidebar.SetNavigationEnabled(isEnabled);
@@ -130,6 +175,8 @@ namespace Syllanote.Desktop
         {
             InitializeComponent();
             RestorePanelWidths();
+            RestoreWindowSize();
+            AppWindow.Closing += MainWindow_Closing;
             Title = "Syllanote";
             SystemBackdrop = new MicaBackdrop();
 
