@@ -56,9 +56,7 @@ namespace Syllanote.Desktop
 
             ViewModel = viewModel;
             NotebookSidebar.SetItemsSource(NotebookNavigationItems);
-            ConceptDefinitionFlyout.OverlayInputPassThroughElement =
-                PageContentRichEditBox;
-            PageContentRichEditBox.AddHandler(
+            EditorView.ContentEditor.AddHandler(
                 UIElement.TappedEvent,
                 new TappedEventHandler(PageContentRichEditBox_Tapped),
                 true);
@@ -107,7 +105,7 @@ namespace Syllanote.Desktop
         private void ShowPageEditor()
         {
             ConceptDictionaryPanel.Visibility = Visibility.Collapsed;
-            PageEditorPanel.Visibility = Visibility.Visible;
+            EditorView.Visibility = Visibility.Visible;
         }
 
         private void UpdateConceptEditorState()
@@ -250,15 +248,12 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedSection.NotebookId == ViewModel.SelectedNotebook?.Id;
             var hasPage = IsSelectedPageCurrent();
             PageSidebar.UpdateState(hasSection, ViewModel.Pages.Count > 0);
-            EditorPageTitle.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            FormattingToolbar.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            PageContentRichEditBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            EditorEmptyState.Visibility = hasPage ? Visibility.Collapsed : Visibility.Visible;
+            EditorView.UpdatePageState(hasPage);
         }
 
         private void SyncPageEditorContent(bool force = false)
         {
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
 
@@ -273,13 +268,13 @@ namespace Syllanote.Desktop
             {
                 if (string.IsNullOrEmpty(ViewModel.PageFormattedContent))
                 {
-                    PageContentRichEditBox.Document.SetText(
+                    EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.None,
                         ViewModel.PageContent);
                 }
                 else
                 {
-                    PageContentRichEditBox.Document.SetText(
+                    EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.FormatRtf,
                         ViewModel.PageFormattedContent);
                 }
@@ -298,18 +293,18 @@ namespace Syllanote.Desktop
             out string content,
             out string formattedContent)
         {
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out content);
 
             _isApplyingConceptHighlighting = true;
             BeginInternalEditorChange();
-            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
                 if (content.Length > 0)
                 {
-                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                    var documentRange = EditorView.ContentEditor.Document.GetRange(
                         0,
                         content.Length);
                     var documentFormat = documentRange.CharacterFormat;
@@ -317,13 +312,13 @@ namespace Syllanote.Desktop
                     documentRange.CharacterFormat = documentFormat;
                 }
 
-                PageContentRichEditBox.Document.GetText(
+                EditorView.ContentEditor.Document.GetText(
                     TextGetOptions.FormatRtf,
                     out formattedContent);
             }
             finally
             {
-                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                EditorView.ContentEditor.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
                 EndInternalEditorChange();
             }
@@ -347,13 +342,13 @@ namespace Syllanote.Desktop
         {
             if (_isUpdatingFormattingToolbar ||
                 !IsSelectedPageCurrent() ||
-                ParagraphStyleComboBox.SelectedIndex < 0)
+                EditorView.ParagraphStyleSelector.SelectedIndex < 0)
             {
                 return;
             }
 
-            var selectedStyle = ParagraphStyleComboBox.SelectedIndex;
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selectedStyle = EditorView.ParagraphStyleSelector.SelectedIndex;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var paragraphRange = selection.GetClone();
             paragraphRange.Expand(TextRangeUnit.Paragraph);
 
@@ -388,7 +383,7 @@ namespace Syllanote.Desktop
 
             UpdatePageContentFromEditor();
             UpdateFormattingToolbarState();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void BoldButton_Click(object sender, RoutedEventArgs e)
@@ -398,15 +393,15 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var characterFormat = selection.CharacterFormat;
-            characterFormat.Bold = BoldButton.IsChecked == true
+            characterFormat.Bold = EditorView.BoldToggle.IsChecked == true
                 ? FormatEffect.On
                 : FormatEffect.Off;
             selection.CharacterFormat = characterFormat;
 
             UpdatePageContentFromEditor();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void ItalicButton_Click(object sender, RoutedEventArgs e)
@@ -416,15 +411,15 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var characterFormat = selection.CharacterFormat;
-            characterFormat.Italic = ItalicButton.IsChecked == true
+            characterFormat.Italic = EditorView.ItalicToggle.IsChecked == true
                 ? FormatEffect.On
                 : FormatEffect.Off;
             selection.CharacterFormat = characterFormat;
 
             UpdatePageContentFromEditor();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void UnderlineButton_Click(object sender, RoutedEventArgs e)
@@ -434,15 +429,15 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var characterFormat = selection.CharacterFormat;
-            characterFormat.Underline = UnderlineButton.IsChecked == true
+            characterFormat.Underline = EditorView.UnderlineToggle.IsChecked == true
                 ? UnderlineType.Single
                 : UnderlineType.None;
             selection.CharacterFormat = characterFormat;
 
             UpdatePageContentFromEditor();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void BulletedListButton_Click(object sender, RoutedEventArgs e)
@@ -454,7 +449,7 @@ namespace Syllanote.Desktop
 
             ApplyListFormatting(
                 MarkerType.Bullet,
-                BulletedListButton.IsChecked == true);
+                EditorView.BulletedListToggle.IsChecked == true);
         }
 
         private void NumberedListButton_Click(object sender, RoutedEventArgs e)
@@ -466,12 +461,12 @@ namespace Syllanote.Desktop
 
             ApplyListFormatting(
                 MarkerType.Arabic,
-                NumberedListButton.IsChecked == true);
+                EditorView.NumberedListToggle.IsChecked == true);
         }
 
         private void ApplyListFormatting(MarkerType listType, bool isEnabled)
         {
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var paragraphRange = selection.GetClone();
             paragraphRange.Expand(TextRangeUnit.Paragraph);
 
@@ -498,7 +493,7 @@ namespace Syllanote.Desktop
 
             UpdatePageContentFromEditor();
             UpdateFormattingToolbarState();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void UpdateFormattingToolbarState()
@@ -509,29 +504,29 @@ namespace Syllanote.Desktop
             }
 
             var characterFormat =
-                PageContentRichEditBox.Document.Selection.CharacterFormat;
+                EditorView.ContentEditor.Document.Selection.CharacterFormat;
             var paragraphStyle =
-                PageContentRichEditBox.Document.Selection.ParagraphFormat.Style;
+                EditorView.ContentEditor.Document.Selection.ParagraphFormat.Style;
             var listType =
-                PageContentRichEditBox.Document.Selection.ParagraphFormat.ListType;
+                EditorView.ContentEditor.Document.Selection.ParagraphFormat.ListType;
 
             _isUpdatingFormattingToolbar = true;
             try
             {
-                ParagraphStyleComboBox.SelectedIndex = paragraphStyle switch
+                EditorView.ParagraphStyleSelector.SelectedIndex = paragraphStyle switch
                 {
                     ParagraphStyle.Heading1 => 1,
                     ParagraphStyle.Heading2 => 2,
                     ParagraphStyle.Normal or ParagraphStyle.None => 0,
                     _ => -1
                 };
-                BoldButton.IsChecked = characterFormat.Bold == FormatEffect.On;
-                ItalicButton.IsChecked = characterFormat.Italic == FormatEffect.On;
-                UnderlineButton.IsChecked =
+                EditorView.BoldToggle.IsChecked = characterFormat.Bold == FormatEffect.On;
+                EditorView.ItalicToggle.IsChecked = characterFormat.Italic == FormatEffect.On;
+                EditorView.UnderlineToggle.IsChecked =
                     characterFormat.Underline != UnderlineType.None &&
                     characterFormat.Underline != UnderlineType.Undefined;
-                BulletedListButton.IsChecked = listType == MarkerType.Bullet;
-                NumberedListButton.IsChecked = listType == MarkerType.Arabic;
+                EditorView.BulletedListToggle.IsChecked = listType == MarkerType.Bullet;
+                EditorView.NumberedListToggle.IsChecked = listType == MarkerType.Arabic;
             }
             finally
             {
@@ -559,22 +554,22 @@ namespace Syllanote.Desktop
 
         private void ApplyConceptHighlights()
         {
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var selectionStart = selection.StartPosition;
             var selectionEnd = selection.EndPosition;
 
             _isApplyingConceptHighlighting = true;
             BeginInternalEditorChange();
-            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
                 if (editorContent.Length > 0)
                 {
-                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                    var documentRange = EditorView.ContentEditor.Document.GetRange(
                         0,
                         editorContent.Length);
                     var documentFormat = documentRange.CharacterFormat;
@@ -590,7 +585,7 @@ namespace Syllanote.Desktop
                     }
 
                     var endIndex = match.StartIndex + match.Length;
-                    var conceptRange = PageContentRichEditBox.Document.GetRange(
+                    var conceptRange = EditorView.ContentEditor.Document.GetRange(
                         match.StartIndex,
                         endIndex);
                     var conceptFormat = conceptRange.CharacterFormat;
@@ -604,7 +599,7 @@ namespace Syllanote.Desktop
             }
             finally
             {
-                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                EditorView.ContentEditor.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
                 EndInternalEditorChange();
             }
@@ -634,7 +629,7 @@ namespace Syllanote.Desktop
             object sender,
             TappedRoutedEventArgs e)
         {
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             if (ViewModel.SelectedPage is null ||
                 selection.StartPosition != selection.EndPosition)
             {
@@ -642,7 +637,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
             var caretPosition = selection.StartPosition;
@@ -663,24 +658,15 @@ namespace Syllanote.Desktop
             }
 
             HideConceptDefinition();
-            ConceptDefinitionNameTextBlock.Text = concept.Name;
-            ConceptDefinitionTextBlock.Text = concept.Definition;
-            ConceptDefinitionFlyout.ShowAt(
-                PageContentRichEditBox,
-                new FlyoutShowOptions
-                {
-                    Placement = FlyoutPlacementMode.Bottom,
-                    Position = e.GetPosition(PageContentRichEditBox),
-                    ShowMode = FlyoutShowMode.Transient
-                });
+            EditorView.ShowConceptDefinition(
+                concept.Name,
+                concept.Definition,
+                e.GetPosition(EditorView.ContentEditor));
         }
 
         private void HideConceptDefinition()
         {
-            if (ConceptDefinitionFlyout.IsOpen)
-            {
-                ConceptDefinitionFlyout.Hide();
-            }
+            EditorView.HideConceptDefinition();
         }
         private bool IsSelectedPageCurrent()
         {
@@ -731,7 +717,7 @@ namespace Syllanote.Desktop
                 ConceptNameTextBox.Text = string.Empty;
                 ConceptDefinitionTextBox.Text = string.Empty;
                 ConceptMessage.Text = string.Empty;
-                PageEditorPanel.Visibility = Visibility.Collapsed;
+                EditorView.Visibility = Visibility.Collapsed;
                 ConceptDictionaryPanel.Visibility = Visibility.Visible;
             }
             finally
