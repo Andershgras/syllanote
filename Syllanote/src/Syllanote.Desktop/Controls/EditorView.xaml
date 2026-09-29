@@ -58,12 +58,7 @@
                         <ComboBoxItem Content="Heading 2" />
                     </ComboBox>
 
-                    <Border
-                        Width="1"
-                        Height="20"
-                        Margin="4,0"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
-                        VerticalAlignment="Center" />
+                    <Border Style="{StaticResource SyllanoteEditorToolbarSeparatorStyle}" />
 
                     <ToggleButton
                         x:Name="BoldButton"
@@ -90,12 +85,7 @@
                         <TextBlock Text="U" TextDecorations="Underline" />
                     </ToggleButton>
 
-                    <Border
-                        Width="1"
-                        Height="20"
-                        Margin="4,0"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
-                        VerticalAlignment="Center" />
+                    <Border Style="{StaticResource SyllanoteEditorToolbarSeparatorStyle}" />
 
                     <ToggleButton
                         x:Name="BulletedListButton"
