@@ -30,21 +30,6 @@
         <Setter Property="CornerRadius" Value="6" />
     </Style>
 
-    <Style x:Key="SyllanoteEditorToolbarToggleButtonStyle" TargetType="ToggleButton">
-        <Setter Property="Width" Value="40" />
-        <Setter Property="Height" Value="36" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="AllowFocusOnInteraction" Value="False" />
-    </Style>
-
-    <Style x:Key="SyllanoteEditorToolbarSeparatorStyle" TargetType="Border">
-        <Setter Property="Width" Value="1" />
-        <Setter Property="Height" Value="20" />
-        <Setter Property="Margin" Value="4,0" />
-        <Setter Property="Background" Value="{ThemeResource DividerStrokeColorDefaultBrush}" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
     <Style x:Key="SyllanoteEmptyStateIconStyle" TargetType="FontIcon">
         <Setter Property="Opacity" Value="0.5" />
         <Setter Property="AutomationProperties.AccessibilityView" Value="Raw" />

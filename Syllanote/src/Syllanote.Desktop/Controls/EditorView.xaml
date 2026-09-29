@@ -33,19 +33,21 @@
                 AutomationProperties.Name="Page title"
                 Visibility="Collapsed" />
 
-            <Border
+            <CommandBar
                 x:Name="FormattingToolbar"
                 Grid.Row="1"
                 Margin="0,0,0,12"
-                Padding="8"
+                Padding="4"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="6"
+                ClosedDisplayMode="Compact"
+                DefaultLabelPosition="Collapsed"
+                IsDynamicOverflowEnabled="False"
+                OverflowButtonVisibility="Collapsed"
                 Visibility="Collapsed">
-                <StackPanel
-                    Orientation="Horizontal"
-                    Spacing="4">
+                <CommandBar.Content>
                     <ComboBox
                         x:Name="ParagraphStyleComboBox"
                         Width="140"
@@ -57,58 +59,71 @@
                         <ComboBoxItem Content="Heading 1" />
                         <ComboBoxItem Content="Heading 2" />
                     </ComboBox>
+                </CommandBar.Content>
 
-                    <Border Style="{StaticResource SyllanoteEditorToolbarSeparatorStyle}" />
+                <CommandBar.PrimaryCommands>
+                    <AppBarSeparator />
 
-                    <ToggleButton
+                    <AppBarToggleButton
                         x:Name="BoldButton"
-                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
+                        Label="Bold"
+                        AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Bold"
                         ToolTipService.ToolTip="Bold"
                         Click="BoldButton_Click">
-                        <TextBlock Text="B" FontWeight="Bold" />
-                    </ToggleButton>
-                    <ToggleButton
+                        <AppBarToggleButton.Icon>
+                            <SymbolIcon Symbol="Bold" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarToggleButton
                         x:Name="ItalicButton"
-                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
+                        Label="Italic"
+                        AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Italic"
                         ToolTipService.ToolTip="Italic"
                         Click="ItalicButton_Click">
-                        <TextBlock Text="I" FontStyle="Italic" />
-                    </ToggleButton>
-                    <ToggleButton
+                        <AppBarToggleButton.Icon>
+                            <SymbolIcon Symbol="Italic" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarToggleButton
                         x:Name="UnderlineButton"
-                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
+                        Label="Underline"
+                        AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Underline"
                         ToolTipService.ToolTip="Underline"
                         Click="UnderlineButton_Click">
-                        <TextBlock Text="U" TextDecorations="Underline" />
-                    </ToggleButton>
+                        <AppBarToggleButton.Icon>
+                            <SymbolIcon Symbol="Underline" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
 
-                    <Border Style="{StaticResource SyllanoteEditorToolbarSeparatorStyle}" />
+                    <AppBarSeparator />
 
-                    <ToggleButton
+                    <AppBarToggleButton
                         x:Name="BulletedListButton"
-                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
+                        Label="Bulleted list"
+                        AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Bulleted list"
                         ToolTipService.ToolTip="Bulleted list"
                         Click="BulletedListButton_Click">
-                        <FontIcon
-                            Glyph="&#xE8FD;"
-                            FontSize="16" />
-                    </ToggleButton>
-                    <ToggleButton
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8FD;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarToggleButton
                         x:Name="NumberedListButton"
-                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
+                        Label="Numbered list"
+                        AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Numbered list"
                         ToolTipService.ToolTip="Numbered list"
                         Click="NumberedListButton_Click">
-                        <FontIcon
-                            Glyph="&#xEA1C;"
-                            FontSize="16" />
-                    </ToggleButton>
-                </StackPanel>
-            </Border>
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xEA1C;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                </CommandBar.PrimaryCommands>
+            </CommandBar>
 
             <RichEditBox
                 x:Name="PageContentRichEditBox"
