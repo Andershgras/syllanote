@@ -15,12 +15,16 @@ A local-first desktop note-taking application for students with organized notebo
 ## Features
 
 - Create, rename, and delete notebooks, sections, and pages
+- Navigate notebooks, sections, and pages in a three-pane workspace with expandable notebooks and clear selection states
 - Write notes in a dedicated page editor with a separate title field
 - Autosave page content and rich-text formatting locally
 - Format paragraphs as Normal, Heading 1, or Heading 2
-- Toggle bold, italic, and underline formatting from a persistent toolbar
+- Toggle bold, italic, and underline formatting from a native Windows command bar
 - Create and remove bulleted and numbered lists
-- Search page titles and content across all notebooks
+- Search page titles and content across all notebooks from the app header using Enter or Ctrl+F
+- Resize the notebook and page panels and retain their widths between sessions
+- Restore the window size, screen position, and maximized state between sessions
+- Use a Windows 11-inspired interface with Mica, a themed title bar, Fluent icons, and consistent empty states
 - Create, update, and delete Concepts for each notebook
 - Recognize Concepts in page content
 - Highlight recognized Concepts in the page editor
