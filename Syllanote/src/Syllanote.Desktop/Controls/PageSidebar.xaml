@@ -91,6 +91,11 @@
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
                             <Grid.ContextFlyout>
                                 <MenuFlyout Opening="PageContextMenu_Opening">
                                     <MenuFlyoutItem
@@ -109,7 +114,16 @@
                                 </MenuFlyout>
                             </Grid.ContextFlyout>
 
+                            <FontIcon
+                                Glyph="&#xE8A5;"
+                                FontSize="14"
+                                Opacity="0.7"
+                                AutomationProperties.AccessibilityView="Raw"
+                                VerticalAlignment="Center" />
+
                             <TextBlock
+                                Grid.Column="1"
+                                Margin="8,0,0,0"
                                 Text="{Binding Title}"
                                 FontSize="16"
                                 TextTrimming="CharacterEllipsis"
