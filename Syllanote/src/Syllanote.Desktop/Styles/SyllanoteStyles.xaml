@@ -24,4 +24,21 @@
         <Setter Property="CornerRadius" Value="6" />
     </Style>
 
+    <Style x:Key="SyllanoteEmptyStateIconStyle" TargetType="FontIcon">
+        <Setter Property="Opacity" Value="0.5" />
+        <Setter Property="AutomationProperties.AccessibilityView" Value="Raw" />
+    </Style>
+
+    <Style x:Key="SyllanoteEmptyStateTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="SyllanoteEmptyStateDescriptionTextStyle" TargetType="TextBlock">
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
 </ResourceDictionary>

@@ -179,19 +179,14 @@
                 <FontIcon
                     Glyph="&#xE70F;"
                     FontSize="32"
-                    Opacity="0.5"
-                    AutomationProperties.AccessibilityView="Raw" />
+                    Style="{StaticResource SyllanoteEmptyStateIconStyle}" />
                 <TextBlock
                     Text="No page selected"
                     FontSize="18"
-                    FontWeight="SemiBold"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
+                    Style="{StaticResource SyllanoteEmptyStateTitleTextStyle}" />
                 <TextBlock
                     Text="Select a page from the list to start writing."
-                    Opacity="0.7"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
+                    Style="{StaticResource SyllanoteEmptyStateDescriptionTextStyle}" />
             </StackPanel>
         </Grid>
     </Border>

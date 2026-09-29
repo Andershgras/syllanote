@@ -137,20 +137,15 @@
                     x:Name="PageEmptyStateIcon"
                     Glyph="&#xE8B7;"
                     FontSize="28"
-                    Opacity="0.5"
-                    AutomationProperties.AccessibilityView="Raw" />
+                    Style="{StaticResource SyllanoteEmptyStateIconStyle}" />
                 <TextBlock
                     x:Name="PageEmptyStateTitle"
                     Text="No section selected"
-                    FontWeight="SemiBold"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
+                    Style="{StaticResource SyllanoteEmptyStateTitleTextStyle}" />
                 <TextBlock
                     x:Name="PageEmptyStateDescription"
                     Text="Select a section to see its pages."
-                    Opacity="0.7"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
+                    Style="{StaticResource SyllanoteEmptyStateDescriptionTextStyle}" />
             </StackPanel>
         </Grid>
     </Border>
