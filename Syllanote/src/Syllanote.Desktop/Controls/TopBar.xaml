@@ -5,40 +5,66 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <StackPanel>
-        <StackPanel
-            Orientation="Horizontal"
-            Spacing="8"
-            Margin="0,0,0,8">
-            <TextBox
-                x:Name="SearchTextBox"
-                Width="360"
-                PlaceholderText="Search pages in all notebooks"
-                AutomationProperties.Name="Search pages"
-                AutomationProperties.HelpText="Press Ctrl+F to focus search and Enter to search"
-                KeyDown="SearchTextBox_KeyDown">
-                <TextBox.KeyboardAccelerators>
-                    <KeyboardAccelerator
-                        Key="F"
-                        Modifiers="Control"
-                        Invoked="FocusSearchKeyboardAccelerator_Invoked" />
-                </TextBox.KeyboardAccelerators>
-            </TextBox>
-            <Button
-                x:Name="SearchButton"
-                Content="Search"
-                Click="SearchButton_Click" />
-            <ProgressRing
-                x:Name="SearchProgressRing"
-                Width="20"
-                Height="20"
-                IsActive="False"
-                Visibility="Collapsed"
-                VerticalAlignment="Center"
-                AutomationProperties.Name="Searching pages" />
-        </StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <StackPanel Margin="0,0,0,12">
+        <Border
+            Padding="0,0,0,12"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid>
+                <TextBlock
+                    Text="Syllanote"
+                    Style="{StaticResource SyllanotePanelTitleTextStyle}" />
+
+                <StackPanel
+                    HorizontalAlignment="Right"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <TextBox
+                        x:Name="SearchTextBox"
+                        Width="320"
+                        PlaceholderText="Search pages in all notebooks"
+                        AutomationProperties.Name="Search pages"
+                        AutomationProperties.HelpText="Press Ctrl+F to focus search and Enter to search"
+                        KeyDown="SearchTextBox_KeyDown">
+                        <TextBox.KeyboardAccelerators>
+                            <KeyboardAccelerator
+                                Key="F"
+                                Modifiers="Control"
+                                Invoked="FocusSearchKeyboardAccelerator_Invoked" />
+                        </TextBox.KeyboardAccelerators>
+                    </TextBox>
+                    <Button
+                        x:Name="SearchButton"
+                        Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
+                        AutomationProperties.Name="Search pages"
+                        ToolTipService.ToolTip="Search"
+                        Click="SearchButton_Click">
+                        <FontIcon
+                            Glyph="&#xE721;"
+                            FontSize="14" />
+                    </Button>
+                    <ProgressRing
+                        x:Name="SearchProgressRing"
+                        Width="20"
+                        Height="20"
+                        IsActive="False"
+                        Visibility="Collapsed"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="Searching pages" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel
+            Grid.Row="1"
+            Width="360"
+            Margin="0,8,0,12"
+            HorizontalAlignment="Right">
             <TextBlock
                 Text="{Binding SearchMessage}"
                 TextWrapping="Wrap" />
@@ -93,6 +119,6 @@
                 </ListView.ItemTemplate>
             </ListView>
         </StackPanel>
-    </StackPanel>
+    </Grid>
 
 </UserControl>
