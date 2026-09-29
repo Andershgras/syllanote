@@ -46,7 +46,7 @@ namespace Syllanote.Desktop
         private void SetNavigationEnabled(bool isEnabled)
         {
             NotebookItemsControl.IsEnabled = isEnabled;
-            PagesListView.IsEnabled = isEnabled;
+            PageSidebar.SetPageListEnabled(isEnabled);
         }
 
         public MainWindow(NotebookViewModel viewModel)
@@ -250,13 +250,7 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedSection is not null &&
                 ViewModel.SelectedSection.NotebookId == ViewModel.SelectedNotebook?.Id;
             var hasPage = IsSelectedPageCurrent();
-            NewPageButton.IsEnabled = hasSection;
-            PageEmptyState.Text = hasSection
-                ? "No pages yet. Create one to get started."
-                : "Select a section to see its pages.";
-            PageEmptyState.Visibility = !hasSection || ViewModel.Pages.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            PageSidebar.UpdateState(hasSection, ViewModel.Pages.Count > 0);
             EditorPageTitle.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             FormattingToolbar.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
             PageContentRichEditBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
@@ -695,7 +689,7 @@ namespace Syllanote.Desktop
             return page is not null &&
                 page.SectionId == ViewModel.SelectedSection?.Id &&
                 ViewModel.SelectedSection?.NotebookId == ViewModel.SelectedNotebook?.Id &&
-                ReferenceEquals(PagesListView.SelectedItem, page);
+                ReferenceEquals(PageSidebar.SelectedPage, page);
         }
         private async void RootGrid_Loaded(
             object sender,
@@ -815,7 +809,7 @@ namespace Syllanote.Desktop
                 {
                     ShowPageEditor();
                     RefreshSectionNavigation();
-                    PagesListView.SelectedItem = ViewModel.SelectedPage;
+                    PageSidebar.SelectPage(ViewModel.SelectedPage);
                     UpdatePageState();
                 }
                 else
@@ -984,7 +978,7 @@ namespace Syllanote.Desktop
                     ShowPageEditor();
                 }
                 RefreshSectionNavigation();
-                PagesListView.SelectedItem = ViewModel.SelectedPage;
+                PageSidebar.SelectPage(ViewModel.SelectedPage);
                 UpdatePageState();
                 TopBar.ClearSelectedSearchResult();
             }
@@ -1347,7 +1341,7 @@ namespace Syllanote.Desktop
                     await ViewModel.SelectPageAsync(currentPage);
                 }
 
-                PagesListView.SelectedItem = currentPage;
+                PageSidebar.SelectPage(currentPage);
                 ShowPageEditor();
                 UpdatePageState();
                 return currentPage;
@@ -1585,13 +1579,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            if (sender is not ListView listView)
-            {
-                return;
-            }
-
-            var page =
-                listView.SelectedItem as Syllanote.Domain.Entities.Page;
+            var page = PageSidebar.SelectedPage;
 
             var navigationVersion = _selectionNavigationVersion;
             await _selectionNavigationLock.WaitAsync();
@@ -1657,7 +1645,7 @@ namespace Syllanote.Desktop
                 {
                     await ViewModel.MoveSelectedPageDownCommand.ExecuteAsync(null);
                 }
-                PagesListView.SelectedItem = currentPage;
+                PageSidebar.SelectPage(currentPage);
                 UpdatePageState();
             }
             finally
@@ -1712,7 +1700,7 @@ namespace Syllanote.Desktop
                 try
                 {
                     await ViewModel.RenamePageCommand.ExecuteAsync(null);
-                    PagesListView.SelectedItem = page;
+                    PageSidebar.SelectPage(page);
                     UpdatePageState();
                 }
                 finally

@@ -232,91 +232,18 @@
         <!-- PAGES                -->
         <!-- ==================== -->
 
-        <Grid
+        <controls:PageSidebar
+            x:Name="PageSidebar"
             Grid.Row="1"
             Grid.Column="1"
-            RowSpacing="12"
-            Margin="0,0,24,0">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <Grid ColumnSpacing="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock
-                    Text="Pages"
-                    FontSize="20"
-                    FontWeight="SemiBold" />
-
-                <Button
-                    x:Name="NewPageButton"
-                    Grid.Column="1"
-                    Content="+"
-                    FontSize="18"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    IsEnabled="False"
-                    AutomationProperties.Name="New page"
-                    ToolTipService.ToolTip="New page"
-                    Click="NewPageButton_Click" />
-            </Grid>
-
-            <ListView
-                x:Name="PagesListView"
-                Grid.Row="1"
-                ItemsSource="{Binding Pages}"
-                SelectionChanged="PageListView_SelectionChanged">
-
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Background="Transparent">
-                            <Grid.ContextFlyout>
-                                <MenuFlyout Opening="PageContextMenu_Opening">
-                                    <MenuFlyoutItem
-                                        Text="Move up"
-                                        Click="MovePageUpMenuItem_Click" />
-                                    <MenuFlyoutItem
-                                        Text="Move down"
-                                        Click="MovePageDownMenuItem_Click" />
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem
-                                        Text="Rename"
-                                        Click="RenamePageMenuItem_Click" />
-                                    <MenuFlyoutItem
-                                        Text="Delete"
-                                        Click="DeletePageMenuItem_Click" />
-                                </MenuFlyout>
-                            </Grid.ContextFlyout>
-
-                            <TextBlock
-                                Text="{Binding Title}"
-                                FontSize="16" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-
-            </ListView>
-
-            <TextBlock
-                x:Name="PageEmptyState"
-                Grid.Row="1"
-                TextWrapping="Wrap"
-                Opacity="0.7" />
-
-        </Grid>
+            Margin="0,0,24,0"
+            NewPageRequested="NewPageButton_Click"
+            PageSelectionChanged="PageListView_SelectionChanged"
+            PageContextMenuOpening="PageContextMenu_Opening"
+            MovePageUpRequested="MovePageUpMenuItem_Click"
+            MovePageDownRequested="MovePageDownMenuItem_Click"
+            RenamePageRequested="RenamePageMenuItem_Click"
+            DeletePageRequested="DeletePageMenuItem_Click" />
 
         <!-- ==================== -->
         <!-- NOTE EDITOR          -->
