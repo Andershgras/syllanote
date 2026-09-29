@@ -143,6 +143,11 @@
                 Grid.Row="2"
                 PlaceholderText="Start writing..."
                 FontSize="14"
+                Padding="20,16"
+                Background="{ThemeResource ControlFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
                 SelectionChanged="PageContentRichEditBox_SelectionChanged"
                 TextChanged="PageContentRichEditBox_TextChanged"
                 TextWrapping="Wrap"
@@ -167,15 +172,30 @@
                 </primitives:FlyoutBase.AttachedFlyout>
             </RichEditBox>
 
-            <TextBlock
+            <StackPanel
                 x:Name="EditorEmptyState"
                 Grid.RowSpan="3"
-                Text="Select a page to start writing."
-                TextWrapping="Wrap"
-                TextAlignment="Center"
+                MaxWidth="260"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Opacity="0.7" />
+                Spacing="10">
+                <FontIcon
+                    Glyph="&#xE70F;"
+                    FontSize="32"
+                    Opacity="0.5"
+                    AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock
+                    Text="No page selected"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Text="Select a page from the list to start writing."
+                    Opacity="0.7"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </StackPanel>
         </Grid>
     </Border>
 
