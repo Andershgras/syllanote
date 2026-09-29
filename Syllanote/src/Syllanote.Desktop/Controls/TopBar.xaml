@@ -44,10 +44,41 @@
                 TextWrapping="Wrap" />
             <ListView
                 x:Name="SearchResultsListView"
+                Background="Transparent"
+                BorderThickness="0"
                 ItemsSource="{Binding SearchResults}"
                 SelectionChanged="SearchResultsListView_SelectionChanged"
                 MaxHeight="160"
                 AutomationProperties.Name="Search results">
+                <ListView.Resources>
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundPointerOver"
+                        ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundPressed"
+                        ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundSelected"
+                        ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundSelectedPointerOver"
+                        ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <CornerRadius x:Key="ListViewItemCornerRadius">6</CornerRadius>
+                </ListView.Resources>
+
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="MinHeight" Value="48" />
+                        <Setter Property="Margin" Value="0,1" />
+                        <Setter Property="Padding" Value="10,8" />
+                        <Setter Property="CornerRadius" Value="6" />
+                        <Setter Property="UseSystemFocusVisuals" Value="True" />
+                        <Setter Property="FocusVisualMargin" Value="-1" />
+                        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
