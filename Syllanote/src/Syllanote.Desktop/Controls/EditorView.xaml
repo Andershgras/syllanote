@@ -6,35 +6,43 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Border
+        Padding="16"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <TextBox
-            x:Name="EditorPageTitle"
-            Grid.Row="1"
-            Text="{Binding SelectedPageTitle}"
-            FontSize="28"
-            FontWeight="SemiBold"
-            TextWrapping="Wrap"
-            IsReadOnly="True"
-            IsTabStop="False"
-            MinHeight="56"
-            Padding="12,8"
-            Margin="0,0,0,8"
-            AutomationProperties.Name="Page title"
-            Visibility="Collapsed" />
+            <TextBox
+                x:Name="EditorPageTitle"
+                Grid.Row="0"
+                Text="{Binding SelectedPageTitle}"
+                FontSize="28"
+                FontWeight="SemiBold"
+                TextWrapping="Wrap"
+                IsReadOnly="True"
+                IsTabStop="False"
+                MinHeight="44"
+                Padding="0"
+                Margin="0,0,0,12"
+                Background="Transparent"
+                BorderThickness="0"
+                AutomationProperties.Name="Page title"
+                Visibility="Collapsed" />
 
-        <StackPanel
-            x:Name="FormattingToolbar"
-            Grid.Row="0"
-            Orientation="Horizontal"
-            Spacing="4"
-            Margin="0,0,0,8"
-            Visibility="Collapsed">
+            <StackPanel
+                x:Name="FormattingToolbar"
+                Grid.Row="1"
+                Orientation="Horizontal"
+                Spacing="4"
+                Margin="0,0,0,12"
+                Visibility="Collapsed">
             <ComboBox
                 x:Name="ParagraphStyleComboBox"
                 Width="140"
@@ -101,46 +109,47 @@
                 Click="NumberedListButton_Click">
                 <TextBlock Text="1." FontWeight="SemiBold" />
             </ToggleButton>
-        </StackPanel>
+            </StackPanel>
 
-        <RichEditBox
-            x:Name="PageContentRichEditBox"
-            Grid.Row="2"
-            PlaceholderText="Start writing..."
-            FontSize="14"
-            SelectionChanged="PageContentRichEditBox_SelectionChanged"
-            TextChanged="PageContentRichEditBox_TextChanged"
-            TextWrapping="Wrap"
-            MinHeight="200"
-            Visibility="Collapsed">
-            <primitives:FlyoutBase.AttachedFlyout>
-                <Flyout
-                    x:Name="ConceptDefinitionFlyout"
-                    Placement="Bottom"
-                    ShowMode="Transient">
-                    <StackPanel Width="340" Spacing="8">
-                        <TextBlock
-                            x:Name="ConceptDefinitionNameTextBlock"
-                            FontSize="18"
-                            FontWeight="SemiBold"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Name="ConceptDefinitionTextBlock"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-                </Flyout>
-            </primitives:FlyoutBase.AttachedFlyout>
-        </RichEditBox>
+            <RichEditBox
+                x:Name="PageContentRichEditBox"
+                Grid.Row="2"
+                PlaceholderText="Start writing..."
+                FontSize="14"
+                SelectionChanged="PageContentRichEditBox_SelectionChanged"
+                TextChanged="PageContentRichEditBox_TextChanged"
+                TextWrapping="Wrap"
+                MinHeight="200"
+                Visibility="Collapsed">
+                <primitives:FlyoutBase.AttachedFlyout>
+                    <Flyout
+                        x:Name="ConceptDefinitionFlyout"
+                        Placement="Bottom"
+                        ShowMode="Transient">
+                        <StackPanel Width="340" Spacing="8">
+                            <TextBlock
+                                x:Name="ConceptDefinitionNameTextBlock"
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                x:Name="ConceptDefinitionTextBlock"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Flyout>
+                </primitives:FlyoutBase.AttachedFlyout>
+            </RichEditBox>
 
-        <TextBlock
-            x:Name="EditorEmptyState"
-            Grid.RowSpan="3"
-            Text="Select a page to start writing."
-            TextWrapping="Wrap"
-            TextAlignment="Center"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Opacity="0.7" />
-    </Grid>
+            <TextBlock
+                x:Name="EditorEmptyState"
+                Grid.RowSpan="3"
+                Text="Select a page to start writing."
+                TextWrapping="Wrap"
+                TextAlignment="Center"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Opacity="0.7" />
+        </Grid>
+    </Border>
 
 </UserControl>
