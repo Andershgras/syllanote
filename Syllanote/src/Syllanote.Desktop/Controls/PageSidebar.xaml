@@ -8,7 +8,7 @@
     <Border
         Padding="12"
         Style="{StaticResource SyllanoteShellPaneStyle}">
-        <Grid RowSpacing="16">
+        <Grid RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -22,6 +22,7 @@
 
                 <TextBlock
                     Text="Pages"
+                    FontSize="18"
                     Style="{StaticResource SyllanotePanelTitleTextStyle}" />
 
                 <Button
@@ -70,9 +71,9 @@
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="MinHeight" Value="40" />
+                        <Setter Property="MinHeight" Value="38" />
                         <Setter Property="Margin" Value="0,1" />
-                        <Setter Property="Padding" Value="10,6" />
+                        <Setter Property="Padding" Value="10,4" />
                         <Setter Property="CornerRadius" Value="6" />
                         <Setter Property="UseSystemFocusVisuals" Value="True" />
                         <Setter Property="FocusVisualMargin" Value="-1" />
@@ -84,7 +85,7 @@
                     <DataTemplate>
                         <Grid Background="Transparent">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="18" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
@@ -115,9 +116,9 @@
 
                             <TextBlock
                                 Grid.Column="1"
-                                Margin="8,0,0,0"
+                                Margin="6,0,0,0"
                                 Text="{Binding Title}"
-                                FontSize="16"
+                                FontSize="14"
                                 TextTrimming="CharacterEllipsis"
                                 VerticalAlignment="Center" />
                         </Grid>

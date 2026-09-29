@@ -66,7 +66,7 @@
     <Border
         Padding="12"
         Style="{StaticResource SyllanoteShellPaneStyle}">
-        <Grid RowSpacing="16">
+        <Grid RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -80,6 +80,7 @@
 
                 <TextBlock
                     Text="Notebooks"
+                    FontSize="18"
                     Style="{StaticResource SyllanotePanelTitleTextStyle}" />
 
                 <Button
@@ -100,12 +101,12 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
                         <StackPanel Spacing="2">
-                            <Grid MinHeight="40">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="4" />
-                                <ColumnDefinition Width="32" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
+                            <Grid MinHeight="38">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
 
                             <Grid.ContextFlyout>
                                 <MenuFlyout Opening="NotebookContextMenu_Opening">
@@ -149,7 +150,7 @@
                                 Grid.Column="1"
                                 Grid.ColumnSpan="2"
                                 Style="{StaticResource NavigationRowButtonStyle}"
-                                Padding="4,4,8,4"
+                                Padding="4,3,8,3"
                                 AutomationProperties.Name="{x:Bind Name}"
                                 ToolTipService.ToolTip="Expand or collapse sections"
                                 Click="NotebookExpandCollapseButton_Click">
@@ -166,7 +167,9 @@
                                         Grid.Column="1"
                                         Margin="4,0,0,0"
                                         Text="{x:Bind Name}"
-                                        FontSize="16"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        TextTrimming="CharacterEllipsis"
                                         VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
@@ -176,7 +179,7 @@
                             <ItemsControl ItemsSource="{x:Bind Children}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
-                                        <Grid MinHeight="38" Margin="28,0,0,0">
+                                        <Grid MinHeight="36" Margin="28,0,0,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="4" />
                                                 <ColumnDefinition Width="*" />
@@ -220,7 +223,9 @@
                                             <Button
                                                 Grid.Column="1"
                                                 Style="{StaticResource NavigationRowButtonStyle}"
+                                                Padding="10,3"
                                                 Content="{x:Bind Name}"
+                                                FontSize="14"
                                                 AutomationProperties.Name="{x:Bind Name}"
                                                 Click="SectionNavigationButton_Click" />
                                         </Grid>
@@ -229,16 +234,17 @@
                             </ItemsControl>
 
                             <TextBlock
-                                Margin="42,6,8,4"
+                                Margin="42,4,8,4"
                                 Text="No sections yet. Create one to get started."
+                                FontSize="12"
                                 TextWrapping="Wrap"
                                 Opacity="0.7"
                                 Visibility="{x:Bind EmptySectionsVisibility, Mode=OneWay}" />
 
                             <Button
                                 Style="{StaticResource NavigationRowButtonStyle}"
-                                Margin="28,6,0,4"
-                                Padding="10,6"
+                                Margin="28,4,0,4"
+                                Padding="10,4"
                                 AutomationProperties.Name="New section"
                                 ToolTipService.ToolTip="New section"
                                 Click="NewSectionButton_Click">
