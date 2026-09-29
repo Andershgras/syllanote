@@ -7,8 +7,10 @@
     xmlns:controls="using:Syllanote.Desktop.Controls">
 
     <Grid
+        x:Name="RootGrid"
         Padding="24"
         DataContext="{x:Bind ViewModel}"
+        ActualThemeChanged="RootGrid_ActualThemeChanged"
         Loaded="RootGrid_Loaded">
 
         <Grid.RowDefinitions>

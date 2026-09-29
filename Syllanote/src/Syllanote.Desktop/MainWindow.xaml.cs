@@ -1,10 +1,12 @@
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
@@ -53,6 +55,7 @@ namespace Syllanote.Desktop
         {
             InitializeComponent();
             Title = "Syllanote";
+            SystemBackdrop = new MicaBackdrop();
 
             ViewModel = viewModel;
             NotebookSidebar.SetItemsSource(NotebookNavigationItems);
@@ -665,7 +668,49 @@ namespace Syllanote.Desktop
             object sender,
             RoutedEventArgs e)
         {
+            UpdateTitleBarTheme();
             await ViewModel.LoadNotebooksCommand.ExecuteAsync(null);
+        }
+
+        private void RootGrid_ActualThemeChanged(
+            FrameworkElement sender,
+            object args)
+        {
+            UpdateTitleBarTheme();
+        }
+
+        private void UpdateTitleBarTheme()
+        {
+            if (!AppWindowTitleBar.IsCustomizationSupported())
+            {
+                return;
+            }
+
+            var isDarkTheme = RootGrid.ActualTheme == ElementTheme.Dark;
+            var titleBar = AppWindow.TitleBar;
+
+            titleBar.BackgroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 32, 32, 32)
+                : ColorHelper.FromArgb(255, 243, 243, 243);
+            titleBar.ForegroundColor = isDarkTheme
+                ? Colors.White
+                : Colors.Black;
+            titleBar.InactiveBackgroundColor = titleBar.BackgroundColor;
+            titleBar.InactiveForegroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 160, 160, 160)
+                : ColorHelper.FromArgb(255, 96, 96, 96);
+            titleBar.ButtonBackgroundColor = titleBar.BackgroundColor;
+            titleBar.ButtonForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonInactiveBackgroundColor = titleBar.InactiveBackgroundColor;
+            titleBar.ButtonInactiveForegroundColor = titleBar.InactiveForegroundColor;
+            titleBar.ButtonHoverBackgroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 51, 51, 51)
+                : ColorHelper.FromArgb(255, 229, 229, 229);
+            titleBar.ButtonHoverForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonPressedBackgroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 64, 64, 64)
+                : ColorHelper.FromArgb(255, 218, 218, 218);
+            titleBar.ButtonPressedForegroundColor = titleBar.ForegroundColor;
         }
 
         private async void ConceptDictionaryMenuItem_Click(
