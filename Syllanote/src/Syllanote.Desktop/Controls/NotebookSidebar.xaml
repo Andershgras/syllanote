@@ -6,6 +6,63 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:viewModels="using:Syllanote.Desktop.ViewModels">
 
+    <UserControl.Resources>
+        <Style x:Key="NavigationRowButtonStyle" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorTransparentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+            <Setter Property="FocusVisualMargin" Value="-1" />
+            <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter
+                            x:Name="ContentPresenter"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                            <ContentPresenter.BackgroundTransition>
+                                <BrushTransition Duration="0:0:0.083" />
+                            </ContentPresenter.BackgroundTransition>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentPresenter.Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentPresenter.Background" Value="{ThemeResource SubtleFillColorTertiaryBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentPresenter.Opacity" Value="0.4" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </ContentPresenter>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Border
         Padding="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -97,12 +154,8 @@
                             <Button
                                 Grid.Column="1"
                                 Grid.ColumnSpan="2"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
-                                MinHeight="36"
+                                Style="{StaticResource NavigationRowButtonStyle}"
                                 Padding="4,4,8,4"
-                                Background="Transparent"
-                                BorderThickness="0"
                                 AutomationProperties.Name="{x:Bind Name}"
                                 ToolTipService.ToolTip="Expand or collapse sections"
                                 Click="NotebookExpandCollapseButton_Click">
@@ -173,12 +226,7 @@
 
                                             <Button
                                                 Grid.Column="1"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left"
-                                                MinHeight="36"
-                                                Padding="10,4"
-                                                Background="Transparent"
-                                                BorderThickness="0"
+                                                Style="{StaticResource NavigationRowButtonStyle}"
                                                 Content="{x:Bind Name}"
                                                 AutomationProperties.Name="{x:Bind Name}"
                                                 Click="SectionNavigationButton_Click" />
@@ -195,12 +243,9 @@
                                 Visibility="{x:Bind EmptySectionsVisibility, Mode=OneWay}" />
 
                             <Button
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
+                                Style="{StaticResource NavigationRowButtonStyle}"
                                 Margin="28,6,0,4"
                                 Padding="10,6"
-                                Background="Transparent"
-                                BorderThickness="0"
                                 Content="+  New section"
                                 AutomationProperties.Name="New section"
                                 ToolTipService.ToolTip="New section"
