@@ -60,6 +60,20 @@ namespace Syllanote.Desktop.Controls
             SearchRequested?.Invoke(this, e);
         }
 
+        private void FocusSearchKeyboardAccelerator_Invoked(
+            KeyboardAccelerator sender,
+            KeyboardAcceleratorInvokedEventArgs e)
+        {
+            if (!SearchTextBox.IsEnabled)
+            {
+                return;
+            }
+
+            SearchTextBox.Focus(FocusState.Keyboard);
+            SearchTextBox.SelectAll();
+            e.Handled = true;
+        }
+
         private void SearchResultsListView_SelectionChanged(
             object sender,
             SelectionChangedEventArgs e)

@@ -15,8 +15,15 @@
                 Width="360"
                 PlaceholderText="Search pages in all notebooks"
                 AutomationProperties.Name="Search pages"
-                AutomationProperties.HelpText="Press Enter to search"
-                KeyDown="SearchTextBox_KeyDown" />
+                AutomationProperties.HelpText="Press Ctrl+F to focus search and Enter to search"
+                KeyDown="SearchTextBox_KeyDown">
+                <TextBox.KeyboardAccelerators>
+                    <KeyboardAccelerator
+                        Key="F"
+                        Modifiers="Control"
+                        Invoked="FocusSearchKeyboardAccelerator_Invoked" />
+                </TextBox.KeyboardAccelerators>
+            </TextBox>
             <Button
                 x:Name="SearchButton"
                 Content="Search"
