@@ -34,6 +34,9 @@ namespace Syllanote.Desktop
             "Workspace.PageColumnWidth";
         private const string WindowWidthSettingKey = "Window.Width";
         private const string WindowHeightSettingKey = "Window.Height";
+        private const string WindowXSettingKey = "Window.X";
+        private const string WindowYSettingKey = "Window.Y";
+        private const string WindowMaximizedSettingKey = "Window.Maximized";
         private const int MinimumWindowWidth = 900;
         private const int MinimumWindowHeight = 600;
 
@@ -45,6 +48,9 @@ namespace Syllanote.Desktop
         private bool _isSuppressingEditorChanges;
         private bool _isUpdatingFormattingToolbar;
         private bool _isConceptHighlightUpdateQueued;
+        private bool _shouldRestoreMaximizedState;
+        private bool _hasLastRestoredWindowBounds;
+        private RectInt32 _lastRestoredWindowBounds;
         private int _editorChangeSuppressionVersion;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
@@ -125,44 +131,136 @@ namespace Syllanote.Desktop
             ApplicationData.Current.LocalSettings.Values[settingKey] = width;
         }
 
-        private void RestoreWindowSize()
+        private void RestoreWindowPlacement()
         {
             var settings = ApplicationData.Current.LocalSettings.Values;
+            _shouldRestoreMaximizedState =
+                settings.TryGetValue(
+                    WindowMaximizedSettingKey,
+                    out var storedMaximized) &&
+                storedMaximized is true;
+
             if (!settings.TryGetValue(WindowWidthSettingKey, out var storedWidth) ||
                 storedWidth is not int width ||
                 !settings.TryGetValue(WindowHeightSettingKey, out var storedHeight) ||
                 storedHeight is not int height)
             {
+                CaptureCurrentWindowBounds();
                 return;
             }
 
-            var displayArea = DisplayArea.GetFromWindowId(
-                AppWindow.Id,
-                DisplayAreaFallback.Primary);
-            var workArea = displayArea.WorkArea;
-            var minimumWidth = Math.Min(MinimumWindowWidth, workArea.Width);
-            var minimumHeight = Math.Min(MinimumWindowHeight, workArea.Height);
+            var x = AppWindow.Position.X;
+            var y = AppWindow.Position.Y;
+            var hasStoredPosition = false;
+            if (settings.TryGetValue(WindowXSettingKey, out var storedX) &&
+                storedX is int storedPositionX &&
+                settings.TryGetValue(WindowYSettingKey, out var storedY) &&
+                storedY is int storedPositionY)
+            {
+                x = storedPositionX;
+                y = storedPositionY;
+                hasStoredPosition = true;
+            }
+            var requestedBounds = new RectInt32(
+                x,
+                y,
+                width,
+                height);
+            var displayArea = hasStoredPosition
+                ? DisplayArea.GetFromRect(
+                    requestedBounds,
+                    DisplayAreaFallback.Nearest)
+                : DisplayArea.GetFromWindowId(
+                    AppWindow.Id,
+                    DisplayAreaFallback.Primary);
+            var safeBounds = ClampWindowBounds(
+                requestedBounds,
+                displayArea.WorkArea);
 
-            AppWindow.Resize(new SizeInt32(
-                Math.Clamp(width, minimumWidth, workArea.Width),
-                Math.Clamp(height, minimumHeight, workArea.Height)));
+            if (hasStoredPosition)
+            {
+                AppWindow.MoveAndResize(safeBounds);
+            }
+            else
+            {
+                AppWindow.Resize(new SizeInt32(
+                    safeBounds.Width,
+                    safeBounds.Height));
+            }
+
+            CaptureCurrentWindowBounds();
         }
 
-        private static void MainWindow_Closing(
-            AppWindow sender,
-            AppWindowClosingEventArgs args)
+        private static RectInt32 ClampWindowBounds(
+            RectInt32 requestedBounds,
+            RectInt32 workArea)
         {
-            if (sender.Presenter is not OverlappedPresenter
+            var minimumWidth = Math.Min(MinimumWindowWidth, workArea.Width);
+            var minimumHeight = Math.Min(MinimumWindowHeight, workArea.Height);
+            var width = Math.Clamp(
+                requestedBounds.Width,
+                minimumWidth,
+                workArea.Width);
+            var height = Math.Clamp(
+                requestedBounds.Height,
+                minimumHeight,
+                workArea.Height);
+            var x = Math.Clamp(
+                requestedBounds.X,
+                workArea.X,
+                workArea.X + workArea.Width - width);
+            var y = Math.Clamp(
+                requestedBounds.Y,
+                workArea.Y,
+                workArea.Y + workArea.Height - height);
+
+            return new RectInt32(x, y, width, height);
+        }
+
+        private void AppWindow_Changed(
+            AppWindow sender,
+            AppWindowChangedEventArgs args)
+        {
+            if ((args.DidPositionChange || args.DidSizeChange) &&
+                sender.Presenter is OverlappedPresenter
                 {
                     State: OverlappedPresenterState.Restored
                 })
             {
-                return;
+                CaptureCurrentWindowBounds();
             }
+        }
 
+        private void CaptureCurrentWindowBounds()
+        {
+            _lastRestoredWindowBounds = new RectInt32(
+                AppWindow.Position.X,
+                AppWindow.Position.Y,
+                AppWindow.Size.Width,
+                AppWindow.Size.Height);
+            _hasLastRestoredWindowBounds = true;
+        }
+
+        private void MainWindow_Closing(
+            AppWindow sender,
+            AppWindowClosingEventArgs args)
+        {
             var settings = ApplicationData.Current.LocalSettings.Values;
-            settings[WindowWidthSettingKey] = sender.Size.Width;
-            settings[WindowHeightSettingKey] = sender.Size.Height;
+            settings[WindowMaximizedSettingKey] =
+                sender.Presenter is OverlappedPresenter
+                {
+                    State: OverlappedPresenterState.Maximized
+                };
+
+            if (_hasLastRestoredWindowBounds)
+            {
+                settings[WindowXSettingKey] = _lastRestoredWindowBounds.X;
+                settings[WindowYSettingKey] = _lastRestoredWindowBounds.Y;
+                settings[WindowWidthSettingKey] =
+                    _lastRestoredWindowBounds.Width;
+                settings[WindowHeightSettingKey] =
+                    _lastRestoredWindowBounds.Height;
+            }
         }
 
         private void SetNavigationEnabled(bool isEnabled)
@@ -175,7 +273,8 @@ namespace Syllanote.Desktop
         {
             InitializeComponent();
             RestorePanelWidths();
-            RestoreWindowSize();
+            RestoreWindowPlacement();
+            AppWindow.Changed += AppWindow_Changed;
             AppWindow.Closing += MainWindow_Closing;
             Title = "Syllanote";
             SystemBackdrop = new MicaBackdrop();
@@ -792,6 +891,12 @@ namespace Syllanote.Desktop
             RoutedEventArgs e)
         {
             UpdateTitleBarTheme();
+            if (_shouldRestoreMaximizedState &&
+                AppWindow.Presenter is OverlappedPresenter presenter)
+            {
+                _shouldRestoreMaximizedState = false;
+                presenter.Maximize();
+            }
             await ViewModel.LoadNotebooksCommand.ExecuteAsync(null);
         }
 
