@@ -45,7 +45,7 @@ namespace Syllanote.Desktop
 
         private void SetNavigationEnabled(bool isEnabled)
         {
-            NotebookItemsControl.IsEnabled = isEnabled;
+            NotebookSidebar.SetNavigationEnabled(isEnabled);
             PageSidebar.SetPageListEnabled(isEnabled);
         }
 
@@ -55,6 +55,7 @@ namespace Syllanote.Desktop
             Title = "Syllanote";
 
             ViewModel = viewModel;
+            NotebookSidebar.SetItemsSource(NotebookNavigationItems);
             ConceptDefinitionFlyout.OverlayInputPassThroughElement =
                 PageContentRichEditBox;
             PageContentRichEditBox.AddHandler(
@@ -170,9 +171,7 @@ namespace Syllanote.Desktop
         }
         private void UpdateNotebookEmptyState()
         {
-            NotebookEmptyState.Visibility = ViewModel.Notebooks.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            NotebookSidebar.UpdateEmptyState(ViewModel.Notebooks.Count > 0);
         }
 
         private void RebuildNotebookNavigation()
