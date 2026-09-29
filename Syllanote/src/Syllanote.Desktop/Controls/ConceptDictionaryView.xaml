@@ -55,11 +55,23 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <TextBlock
+                    <StackPanel
                         x:Name="ConceptEmptyState"
-                        Text="No concepts yet. Create one to get started."
-                        TextWrapping="Wrap"
-                        Opacity="0.7" />
+                        MaxWidth="240"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="6">
+                        <FontIcon
+                            Glyph="&#xE8B7;"
+                            FontSize="24"
+                            Style="{StaticResource SyllanoteEmptyStateIconStyle}" />
+                        <TextBlock
+                            Text="No concepts yet"
+                            Style="{StaticResource SyllanoteEmptyStateTitleTextStyle}" />
+                        <TextBlock
+                            Text="Create a concept to build your dictionary."
+                            Style="{StaticResource SyllanoteEmptyStateDescriptionTextStyle}" />
+                    </StackPanel>
                 </Grid>
                 <TextBox
                     x:Name="ConceptNameTextBox"
@@ -116,14 +128,25 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <TextBlock
+                    <StackPanel
                         x:Name="ConceptReferencesEmptyState"
-                        Text="Select a concept to view references."
-                        TextWrapping="Wrap"
+                        MaxWidth="260"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        TextAlignment="Center"
-                        Opacity="0.7" />
+                        Spacing="6">
+                        <FontIcon
+                            Glyph="&#xE8A5;"
+                            FontSize="24"
+                            Style="{StaticResource SyllanoteEmptyStateIconStyle}" />
+                        <TextBlock
+                            x:Name="ConceptReferencesEmptyStateTitle"
+                            Text="No concept selected"
+                            Style="{StaticResource SyllanoteEmptyStateTitleTextStyle}" />
+                        <TextBlock
+                            x:Name="ConceptReferencesEmptyStateDescription"
+                            Text="Select a concept to view references."
+                            Style="{StaticResource SyllanoteEmptyStateDescriptionTextStyle}" />
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </ScrollViewer>

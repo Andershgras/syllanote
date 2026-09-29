@@ -43,7 +43,10 @@ namespace Syllanote.Desktop.Controls
             ConceptEmptyState.Visibility = hasConcepts
                 ? Visibility.Collapsed
                 : Visibility.Visible;
-            ConceptReferencesEmptyState.Text = hasCurrentConcept
+            ConceptReferencesEmptyStateTitle.Text = hasCurrentConcept
+                ? "No references yet"
+                : "No concept selected";
+            ConceptReferencesEmptyStateDescription.Text = hasCurrentConcept
                 ? "This concept is not referenced on any pages."
                 : "Select a concept to view references.";
             ConceptReferencesEmptyState.Visibility = hasReferences
