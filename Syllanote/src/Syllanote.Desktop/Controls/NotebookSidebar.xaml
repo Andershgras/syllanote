@@ -89,15 +89,17 @@
 
                 <Button
                     Grid.Column="1"
-                    Content="+"
-                    FontSize="18"
                     Width="32"
                     Height="32"
                     Padding="0"
                     CornerRadius="6"
                     AutomationProperties.Name="New notebook"
                     ToolTipService.ToolTip="New notebook"
-                    Click="NewNotebookButton_Click" />
+                    Click="NewNotebookButton_Click">
+                    <FontIcon
+                        Glyph="&#xE710;"
+                        FontSize="14" />
+                </Button>
             </Grid>
 
             <ItemsControl
@@ -164,10 +166,9 @@
                                         <ColumnDefinition Width="28" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock
-                                        Text="{x:Bind ExpandCollapseGlyph, Mode=OneWay}"
+                                    <FontIcon
+                                        Glyph="{x:Bind ExpandCollapseGlyph, Mode=OneWay}"
                                         FontSize="14"
-                                        TextAlignment="Center"
                                         VerticalAlignment="Center" />
                                     <TextBlock
                                         Grid.Column="1"
@@ -246,10 +247,20 @@
                                 Style="{StaticResource NavigationRowButtonStyle}"
                                 Margin="28,6,0,4"
                                 Padding="10,6"
-                                Content="+  New section"
                                 AutomationProperties.Name="New section"
                                 ToolTipService.ToolTip="New section"
-                                Click="NewSectionButton_Click" />
+                                Click="NewSectionButton_Click">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <FontIcon
+                                        Glyph="&#xE710;"
+                                        FontSize="14" />
+                                    <TextBlock
+                                        Text="New section"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                         </StackPanel>
                     </DataTemplate>
