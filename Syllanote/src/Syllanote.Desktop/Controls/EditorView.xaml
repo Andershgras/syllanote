@@ -67,10 +67,7 @@
 
                     <ToggleButton
                         x:Name="BoldButton"
-                        Width="40"
-                        Height="36"
-                        Padding="0"
-                        AllowFocusOnInteraction="False"
+                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
                         AutomationProperties.Name="Bold"
                         ToolTipService.ToolTip="Bold"
                         Click="BoldButton_Click">
@@ -78,10 +75,7 @@
                     </ToggleButton>
                     <ToggleButton
                         x:Name="ItalicButton"
-                        Width="40"
-                        Height="36"
-                        Padding="0"
-                        AllowFocusOnInteraction="False"
+                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
                         AutomationProperties.Name="Italic"
                         ToolTipService.ToolTip="Italic"
                         Click="ItalicButton_Click">
@@ -89,10 +83,7 @@
                     </ToggleButton>
                     <ToggleButton
                         x:Name="UnderlineButton"
-                        Width="40"
-                        Height="36"
-                        Padding="0"
-                        AllowFocusOnInteraction="False"
+                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
                         AutomationProperties.Name="Underline"
                         ToolTipService.ToolTip="Underline"
                         Click="UnderlineButton_Click">
@@ -108,10 +99,7 @@
 
                     <ToggleButton
                         x:Name="BulletedListButton"
-                        Width="40"
-                        Height="36"
-                        Padding="0"
-                        AllowFocusOnInteraction="False"
+                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
                         AutomationProperties.Name="Bulleted list"
                         ToolTipService.ToolTip="Bulleted list"
                         Click="BulletedListButton_Click">
@@ -121,10 +109,7 @@
                     </ToggleButton>
                     <ToggleButton
                         x:Name="NumberedListButton"
-                        Width="40"
-                        Height="36"
-                        Padding="0"
-                        AllowFocusOnInteraction="False"
+                        Style="{StaticResource SyllanoteEditorToolbarToggleButtonStyle}"
                         AutomationProperties.Name="Numbered list"
                         ToolTipService.ToolTip="Numbered list"
                         Click="NumberedListButton_Click">
