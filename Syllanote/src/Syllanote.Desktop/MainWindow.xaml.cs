@@ -160,8 +160,7 @@ namespace Syllanote.Desktop
         {
             _isConceptOperationInProgress = isInProgress;
             SetNavigationEnabled(!isInProgress);
-            SearchButton.IsEnabled = !isInProgress;
-            SearchTextBox.IsEnabled = !isInProgress;
+            TopBar.SetSearchInputEnabled(!isInProgress);
             NewConceptButton.IsEnabled = !isInProgress;
             ConceptsListView.IsEnabled = !isInProgress;
             ConceptReferencesListView.IsEnabled = !isInProgress;
@@ -945,30 +944,30 @@ namespace Syllanote.Desktop
                 SetConceptOperationInProgress(false);
             }
         }
-        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        private async void TopBar_SearchRequested(object sender, RoutedEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress)
             {
                 return;
             }
 
-            SearchButton.IsEnabled = false;
+            TopBar.SetSearchSubmissionEnabled(false);
             try
             {
-                ViewModel.SearchText = SearchTextBox.Text;
+                ViewModel.SearchText = TopBar.SearchText;
                 await ViewModel.SearchPagesCommand.ExecuteAsync(null);
             }
             finally
             {
-                SearchButton.IsEnabled = true;
+                TopBar.SetSearchSubmissionEnabled(true);
             }
         }
 
-        private async void SearchResultsListView_SelectionChanged(
+        private async void TopBar_SearchResultSelectionChanged(
             object sender, SelectionChangedEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                SearchResultsListView.SelectedItem is not SearchPageResult result)
+                TopBar.SelectedSearchResult is not SearchPageResult result)
             {
                 return;
             }
@@ -976,9 +975,7 @@ namespace Syllanote.Desktop
             _isSearchNavigationInProgress = true;
             _selectionNavigationVersion++;
             SetNavigationEnabled(false);
-            SearchButton.IsEnabled = false;
-            SearchTextBox.IsEnabled = false;
-            SearchResultsListView.IsEnabled = false;
+            TopBar.SetSearchEnabled(false);
             await _selectionNavigationLock.WaitAsync();
             try
             {
@@ -989,14 +986,12 @@ namespace Syllanote.Desktop
                 RefreshSectionNavigation();
                 PagesListView.SelectedItem = ViewModel.SelectedPage;
                 UpdatePageState();
-                SearchResultsListView.SelectedItem = null;
+                TopBar.ClearSelectedSearchResult();
             }
             finally
             {
                 _selectionNavigationLock.Release();
-                SearchResultsListView.IsEnabled = true;
-                SearchTextBox.IsEnabled = true;
-                SearchButton.IsEnabled = true;
+                TopBar.SetSearchEnabled(true);
                 SetNavigationEnabled(true);
                 _isSearchNavigationInProgress = false;
             }
