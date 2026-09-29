@@ -126,14 +126,16 @@
             Grid.Column="1"
             Style="{StaticResource SyllanoteColumnSplitterStyle}"
             AutomationProperties.Name="Resize notebook panel"
-            DragDelta="NotebookColumnSplitter_DragDelta" />
+            DragDelta="NotebookColumnSplitter_DragDelta"
+            DragCompleted="NotebookColumnSplitter_DragCompleted" />
 
         <primitives:Thumb
             Grid.Row="1"
             Grid.Column="3"
             Style="{StaticResource SyllanoteColumnSplitterStyle}"
             AutomationProperties.Name="Resize page panel"
-            DragDelta="PageColumnSplitter_DragDelta" />
+            DragDelta="PageColumnSplitter_DragDelta"
+            DragCompleted="PageColumnSplitter_DragCompleted" />
 
     </Grid>
 

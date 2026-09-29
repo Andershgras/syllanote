@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace Syllanote.Desktop
 {
@@ -26,6 +27,10 @@ namespace Syllanote.Desktop
         private const float NormalFontSizeInPoints = 10.5f;
         private const float Heading1FontSizeInPoints = 18;
         private const float Heading2FontSizeInPoints = 15;
+        private const string NotebookColumnWidthSettingKey =
+            "Workspace.NotebookColumnWidth";
+        private const string PageColumnWidthSettingKey =
+            "Workspace.PageColumnWidth";
 
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
@@ -67,6 +72,54 @@ namespace Syllanote.Desktop
                     PageColumn.MaxWidth));
         }
 
+        private void NotebookColumnSplitter_DragCompleted(
+            object sender,
+            DragCompletedEventArgs e) =>
+            SavePanelWidth(
+                NotebookColumnWidthSettingKey,
+                NotebookColumn.ActualWidth);
+
+        private void PageColumnSplitter_DragCompleted(
+            object sender,
+            DragCompletedEventArgs e) =>
+            SavePanelWidth(
+                PageColumnWidthSettingKey,
+                PageColumn.ActualWidth);
+
+        private void RestorePanelWidths()
+        {
+            NotebookColumn.Width = new GridLength(
+                GetStoredPanelWidth(
+                    NotebookColumnWidthSettingKey,
+                    NotebookColumn.Width.Value,
+                    NotebookColumn.MinWidth,
+                    NotebookColumn.MaxWidth));
+            PageColumn.Width = new GridLength(
+                GetStoredPanelWidth(
+                    PageColumnWidthSettingKey,
+                    PageColumn.Width.Value,
+                    PageColumn.MinWidth,
+                    PageColumn.MaxWidth));
+        }
+
+        private static double GetStoredPanelWidth(
+            string settingKey,
+            double defaultWidth,
+            double minimumWidth,
+            double maximumWidth)
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            return settings.TryGetValue(settingKey, out var storedValue) &&
+                storedValue is double storedWidth
+                    ? Math.Clamp(storedWidth, minimumWidth, maximumWidth)
+                    : defaultWidth;
+        }
+
+        private static void SavePanelWidth(string settingKey, double width)
+        {
+            ApplicationData.Current.LocalSettings.Values[settingKey] = width;
+        }
+
         private void SetNavigationEnabled(bool isEnabled)
         {
             NotebookSidebar.SetNavigationEnabled(isEnabled);
@@ -76,6 +129,7 @@ namespace Syllanote.Desktop
         public MainWindow(NotebookViewModel viewModel)
         {
             InitializeComponent();
+            RestorePanelWidths();
             Title = "Syllanote";
             SystemBackdrop = new MicaBackdrop();
 
