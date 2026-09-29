@@ -37,6 +37,10 @@ namespace Syllanote.Desktop.Controls
         public void SetSearchSubmissionEnabled(bool isEnabled)
         {
             SearchButton.IsEnabled = isEnabled;
+            SearchProgressRing.IsActive = !isEnabled;
+            SearchProgressRing.Visibility = isEnabled
+                ? Visibility.Collapsed
+                : Visibility.Visible;
         }
 
         public void ClearSelectedSearchResult()
@@ -51,7 +55,7 @@ namespace Syllanote.Desktop.Controls
 
         private void SearchTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            if (e.Key != VirtualKey.Enter)
+            if (e.Key != VirtualKey.Enter || !SearchButton.IsEnabled)
             {
                 return;
             }

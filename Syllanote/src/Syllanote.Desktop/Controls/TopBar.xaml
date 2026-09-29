@@ -28,6 +28,14 @@
                 x:Name="SearchButton"
                 Content="Search"
                 Click="SearchButton_Click" />
+            <ProgressRing
+                x:Name="SearchProgressRing"
+                Width="20"
+                Height="20"
+                IsActive="False"
+                Visibility="Collapsed"
+                VerticalAlignment="Center"
+                AutomationProperties.Name="Searching pages" />
         </StackPanel>
 
         <StackPanel Margin="0,0,0,12">
