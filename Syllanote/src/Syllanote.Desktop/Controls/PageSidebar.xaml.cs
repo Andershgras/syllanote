@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using DomainPage = Syllanote.Domain.Entities.Page;
 
@@ -28,12 +29,22 @@ namespace Syllanote.Desktop.Controls
         public void UpdateState(bool hasSection, bool hasPages)
         {
             NewPageButton.IsEnabled = hasSection;
-            PageEmptyState.Text = hasSection
-                ? "No pages yet. Create one to get started."
+            PageEmptyStateIcon.Glyph = hasSection ? "\uE8A5" : "\uE8B7";
+            PageEmptyStateTitle.Text = hasSection
+                ? "No pages yet"
+                : "No section selected";
+            PageEmptyStateDescription.Text = hasSection
+                ? "Create a page to get started."
                 : "Select a section to see its pages.";
             PageEmptyState.Visibility = !hasSection || !hasPages
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+
+            var newPageHelpText = hasSection
+                ? "New page"
+                : "Select a section before creating a page.";
+            ToolTipService.SetToolTip(NewPageButton, newPageHelpText);
+            AutomationProperties.SetHelpText(NewPageButton, newPageHelpText);
         }
 
         public void SetPageListEnabled(bool isEnabled)

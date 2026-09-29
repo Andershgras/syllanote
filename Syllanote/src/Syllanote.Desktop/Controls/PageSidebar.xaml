@@ -133,12 +133,33 @@
                 </ListView.ItemTemplate>
             </ListView>
 
-            <TextBlock
+            <StackPanel
                 x:Name="PageEmptyState"
                 Grid.Row="1"
-                Margin="8,4"
-                TextWrapping="Wrap"
-                Opacity="0.7" />
+                MaxWidth="190"
+                Margin="12,28"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Spacing="8">
+                <FontIcon
+                    x:Name="PageEmptyStateIcon"
+                    Glyph="&#xE8B7;"
+                    FontSize="28"
+                    Opacity="0.5"
+                    AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock
+                    x:Name="PageEmptyStateTitle"
+                    Text="No section selected"
+                    FontWeight="SemiBold"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    x:Name="PageEmptyStateDescription"
+                    Text="Select a section to see its pages."
+                    Opacity="0.7"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </StackPanel>
         </Grid>
     </Border>
 
