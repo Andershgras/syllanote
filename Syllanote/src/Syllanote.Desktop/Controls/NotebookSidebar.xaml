@@ -6,42 +6,50 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:viewModels="using:Syllanote.Desktop.ViewModels">
 
-    <Grid RowSpacing="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Border
+        Padding="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="8">
+        <Grid RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <TextBlock
-                Text="Notebooks"
-                FontSize="20"
-                FontWeight="SemiBold" />
+                <TextBlock
+                    Text="Notebooks"
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center" />
 
-            <Button
-                Grid.Column="1"
-                Content="+"
-                FontSize="18"
-                Width="32"
-                Height="32"
-                Padding="0"
-                AutomationProperties.Name="New notebook"
-                ToolTipService.ToolTip="New notebook"
-                Click="NewNotebookButton_Click" />
-        </Grid>
+                <Button
+                    Grid.Column="1"
+                    Content="+"
+                    FontSize="18"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    CornerRadius="6"
+                    AutomationProperties.Name="New notebook"
+                    ToolTipService.ToolTip="New notebook"
+                    Click="NewNotebookButton_Click" />
+            </Grid>
 
-        <ItemsControl
-            x:Name="NotebookItemsControl"
-            Grid.Row="1">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
-                    <StackPanel>
-                        <Grid MinHeight="40">
+            <ItemsControl
+                x:Name="NotebookItemsControl"
+                Grid.Row="1">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
+                        <StackPanel Spacing="2">
+                            <Grid MinHeight="40">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="4" />
                                 <ColumnDefinition Width="32" />
@@ -72,6 +80,14 @@
                             </Grid.ContextFlyout>
 
                             <Border
+                                Grid.ColumnSpan="3"
+                                Margin="0,1"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="6"
+                                IsHitTestVisible="False"
+                                Visibility="{x:Bind SelectedNotebookIndicatorVisibility, Mode=OneWay}" />
+
+                            <Border
                                 Width="3"
                                 Height="24"
                                 CornerRadius="2"
@@ -80,29 +96,34 @@
 
                             <Button
                                 Grid.Column="1"
-                                Width="28"
-                                Height="28"
-                                Padding="0"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Content="{x:Bind ExpandCollapseGlyph, Mode=OneWay}"
-                                FontSize="14"
-                                AutomationProperties.Name="Expand or collapse notebook sections"
-                                ToolTipService.ToolTip="Expand or collapse sections"
-                                Click="NotebookExpandCollapseButton_Click" />
-
-                            <Button
-                                Grid.Column="2"
+                                Grid.ColumnSpan="2"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Left"
                                 MinHeight="36"
-                                Padding="8,4"
+                                Padding="4,4,8,4"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                Content="{x:Bind Name}"
-                                FontSize="16"
                                 AutomationProperties.Name="{x:Bind Name}"
-                                Click="NotebookNavigationButton_Click" />
+                                ToolTipService.ToolTip="Expand or collapse sections"
+                                Click="NotebookExpandCollapseButton_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Text="{x:Bind ExpandCollapseGlyph, Mode=OneWay}"
+                                        FontSize="14"
+                                        TextAlignment="Center"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Margin="4,0,0,0"
+                                        Text="{x:Bind Name}"
+                                        FontSize="16"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
                         </Grid>
 
                         <StackPanel Visibility="{x:Bind SectionControlsVisibility, Mode=OneWay}">
@@ -136,6 +157,14 @@
                                             </Grid.ContextFlyout>
 
                                             <Border
+                                                Grid.ColumnSpan="2"
+                                                Margin="0,1"
+                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="6"
+                                                IsHitTestVisible="False"
+                                                Visibility="{x:Bind SelectedSectionIndicatorVisibility, Mode=OneWay}" />
+
+                                            <Border
                                                 Width="3"
                                                 Height="22"
                                                 CornerRadius="2"
@@ -159,7 +188,7 @@
                             </ItemsControl>
 
                             <TextBlock
-                                Margin="42,4,0,4"
+                                Margin="42,6,8,4"
                                 Text="No sections yet. Create one to get started."
                                 TextWrapping="Wrap"
                                 Opacity="0.7"
@@ -168,7 +197,7 @@
                             <Button
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Left"
-                                Margin="28,4,0,4"
+                                Margin="28,6,0,4"
                                 Padding="10,6"
                                 Background="Transparent"
                                 BorderThickness="0"
@@ -177,17 +206,19 @@
                                 ToolTipService.ToolTip="New section"
                                 Click="NewSectionButton_Click" />
                         </StackPanel>
-                    </StackPanel>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-        <TextBlock
-            x:Name="NotebookEmptyState"
-            Grid.Row="1"
-            Text="No notebooks yet. Create one to get started."
-            TextWrapping="Wrap"
-            Opacity="0.7" />
-    </Grid>
+            <TextBlock
+                x:Name="NotebookEmptyState"
+                Grid.Row="1"
+                Margin="8,4"
+                Text="No notebooks yet. Create one to get started."
+                TextWrapping="Wrap"
+                Opacity="0.7" />
+        </Grid>
+    </Border>
 
 </UserControl>

@@ -1070,44 +1070,6 @@ namespace Syllanote.Desktop
                 await ViewModel.CreatePageCommand.ExecuteAsync(null);
             }
         }
-        private async void NotebookNavigationButton_Click(
-            object sender,
-            RoutedEventArgs e)
-        {
-            if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                (sender as FrameworkElement)?.DataContext
-                    is not NotebookNavigationItem navigationItem ||
-                navigationItem.Notebook is not Notebook notebook)
-            {
-                return;
-            }
-
-            var navigationVersion = ++_selectionNavigationVersion;
-            navigationItem.IsExpanded = true;
-            ViewModel.SelectedNotebook = notebook;
-            ShowPageEditor();
-            await _selectionNavigationLock.WaitAsync();
-            try
-            {
-                if (navigationVersion != _selectionNavigationVersion ||
-                    _isSearchNavigationInProgress)
-                {
-                    return;
-                }
-
-                await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
-                if (navigationVersion == _selectionNavigationVersion &&
-                    ViewModel.SelectedNotebook?.Id == notebook.Id)
-                {
-                    RefreshSectionNavigation();
-                }
-            }
-            finally
-            {
-                _selectionNavigationLock.Release();
-            }
-        }
-
         private async void SectionNavigationButton_Click(
             object sender,
             RoutedEventArgs e)

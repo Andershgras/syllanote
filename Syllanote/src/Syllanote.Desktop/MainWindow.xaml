@@ -39,7 +39,6 @@
             Grid.Column="0"
             Margin="0,0,24,0"
             NewNotebookRequested="NewNotebookButton_Click"
-            NotebookNavigationRequested="NotebookNavigationButton_Click"
             NotebookExpandCollapseRequested="NotebookExpandCollapseButton_Click"
             NotebookContextMenuOpening="NotebookContextMenu_Opening"
             MoveNotebookUpRequested="MoveNotebookUpMenuItem_Click"

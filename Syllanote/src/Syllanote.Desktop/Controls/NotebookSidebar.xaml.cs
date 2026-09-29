@@ -12,7 +12,6 @@ namespace Syllanote.Desktop.Controls
     public sealed partial class NotebookSidebar : UserControl
     {
         public event RoutedEventHandler? NewNotebookRequested;
-        public event RoutedEventHandler? NotebookNavigationRequested;
         public event RoutedEventHandler? NotebookExpandCollapseRequested;
         public event NavigationContextMenuOpeningEventHandler? NotebookContextMenuOpening;
         public event RoutedEventHandler? MoveNotebookUpRequested;
@@ -53,9 +52,6 @@ namespace Syllanote.Desktop.Controls
 
         private void NewNotebookButton_Click(object sender, RoutedEventArgs e) =>
             NewNotebookRequested?.Invoke(sender, e);
-
-        private void NotebookNavigationButton_Click(object sender, RoutedEventArgs e) =>
-            NotebookNavigationRequested?.Invoke(sender, e);
 
         private void NotebookExpandCollapseButton_Click(object sender, RoutedEventArgs e) =>
             NotebookExpandCollapseRequested?.Invoke(sender, e);
