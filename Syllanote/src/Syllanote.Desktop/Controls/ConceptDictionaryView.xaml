@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<UserControl
+    x:Class="Syllanote.Desktop.Controls.ConceptDictionaryView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Text="Concept Dictionary"
+                FontSize="28"
+                FontWeight="SemiBold"
+                TextWrapping="Wrap" />
+            <Button
+                Grid.Column="1"
+                Content="Back to page"
+                Click="ConceptBackButton_Click" />
+        </Grid>
+
+        <TextBlock
+            Grid.Row="1"
+            Text="{Binding SelectedNotebook.Name}"
+            Opacity="0.7" />
+
+        <ScrollViewer
+            Grid.Row="2"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12">
+                <Button
+                    x:Name="NewConceptButton"
+                    Content="New concept"
+                    Click="NewConceptButton_Click" />
+                <Grid Height="140">
+                    <ListView
+                        x:Name="ConceptsListView"
+                        ItemsSource="{Binding Concepts}"
+                        SelectionChanged="ConceptsListView_SelectionChanged"
+                        AutomationProperties.Name="Concepts">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock
+                                    Text="{Binding Name}"
+                                    TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <TextBlock
+                        x:Name="ConceptEmptyState"
+                        Text="No concepts yet. Create one to get started."
+                        TextWrapping="Wrap"
+                        Opacity="0.7" />
+                </Grid>
+                <TextBox
+                    x:Name="ConceptNameTextBox"
+                    Header="Name"
+                    PlaceholderText="e.g. Dependency Injection"
+                    TextChanged="ConceptInput_TextChanged" />
+                <TextBox
+                    x:Name="ConceptDefinitionTextBox"
+                    Header="Definition"
+                    PlaceholderText="Write your own definition..."
+                    AcceptsReturn="True"
+                    TextWrapping="Wrap"
+                    Height="160"
+                    TextChanged="ConceptInput_TextChanged" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        x:Name="SaveConceptButton"
+                        Content="Create"
+                        IsEnabled="False"
+                        Click="SaveConceptButton_Click" />
+                    <Button
+                        x:Name="DeleteConceptButton"
+                        Content="Delete"
+                        IsEnabled="False"
+                        Click="DeleteConceptButton_Click" />
+                </StackPanel>
+                <TextBlock
+                    x:Name="ConceptMessage"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Text="Referenced on pages"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Margin="0,8,0,0" />
+                <Grid Height="180">
+                    <ListView
+                        x:Name="ConceptReferencesListView"
+                        ItemsSource="{Binding ConceptReferences}"
+                        SelectionMode="Single"
+                        SelectionChanged="ConceptReferencesListView_SelectionChanged"
+                        AutomationProperties.Name="Concept references">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="2">
+                                    <TextBlock
+                                        Text="{Binding PageTitle}"
+                                        FontWeight="SemiBold"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Text="{Binding SectionName}"
+                                        Opacity="0.7"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <TextBlock
+                        x:Name="ConceptReferencesEmptyState"
+                        Text="Select a concept to view references."
+                        TextWrapping="Wrap"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        TextAlignment="Center"
+                        Opacity="0.7" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+
+</UserControl>

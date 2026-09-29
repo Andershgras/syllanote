@@ -104,32 +104,21 @@ namespace Syllanote.Desktop
 
         private void ShowPageEditor()
         {
-            ConceptDictionaryPanel.Visibility = Visibility.Collapsed;
+            ConceptDictionaryView.Visibility = Visibility.Collapsed;
             EditorView.Visibility = Visibility.Visible;
         }
 
         private void UpdateConceptEditorState()
         {
-            var selected = ConceptsListView.SelectedItem as Concept;
+            var selected = ConceptDictionaryView.SelectedConcept;
             var hasCurrentConcept = selected is not null &&
                 selected.NotebookId == ViewModel.SelectedNotebook?.Id;
-            SaveConceptButton.Content = hasCurrentConcept ? "Save" : "Create";
-            SaveConceptButton.IsEnabled = !_isConceptOperationInProgress &&
-                ViewModel.SelectedNotebook is not null &&
-                !string.IsNullOrWhiteSpace(ConceptNameTextBox.Text) &&
-                !string.IsNullOrWhiteSpace(ConceptDefinitionTextBox.Text);
-            DeleteConceptButton.IsEnabled = !_isConceptOperationInProgress &&
-                hasCurrentConcept;
-            ConceptEmptyState.Visibility = ViewModel.Concepts.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-            ConceptReferencesEmptyState.Text = hasCurrentConcept
-                ? "This concept is not referenced on any pages."
-                : "Select a concept to view references.";
-            ConceptReferencesEmptyState.Visibility =
-                ViewModel.ConceptReferences.Count == 0
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+            ConceptDictionaryView.UpdateState(
+                _isConceptOperationInProgress,
+                ViewModel.SelectedNotebook is not null,
+                hasCurrentConcept,
+                ViewModel.Concepts.Count > 0,
+                ViewModel.ConceptReferences.Count > 0);
         }
 
         private void BeginInternalEditorChange()
@@ -160,11 +149,7 @@ namespace Syllanote.Desktop
             _isConceptOperationInProgress = isInProgress;
             SetNavigationEnabled(!isInProgress);
             TopBar.SetSearchInputEnabled(!isInProgress);
-            NewConceptButton.IsEnabled = !isInProgress;
-            ConceptsListView.IsEnabled = !isInProgress;
-            ConceptReferencesListView.IsEnabled = !isInProgress;
-            ConceptNameTextBox.IsEnabled = !isInProgress;
-            ConceptDefinitionTextBox.IsEnabled = !isInProgress;
+            ConceptDictionaryView.SetInteractionEnabled(!isInProgress);
             UpdateConceptEditorState();
         }
         private void UpdateNotebookEmptyState()
@@ -713,12 +698,9 @@ namespace Syllanote.Desktop
                     return;
                 }
 
-                ConceptsListView.SelectedItem = null;
-                ConceptNameTextBox.Text = string.Empty;
-                ConceptDefinitionTextBox.Text = string.Empty;
-                ConceptMessage.Text = string.Empty;
+                ConceptDictionaryView.ClearEditor();
                 EditorView.Visibility = Visibility.Collapsed;
-                ConceptDictionaryPanel.Visibility = Visibility.Visible;
+                ConceptDictionaryView.Visibility = Visibility.Visible;
             }
             finally
             {
@@ -742,10 +724,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            ConceptsListView.SelectedItem = null;
-            ConceptNameTextBox.Text = string.Empty;
-            ConceptDefinitionTextBox.Text = string.Empty;
-            ConceptMessage.Text = string.Empty;
+            ConceptDictionaryView.ClearEditor();
             UpdateConceptEditorState();
         }
 
@@ -757,21 +736,19 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            if (ConceptsListView.SelectedItem is Concept concept)
+            if (ConceptDictionaryView.SelectedConcept is Concept concept)
             {
-                ConceptNameTextBox.Text = concept.Name;
-                ConceptDefinitionTextBox.Text = concept.Definition;
+                ConceptDictionaryView.SetInput(concept.Name, concept.Definition);
             }
             else
             {
-                ConceptNameTextBox.Text = string.Empty;
-                ConceptDefinitionTextBox.Text = string.Empty;
+                ConceptDictionaryView.SetInput(string.Empty, string.Empty);
             }
 
-            ConceptMessage.Text = string.Empty;
+            ConceptDictionaryView.Message = string.Empty;
             UpdateConceptEditorState();
             await ViewModel.LoadConceptReferencesAsync(
-                ConceptsListView.SelectedItem as Concept);
+                ConceptDictionaryView.SelectedConcept);
             UpdateConceptEditorState();
         }
 
@@ -779,7 +756,7 @@ namespace Syllanote.Desktop
             object sender, SelectionChangedEventArgs e)
         {
             if (_isConceptOperationInProgress ||
-                ConceptReferencesListView.SelectedItem
+                ConceptDictionaryView.SelectedReference
                     is not ConceptReference reference)
             {
                 return;
@@ -799,11 +776,11 @@ namespace Syllanote.Desktop
                 }
                 else
                 {
-                    ConceptMessage.Text =
+                    ConceptDictionaryView.Message =
                         "This page is no longer available.";
                 }
 
-                ConceptReferencesListView.SelectedItem = null;
+                ConceptDictionaryView.ClearSelectedReference();
             }
             finally
             {
@@ -816,7 +793,7 @@ namespace Syllanote.Desktop
         {
             if (ViewModel is not null)
             {
-                ConceptMessage.Text = string.Empty;
+                ConceptDictionaryView.Message = string.Empty;
                 UpdateConceptEditorState();
             }
         }
@@ -829,14 +806,14 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selected = ConceptsListView.SelectedItem as Concept;
+            var selected = ConceptDictionaryView.SelectedConcept;
             if (selected is not null && selected.NotebookId != notebook.Id)
             {
                 return;
             }
 
-            var name = ConceptNameTextBox.Text;
-            var definition = ConceptDefinitionTextBox.Text;
+            var name = ConceptDictionaryView.ConceptName;
+            var definition = ConceptDictionaryView.ConceptDefinition;
             SetConceptOperationInProgress(true);
             await _selectionNavigationLock.WaitAsync();
             try
@@ -858,17 +835,17 @@ namespace Syllanote.Desktop
                 }
 
                 await ViewModel.LoadConceptsAsync(notebook.Id);
-                ConceptsListView.SelectedItem = ViewModel.Concepts
-                    .FirstOrDefault(concept => concept.Id == saved.Id);
-                ConceptMessage.Text = "Concept saved.";
+                ConceptDictionaryView.SelectConcept(ViewModel.Concepts
+                    .FirstOrDefault(concept => concept.Id == saved.Id));
+                ConceptDictionaryView.Message = "Concept saved.";
             }
             catch (DuplicateConceptNameException ex)
             {
-                ConceptMessage.Text = ex.Message;
+                ConceptDictionaryView.Message = ex.Message;
             }
             catch (ArgumentException ex)
             {
-                ConceptMessage.Text = ex.Message;
+                ConceptDictionaryView.Message = ex.Message;
             }
             finally
             {
@@ -881,7 +858,7 @@ namespace Syllanote.Desktop
         {
             if (_isConceptOperationInProgress ||
                 ViewModel.SelectedNotebook is not Notebook notebook ||
-                ConceptsListView.SelectedItem is not Concept concept ||
+                ConceptDictionaryView.SelectedConcept is not Concept concept ||
                 concept.NotebookId != notebook.Id)
             {
                 return;
@@ -899,7 +876,7 @@ namespace Syllanote.Desktop
 
             if (await dialog.ShowAsync() != ContentDialogResult.Primary ||
                 ViewModel.SelectedNotebook != notebook ||
-                ConceptsListView.SelectedItem != concept)
+                ConceptDictionaryView.SelectedConcept != concept)
             {
                 return;
             }
@@ -915,7 +892,7 @@ namespace Syllanote.Desktop
 
                 await ViewModel.DeleteConceptAsync(concept);
                 await ViewModel.LoadConceptsAsync(notebook.Id);
-                ConceptMessage.Text = "Concept deleted.";
+                ConceptDictionaryView.Message = "Concept deleted.";
             }
             finally
             {
