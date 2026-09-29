@@ -36,80 +36,107 @@
                 AutomationProperties.Name="Page title"
                 Visibility="Collapsed" />
 
-            <StackPanel
+            <Border
                 x:Name="FormattingToolbar"
                 Grid.Row="1"
-                Orientation="Horizontal"
-                Spacing="4"
                 Margin="0,0,0,12"
+                Padding="8"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
                 Visibility="Collapsed">
-            <ComboBox
-                x:Name="ParagraphStyleComboBox"
-                Width="140"
-                Height="36"
-                PlaceholderText="Normal"
-                AutomationProperties.Name="Paragraph style"
-                SelectionChanged="ParagraphStyleComboBox_SelectionChanged">
-                <ComboBoxItem Content="Normal" />
-                <ComboBoxItem Content="Heading 1" />
-                <ComboBoxItem Content="Heading 2" />
-            </ComboBox>
-            <ToggleButton
-                x:Name="BoldButton"
-                Width="40"
-                Height="36"
-                Padding="0"
-                AllowFocusOnInteraction="False"
-                AutomationProperties.Name="Bold"
-                ToolTipService.ToolTip="Bold"
-                Click="BoldButton_Click">
-                <TextBlock Text="B" FontWeight="Bold" />
-            </ToggleButton>
-            <ToggleButton
-                x:Name="ItalicButton"
-                Width="40"
-                Height="36"
-                Padding="0"
-                AllowFocusOnInteraction="False"
-                AutomationProperties.Name="Italic"
-                ToolTipService.ToolTip="Italic"
-                Click="ItalicButton_Click">
-                <TextBlock Text="I" FontStyle="Italic" />
-            </ToggleButton>
-            <ToggleButton
-                x:Name="UnderlineButton"
-                Width="40"
-                Height="36"
-                Padding="0"
-                AllowFocusOnInteraction="False"
-                AutomationProperties.Name="Underline"
-                ToolTipService.ToolTip="Underline"
-                Click="UnderlineButton_Click">
-                <TextBlock Text="U" TextDecorations="Underline" />
-            </ToggleButton>
-            <ToggleButton
-                x:Name="BulletedListButton"
-                Width="40"
-                Height="36"
-                Padding="0"
-                AllowFocusOnInteraction="False"
-                AutomationProperties.Name="Bulleted list"
-                ToolTipService.ToolTip="Bulleted list"
-                Click="BulletedListButton_Click">
-                <TextBlock Text="•" FontSize="20" />
-            </ToggleButton>
-            <ToggleButton
-                x:Name="NumberedListButton"
-                Width="40"
-                Height="36"
-                Padding="0"
-                AllowFocusOnInteraction="False"
-                AutomationProperties.Name="Numbered list"
-                ToolTipService.ToolTip="Numbered list"
-                Click="NumberedListButton_Click">
-                <TextBlock Text="1." FontWeight="SemiBold" />
-            </ToggleButton>
-            </StackPanel>
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="4">
+                    <ComboBox
+                        x:Name="ParagraphStyleComboBox"
+                        Width="140"
+                        Height="36"
+                        PlaceholderText="Normal"
+                        AutomationProperties.Name="Paragraph style"
+                        SelectionChanged="ParagraphStyleComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Normal" />
+                        <ComboBoxItem Content="Heading 1" />
+                        <ComboBoxItem Content="Heading 2" />
+                    </ComboBox>
+
+                    <Border
+                        Width="1"
+                        Height="20"
+                        Margin="4,0"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        VerticalAlignment="Center" />
+
+                    <ToggleButton
+                        x:Name="BoldButton"
+                        Width="40"
+                        Height="36"
+                        Padding="0"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Bold"
+                        ToolTipService.ToolTip="Bold"
+                        Click="BoldButton_Click">
+                        <TextBlock Text="B" FontWeight="Bold" />
+                    </ToggleButton>
+                    <ToggleButton
+                        x:Name="ItalicButton"
+                        Width="40"
+                        Height="36"
+                        Padding="0"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Italic"
+                        ToolTipService.ToolTip="Italic"
+                        Click="ItalicButton_Click">
+                        <TextBlock Text="I" FontStyle="Italic" />
+                    </ToggleButton>
+                    <ToggleButton
+                        x:Name="UnderlineButton"
+                        Width="40"
+                        Height="36"
+                        Padding="0"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Underline"
+                        ToolTipService.ToolTip="Underline"
+                        Click="UnderlineButton_Click">
+                        <TextBlock Text="U" TextDecorations="Underline" />
+                    </ToggleButton>
+
+                    <Border
+                        Width="1"
+                        Height="20"
+                        Margin="4,0"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        VerticalAlignment="Center" />
+
+                    <ToggleButton
+                        x:Name="BulletedListButton"
+                        Width="40"
+                        Height="36"
+                        Padding="0"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Bulleted list"
+                        ToolTipService.ToolTip="Bulleted list"
+                        Click="BulletedListButton_Click">
+                        <FontIcon
+                            Glyph="&#xE8FD;"
+                            FontSize="16" />
+                    </ToggleButton>
+                    <ToggleButton
+                        x:Name="NumberedListButton"
+                        Width="40"
+                        Height="36"
+                        Padding="0"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Numbered list"
+                        ToolTipService.ToolTip="Numbered list"
+                        Click="NumberedListButton_Click">
+                        <FontIcon
+                            Glyph="&#xEA1C;"
+                            FontSize="16" />
+                    </ToggleButton>
+                </StackPanel>
+            </Border>
 
             <RichEditBox
                 x:Name="PageContentRichEditBox"
