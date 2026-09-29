@@ -1,10 +1,12 @@
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
@@ -16,6 +18,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Graphics;
+using Windows.Storage;
 
 namespace Syllanote.Desktop
 {
@@ -24,6 +28,17 @@ namespace Syllanote.Desktop
         private const float NormalFontSizeInPoints = 10.5f;
         private const float Heading1FontSizeInPoints = 18;
         private const float Heading2FontSizeInPoints = 15;
+        private const string NotebookColumnWidthSettingKey =
+            "Workspace.NotebookColumnWidth";
+        private const string PageColumnWidthSettingKey =
+            "Workspace.PageColumnWidth";
+        private const string WindowWidthSettingKey = "Window.Width";
+        private const string WindowHeightSettingKey = "Window.Height";
+        private const string WindowXSettingKey = "Window.X";
+        private const string WindowYSettingKey = "Window.Y";
+        private const string WindowMaximizedSettingKey = "Window.Maximized";
+        private const int MinimumWindowWidth = 900;
+        private const int MinimumWindowHeight = 600;
 
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
@@ -33,6 +48,9 @@ namespace Syllanote.Desktop
         private bool _isSuppressingEditorChanges;
         private bool _isUpdatingFormattingToolbar;
         private bool _isConceptHighlightUpdateQueued;
+        private bool _shouldRestoreMaximizedState;
+        private bool _hasLastRestoredWindowBounds;
+        private RectInt32 _lastRestoredWindowBounds;
         private int _editorChangeSuppressionVersion;
         private readonly SemaphoreSlim _selectionNavigationLock = new(1, 1);
         private int _selectionNavigationVersion;
@@ -43,21 +61,227 @@ namespace Syllanote.Desktop
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
 
+        private void NotebookColumnSplitter_DragDelta(
+            object sender,
+            DragDeltaEventArgs e)
+        {
+            NotebookColumn.Width = new GridLength(
+                Math.Clamp(
+                    NotebookColumn.ActualWidth + e.HorizontalChange,
+                    NotebookColumn.MinWidth,
+                    NotebookColumn.MaxWidth));
+        }
+
+        private void PageColumnSplitter_DragDelta(
+            object sender,
+            DragDeltaEventArgs e)
+        {
+            PageColumn.Width = new GridLength(
+                Math.Clamp(
+                    PageColumn.ActualWidth + e.HorizontalChange,
+                    PageColumn.MinWidth,
+                    PageColumn.MaxWidth));
+        }
+
+        private void NotebookColumnSplitter_DragCompleted(
+            object sender,
+            DragCompletedEventArgs e) =>
+            SavePanelWidth(
+                NotebookColumnWidthSettingKey,
+                NotebookColumn.ActualWidth);
+
+        private void PageColumnSplitter_DragCompleted(
+            object sender,
+            DragCompletedEventArgs e) =>
+            SavePanelWidth(
+                PageColumnWidthSettingKey,
+                PageColumn.ActualWidth);
+
+        private void RestorePanelWidths()
+        {
+            NotebookColumn.Width = new GridLength(
+                GetStoredPanelWidth(
+                    NotebookColumnWidthSettingKey,
+                    NotebookColumn.Width.Value,
+                    NotebookColumn.MinWidth,
+                    NotebookColumn.MaxWidth));
+            PageColumn.Width = new GridLength(
+                GetStoredPanelWidth(
+                    PageColumnWidthSettingKey,
+                    PageColumn.Width.Value,
+                    PageColumn.MinWidth,
+                    PageColumn.MaxWidth));
+        }
+
+        private static double GetStoredPanelWidth(
+            string settingKey,
+            double defaultWidth,
+            double minimumWidth,
+            double maximumWidth)
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            return settings.TryGetValue(settingKey, out var storedValue) &&
+                storedValue is double storedWidth
+                    ? Math.Clamp(storedWidth, minimumWidth, maximumWidth)
+                    : defaultWidth;
+        }
+
+        private static void SavePanelWidth(string settingKey, double width)
+        {
+            ApplicationData.Current.LocalSettings.Values[settingKey] = width;
+        }
+
+        private void RestoreWindowPlacement()
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            _shouldRestoreMaximizedState =
+                settings.TryGetValue(
+                    WindowMaximizedSettingKey,
+                    out var storedMaximized) &&
+                storedMaximized is true;
+
+            if (!settings.TryGetValue(WindowWidthSettingKey, out var storedWidth) ||
+                storedWidth is not int width ||
+                !settings.TryGetValue(WindowHeightSettingKey, out var storedHeight) ||
+                storedHeight is not int height)
+            {
+                CaptureCurrentWindowBounds();
+                return;
+            }
+
+            var x = AppWindow.Position.X;
+            var y = AppWindow.Position.Y;
+            var hasStoredPosition = false;
+            if (settings.TryGetValue(WindowXSettingKey, out var storedX) &&
+                storedX is int storedPositionX &&
+                settings.TryGetValue(WindowYSettingKey, out var storedY) &&
+                storedY is int storedPositionY)
+            {
+                x = storedPositionX;
+                y = storedPositionY;
+                hasStoredPosition = true;
+            }
+            var requestedBounds = new RectInt32(
+                x,
+                y,
+                width,
+                height);
+            var displayArea = hasStoredPosition
+                ? DisplayArea.GetFromRect(
+                    requestedBounds,
+                    DisplayAreaFallback.Nearest)
+                : DisplayArea.GetFromWindowId(
+                    AppWindow.Id,
+                    DisplayAreaFallback.Primary);
+            var safeBounds = ClampWindowBounds(
+                requestedBounds,
+                displayArea.WorkArea);
+
+            if (hasStoredPosition)
+            {
+                AppWindow.MoveAndResize(safeBounds);
+            }
+            else
+            {
+                AppWindow.Resize(new SizeInt32(
+                    safeBounds.Width,
+                    safeBounds.Height));
+            }
+
+            CaptureCurrentWindowBounds();
+        }
+
+        private static RectInt32 ClampWindowBounds(
+            RectInt32 requestedBounds,
+            RectInt32 workArea)
+        {
+            var minimumWidth = Math.Min(MinimumWindowWidth, workArea.Width);
+            var minimumHeight = Math.Min(MinimumWindowHeight, workArea.Height);
+            var width = Math.Clamp(
+                requestedBounds.Width,
+                minimumWidth,
+                workArea.Width);
+            var height = Math.Clamp(
+                requestedBounds.Height,
+                minimumHeight,
+                workArea.Height);
+            var x = Math.Clamp(
+                requestedBounds.X,
+                workArea.X,
+                workArea.X + workArea.Width - width);
+            var y = Math.Clamp(
+                requestedBounds.Y,
+                workArea.Y,
+                workArea.Y + workArea.Height - height);
+
+            return new RectInt32(x, y, width, height);
+        }
+
+        private void AppWindow_Changed(
+            AppWindow sender,
+            AppWindowChangedEventArgs args)
+        {
+            if ((args.DidPositionChange || args.DidSizeChange) &&
+                sender.Presenter is OverlappedPresenter
+                {
+                    State: OverlappedPresenterState.Restored
+                })
+            {
+                CaptureCurrentWindowBounds();
+            }
+        }
+
+        private void CaptureCurrentWindowBounds()
+        {
+            _lastRestoredWindowBounds = new RectInt32(
+                AppWindow.Position.X,
+                AppWindow.Position.Y,
+                AppWindow.Size.Width,
+                AppWindow.Size.Height);
+            _hasLastRestoredWindowBounds = true;
+        }
+
+        private void MainWindow_Closing(
+            AppWindow sender,
+            AppWindowClosingEventArgs args)
+        {
+            var settings = ApplicationData.Current.LocalSettings.Values;
+            settings[WindowMaximizedSettingKey] =
+                sender.Presenter is OverlappedPresenter
+                {
+                    State: OverlappedPresenterState.Maximized
+                };
+
+            if (_hasLastRestoredWindowBounds)
+            {
+                settings[WindowXSettingKey] = _lastRestoredWindowBounds.X;
+                settings[WindowYSettingKey] = _lastRestoredWindowBounds.Y;
+                settings[WindowWidthSettingKey] =
+                    _lastRestoredWindowBounds.Width;
+                settings[WindowHeightSettingKey] =
+                    _lastRestoredWindowBounds.Height;
+            }
+        }
+
         private void SetNavigationEnabled(bool isEnabled)
         {
-            NotebookItemsControl.IsEnabled = isEnabled;
-            PagesListView.IsEnabled = isEnabled;
+            NotebookSidebar.SetNavigationEnabled(isEnabled);
+            PageSidebar.SetPageListEnabled(isEnabled);
         }
 
         public MainWindow(NotebookViewModel viewModel)
         {
             InitializeComponent();
+            RestorePanelWidths();
+            RestoreWindowPlacement();
+            AppWindow.Changed += AppWindow_Changed;
+            AppWindow.Closing += MainWindow_Closing;
             Title = "Syllanote";
+            SystemBackdrop = new MicaBackdrop();
 
             ViewModel = viewModel;
-            ConceptDefinitionFlyout.OverlayInputPassThroughElement =
-                PageContentRichEditBox;
-            PageContentRichEditBox.AddHandler(
+            NotebookSidebar.SetItemsSource(NotebookNavigationItems);
+            EditorView.ContentEditor.AddHandler(
                 UIElement.TappedEvent,
                 new TappedEventHandler(PageContentRichEditBox_Tapped),
                 true);
@@ -105,32 +329,21 @@ namespace Syllanote.Desktop
 
         private void ShowPageEditor()
         {
-            ConceptDictionaryPanel.Visibility = Visibility.Collapsed;
-            PageEditorPanel.Visibility = Visibility.Visible;
+            ConceptDictionaryView.Visibility = Visibility.Collapsed;
+            EditorView.Visibility = Visibility.Visible;
         }
 
         private void UpdateConceptEditorState()
         {
-            var selected = ConceptsListView.SelectedItem as Concept;
+            var selected = ConceptDictionaryView.SelectedConcept;
             var hasCurrentConcept = selected is not null &&
                 selected.NotebookId == ViewModel.SelectedNotebook?.Id;
-            SaveConceptButton.Content = hasCurrentConcept ? "Save" : "Create";
-            SaveConceptButton.IsEnabled = !_isConceptOperationInProgress &&
-                ViewModel.SelectedNotebook is not null &&
-                !string.IsNullOrWhiteSpace(ConceptNameTextBox.Text) &&
-                !string.IsNullOrWhiteSpace(ConceptDefinitionTextBox.Text);
-            DeleteConceptButton.IsEnabled = !_isConceptOperationInProgress &&
-                hasCurrentConcept;
-            ConceptEmptyState.Visibility = ViewModel.Concepts.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-            ConceptReferencesEmptyState.Text = hasCurrentConcept
-                ? "This concept is not referenced on any pages."
-                : "Select a concept to view references.";
-            ConceptReferencesEmptyState.Visibility =
-                ViewModel.ConceptReferences.Count == 0
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+            ConceptDictionaryView.UpdateState(
+                _isConceptOperationInProgress,
+                ViewModel.SelectedNotebook is not null,
+                hasCurrentConcept,
+                ViewModel.Concepts.Count > 0,
+                ViewModel.ConceptReferences.Count > 0);
         }
 
         private void BeginInternalEditorChange()
@@ -160,20 +373,13 @@ namespace Syllanote.Desktop
         {
             _isConceptOperationInProgress = isInProgress;
             SetNavigationEnabled(!isInProgress);
-            SearchButton.IsEnabled = !isInProgress;
-            SearchTextBox.IsEnabled = !isInProgress;
-            NewConceptButton.IsEnabled = !isInProgress;
-            ConceptsListView.IsEnabled = !isInProgress;
-            ConceptReferencesListView.IsEnabled = !isInProgress;
-            ConceptNameTextBox.IsEnabled = !isInProgress;
-            ConceptDefinitionTextBox.IsEnabled = !isInProgress;
+            TopBar.SetSearchInputEnabled(!isInProgress);
+            ConceptDictionaryView.SetInteractionEnabled(!isInProgress);
             UpdateConceptEditorState();
         }
         private void UpdateNotebookEmptyState()
         {
-            NotebookEmptyState.Visibility = ViewModel.Notebooks.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            NotebookSidebar.UpdateEmptyState(ViewModel.Notebooks.Count > 0);
         }
 
         private void RebuildNotebookNavigation()
@@ -251,22 +457,13 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedSection is not null &&
                 ViewModel.SelectedSection.NotebookId == ViewModel.SelectedNotebook?.Id;
             var hasPage = IsSelectedPageCurrent();
-            NewPageButton.IsEnabled = hasSection;
-            PageEmptyState.Text = hasSection
-                ? "No pages yet. Create one to get started."
-                : "Select a section to see its pages.";
-            PageEmptyState.Visibility = !hasSection || ViewModel.Pages.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-            EditorPageTitle.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            FormattingToolbar.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            PageContentRichEditBox.Visibility = hasPage ? Visibility.Visible : Visibility.Collapsed;
-            EditorEmptyState.Visibility = hasPage ? Visibility.Collapsed : Visibility.Visible;
+            PageSidebar.UpdateState(hasSection, ViewModel.Pages.Count > 0);
+            EditorView.UpdatePageState(hasPage);
         }
 
         private void SyncPageEditorContent(bool force = false)
         {
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
 
@@ -281,13 +478,13 @@ namespace Syllanote.Desktop
             {
                 if (string.IsNullOrEmpty(ViewModel.PageFormattedContent))
                 {
-                    PageContentRichEditBox.Document.SetText(
+                    EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.None,
                         ViewModel.PageContent);
                 }
                 else
                 {
-                    PageContentRichEditBox.Document.SetText(
+                    EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.FormatRtf,
                         ViewModel.PageFormattedContent);
                 }
@@ -306,18 +503,18 @@ namespace Syllanote.Desktop
             out string content,
             out string formattedContent)
         {
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out content);
 
             _isApplyingConceptHighlighting = true;
             BeginInternalEditorChange();
-            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
                 if (content.Length > 0)
                 {
-                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                    var documentRange = EditorView.ContentEditor.Document.GetRange(
                         0,
                         content.Length);
                     var documentFormat = documentRange.CharacterFormat;
@@ -325,13 +522,13 @@ namespace Syllanote.Desktop
                     documentRange.CharacterFormat = documentFormat;
                 }
 
-                PageContentRichEditBox.Document.GetText(
+                EditorView.ContentEditor.Document.GetText(
                     TextGetOptions.FormatRtf,
                     out formattedContent);
             }
             finally
             {
-                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                EditorView.ContentEditor.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
                 EndInternalEditorChange();
             }
@@ -355,13 +552,13 @@ namespace Syllanote.Desktop
         {
             if (_isUpdatingFormattingToolbar ||
                 !IsSelectedPageCurrent() ||
-                ParagraphStyleComboBox.SelectedIndex < 0)
+                EditorView.ParagraphStyleSelector.SelectedIndex < 0)
             {
                 return;
             }
 
-            var selectedStyle = ParagraphStyleComboBox.SelectedIndex;
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selectedStyle = EditorView.ParagraphStyleSelector.SelectedIndex;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var paragraphRange = selection.GetClone();
             paragraphRange.Expand(TextRangeUnit.Paragraph);
 
@@ -396,7 +593,7 @@ namespace Syllanote.Desktop
 
             UpdatePageContentFromEditor();
             UpdateFormattingToolbarState();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void BoldButton_Click(object sender, RoutedEventArgs e)
@@ -406,15 +603,15 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var characterFormat = selection.CharacterFormat;
-            characterFormat.Bold = BoldButton.IsChecked == true
+            characterFormat.Bold = EditorView.BoldToggle.IsChecked == true
                 ? FormatEffect.On
                 : FormatEffect.Off;
             selection.CharacterFormat = characterFormat;
 
             UpdatePageContentFromEditor();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void ItalicButton_Click(object sender, RoutedEventArgs e)
@@ -424,15 +621,15 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var characterFormat = selection.CharacterFormat;
-            characterFormat.Italic = ItalicButton.IsChecked == true
+            characterFormat.Italic = EditorView.ItalicToggle.IsChecked == true
                 ? FormatEffect.On
                 : FormatEffect.Off;
             selection.CharacterFormat = characterFormat;
 
             UpdatePageContentFromEditor();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void UnderlineButton_Click(object sender, RoutedEventArgs e)
@@ -442,15 +639,15 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var characterFormat = selection.CharacterFormat;
-            characterFormat.Underline = UnderlineButton.IsChecked == true
+            characterFormat.Underline = EditorView.UnderlineToggle.IsChecked == true
                 ? UnderlineType.Single
                 : UnderlineType.None;
             selection.CharacterFormat = characterFormat;
 
             UpdatePageContentFromEditor();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void BulletedListButton_Click(object sender, RoutedEventArgs e)
@@ -462,7 +659,7 @@ namespace Syllanote.Desktop
 
             ApplyListFormatting(
                 MarkerType.Bullet,
-                BulletedListButton.IsChecked == true);
+                EditorView.BulletedListToggle.IsChecked == true);
         }
 
         private void NumberedListButton_Click(object sender, RoutedEventArgs e)
@@ -474,12 +671,12 @@ namespace Syllanote.Desktop
 
             ApplyListFormatting(
                 MarkerType.Arabic,
-                NumberedListButton.IsChecked == true);
+                EditorView.NumberedListToggle.IsChecked == true);
         }
 
         private void ApplyListFormatting(MarkerType listType, bool isEnabled)
         {
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var paragraphRange = selection.GetClone();
             paragraphRange.Expand(TextRangeUnit.Paragraph);
 
@@ -506,7 +703,7 @@ namespace Syllanote.Desktop
 
             UpdatePageContentFromEditor();
             UpdateFormattingToolbarState();
-            PageContentRichEditBox.Focus(FocusState.Programmatic);
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void UpdateFormattingToolbarState()
@@ -517,29 +714,29 @@ namespace Syllanote.Desktop
             }
 
             var characterFormat =
-                PageContentRichEditBox.Document.Selection.CharacterFormat;
+                EditorView.ContentEditor.Document.Selection.CharacterFormat;
             var paragraphStyle =
-                PageContentRichEditBox.Document.Selection.ParagraphFormat.Style;
+                EditorView.ContentEditor.Document.Selection.ParagraphFormat.Style;
             var listType =
-                PageContentRichEditBox.Document.Selection.ParagraphFormat.ListType;
+                EditorView.ContentEditor.Document.Selection.ParagraphFormat.ListType;
 
             _isUpdatingFormattingToolbar = true;
             try
             {
-                ParagraphStyleComboBox.SelectedIndex = paragraphStyle switch
+                EditorView.ParagraphStyleSelector.SelectedIndex = paragraphStyle switch
                 {
                     ParagraphStyle.Heading1 => 1,
                     ParagraphStyle.Heading2 => 2,
                     ParagraphStyle.Normal or ParagraphStyle.None => 0,
                     _ => -1
                 };
-                BoldButton.IsChecked = characterFormat.Bold == FormatEffect.On;
-                ItalicButton.IsChecked = characterFormat.Italic == FormatEffect.On;
-                UnderlineButton.IsChecked =
+                EditorView.BoldToggle.IsChecked = characterFormat.Bold == FormatEffect.On;
+                EditorView.ItalicToggle.IsChecked = characterFormat.Italic == FormatEffect.On;
+                EditorView.UnderlineToggle.IsChecked =
                     characterFormat.Underline != UnderlineType.None &&
                     characterFormat.Underline != UnderlineType.Undefined;
-                BulletedListButton.IsChecked = listType == MarkerType.Bullet;
-                NumberedListButton.IsChecked = listType == MarkerType.Arabic;
+                EditorView.BulletedListToggle.IsChecked = listType == MarkerType.Bullet;
+                EditorView.NumberedListToggle.IsChecked = listType == MarkerType.Arabic;
             }
             finally
             {
@@ -567,22 +764,22 @@ namespace Syllanote.Desktop
 
         private void ApplyConceptHighlights()
         {
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
 
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             var selectionStart = selection.StartPosition;
             var selectionEnd = selection.EndPosition;
 
             _isApplyingConceptHighlighting = true;
             BeginInternalEditorChange();
-            PageContentRichEditBox.Document.BatchDisplayUpdates();
+            EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
                 if (editorContent.Length > 0)
                 {
-                    var documentRange = PageContentRichEditBox.Document.GetRange(
+                    var documentRange = EditorView.ContentEditor.Document.GetRange(
                         0,
                         editorContent.Length);
                     var documentFormat = documentRange.CharacterFormat;
@@ -598,7 +795,7 @@ namespace Syllanote.Desktop
                     }
 
                     var endIndex = match.StartIndex + match.Length;
-                    var conceptRange = PageContentRichEditBox.Document.GetRange(
+                    var conceptRange = EditorView.ContentEditor.Document.GetRange(
                         match.StartIndex,
                         endIndex);
                     var conceptFormat = conceptRange.CharacterFormat;
@@ -612,7 +809,7 @@ namespace Syllanote.Desktop
             }
             finally
             {
-                PageContentRichEditBox.Document.ApplyDisplayUpdates();
+                EditorView.ContentEditor.Document.ApplyDisplayUpdates();
                 _isApplyingConceptHighlighting = false;
                 EndInternalEditorChange();
             }
@@ -642,7 +839,7 @@ namespace Syllanote.Desktop
             object sender,
             TappedRoutedEventArgs e)
         {
-            var selection = PageContentRichEditBox.Document.Selection;
+            var selection = EditorView.ContentEditor.Document.Selection;
             if (ViewModel.SelectedPage is null ||
                 selection.StartPosition != selection.EndPosition)
             {
@@ -650,7 +847,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            PageContentRichEditBox.Document.GetText(
+            EditorView.ContentEditor.Document.GetText(
                 TextGetOptions.None,
                 out var editorContent);
             var caretPosition = selection.StartPosition;
@@ -671,24 +868,15 @@ namespace Syllanote.Desktop
             }
 
             HideConceptDefinition();
-            ConceptDefinitionNameTextBlock.Text = concept.Name;
-            ConceptDefinitionTextBlock.Text = concept.Definition;
-            ConceptDefinitionFlyout.ShowAt(
-                PageContentRichEditBox,
-                new FlyoutShowOptions
-                {
-                    Placement = FlyoutPlacementMode.Bottom,
-                    Position = e.GetPosition(PageContentRichEditBox),
-                    ShowMode = FlyoutShowMode.Transient
-                });
+            EditorView.ShowConceptDefinition(
+                concept.Name,
+                concept.Definition,
+                e.GetPosition(EditorView.ContentEditor));
         }
 
         private void HideConceptDefinition()
         {
-            if (ConceptDefinitionFlyout.IsOpen)
-            {
-                ConceptDefinitionFlyout.Hide();
-            }
+            EditorView.HideConceptDefinition();
         }
         private bool IsSelectedPageCurrent()
         {
@@ -696,13 +884,61 @@ namespace Syllanote.Desktop
             return page is not null &&
                 page.SectionId == ViewModel.SelectedSection?.Id &&
                 ViewModel.SelectedSection?.NotebookId == ViewModel.SelectedNotebook?.Id &&
-                ReferenceEquals(PagesListView.SelectedItem, page);
+                ReferenceEquals(PageSidebar.SelectedPage, page);
         }
         private async void RootGrid_Loaded(
             object sender,
             RoutedEventArgs e)
         {
+            UpdateTitleBarTheme();
+            if (_shouldRestoreMaximizedState &&
+                AppWindow.Presenter is OverlappedPresenter presenter)
+            {
+                _shouldRestoreMaximizedState = false;
+                presenter.Maximize();
+            }
             await ViewModel.LoadNotebooksCommand.ExecuteAsync(null);
+        }
+
+        private void RootGrid_ActualThemeChanged(
+            FrameworkElement sender,
+            object args)
+        {
+            UpdateTitleBarTheme();
+        }
+
+        private void UpdateTitleBarTheme()
+        {
+            if (!AppWindowTitleBar.IsCustomizationSupported())
+            {
+                return;
+            }
+
+            var isDarkTheme = RootGrid.ActualTheme == ElementTheme.Dark;
+            var titleBar = AppWindow.TitleBar;
+
+            titleBar.BackgroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 32, 32, 32)
+                : ColorHelper.FromArgb(255, 243, 243, 243);
+            titleBar.ForegroundColor = isDarkTheme
+                ? Colors.White
+                : Colors.Black;
+            titleBar.InactiveBackgroundColor = titleBar.BackgroundColor;
+            titleBar.InactiveForegroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 160, 160, 160)
+                : ColorHelper.FromArgb(255, 96, 96, 96);
+            titleBar.ButtonBackgroundColor = titleBar.BackgroundColor;
+            titleBar.ButtonForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonInactiveBackgroundColor = titleBar.InactiveBackgroundColor;
+            titleBar.ButtonInactiveForegroundColor = titleBar.InactiveForegroundColor;
+            titleBar.ButtonHoverBackgroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 51, 51, 51)
+                : ColorHelper.FromArgb(255, 229, 229, 229);
+            titleBar.ButtonHoverForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonPressedBackgroundColor = isDarkTheme
+                ? ColorHelper.FromArgb(255, 64, 64, 64)
+                : ColorHelper.FromArgb(255, 218, 218, 218);
+            titleBar.ButtonPressedForegroundColor = titleBar.ForegroundColor;
         }
 
         private async void ConceptDictionaryMenuItem_Click(
@@ -735,12 +971,9 @@ namespace Syllanote.Desktop
                     return;
                 }
 
-                ConceptsListView.SelectedItem = null;
-                ConceptNameTextBox.Text = string.Empty;
-                ConceptDefinitionTextBox.Text = string.Empty;
-                ConceptMessage.Text = string.Empty;
-                PageEditorPanel.Visibility = Visibility.Collapsed;
-                ConceptDictionaryPanel.Visibility = Visibility.Visible;
+                ConceptDictionaryView.ClearEditor();
+                EditorView.Visibility = Visibility.Collapsed;
+                ConceptDictionaryView.Visibility = Visibility.Visible;
             }
             finally
             {
@@ -764,10 +997,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            ConceptsListView.SelectedItem = null;
-            ConceptNameTextBox.Text = string.Empty;
-            ConceptDefinitionTextBox.Text = string.Empty;
-            ConceptMessage.Text = string.Empty;
+            ConceptDictionaryView.ClearEditor();
             UpdateConceptEditorState();
         }
 
@@ -779,21 +1009,19 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            if (ConceptsListView.SelectedItem is Concept concept)
+            if (ConceptDictionaryView.SelectedConcept is Concept concept)
             {
-                ConceptNameTextBox.Text = concept.Name;
-                ConceptDefinitionTextBox.Text = concept.Definition;
+                ConceptDictionaryView.SetInput(concept.Name, concept.Definition);
             }
             else
             {
-                ConceptNameTextBox.Text = string.Empty;
-                ConceptDefinitionTextBox.Text = string.Empty;
+                ConceptDictionaryView.SetInput(string.Empty, string.Empty);
             }
 
-            ConceptMessage.Text = string.Empty;
+            ConceptDictionaryView.Message = string.Empty;
             UpdateConceptEditorState();
             await ViewModel.LoadConceptReferencesAsync(
-                ConceptsListView.SelectedItem as Concept);
+                ConceptDictionaryView.SelectedConcept);
             UpdateConceptEditorState();
         }
 
@@ -801,7 +1029,7 @@ namespace Syllanote.Desktop
             object sender, SelectionChangedEventArgs e)
         {
             if (_isConceptOperationInProgress ||
-                ConceptReferencesListView.SelectedItem
+                ConceptDictionaryView.SelectedReference
                     is not ConceptReference reference)
             {
                 return;
@@ -816,16 +1044,16 @@ namespace Syllanote.Desktop
                 {
                     ShowPageEditor();
                     RefreshSectionNavigation();
-                    PagesListView.SelectedItem = ViewModel.SelectedPage;
+                    PageSidebar.SelectPage(ViewModel.SelectedPage);
                     UpdatePageState();
                 }
                 else
                 {
-                    ConceptMessage.Text =
+                    ConceptDictionaryView.Message =
                         "This page is no longer available.";
                 }
 
-                ConceptReferencesListView.SelectedItem = null;
+                ConceptDictionaryView.ClearSelectedReference();
             }
             finally
             {
@@ -838,7 +1066,7 @@ namespace Syllanote.Desktop
         {
             if (ViewModel is not null)
             {
-                ConceptMessage.Text = string.Empty;
+                ConceptDictionaryView.Message = string.Empty;
                 UpdateConceptEditorState();
             }
         }
@@ -851,14 +1079,14 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            var selected = ConceptsListView.SelectedItem as Concept;
+            var selected = ConceptDictionaryView.SelectedConcept;
             if (selected is not null && selected.NotebookId != notebook.Id)
             {
                 return;
             }
 
-            var name = ConceptNameTextBox.Text;
-            var definition = ConceptDefinitionTextBox.Text;
+            var name = ConceptDictionaryView.ConceptName;
+            var definition = ConceptDictionaryView.ConceptDefinition;
             SetConceptOperationInProgress(true);
             await _selectionNavigationLock.WaitAsync();
             try
@@ -880,17 +1108,17 @@ namespace Syllanote.Desktop
                 }
 
                 await ViewModel.LoadConceptsAsync(notebook.Id);
-                ConceptsListView.SelectedItem = ViewModel.Concepts
-                    .FirstOrDefault(concept => concept.Id == saved.Id);
-                ConceptMessage.Text = "Concept saved.";
+                ConceptDictionaryView.SelectConcept(ViewModel.Concepts
+                    .FirstOrDefault(concept => concept.Id == saved.Id));
+                ConceptDictionaryView.Message = "Concept saved.";
             }
             catch (DuplicateConceptNameException ex)
             {
-                ConceptMessage.Text = ex.Message;
+                ConceptDictionaryView.Message = ex.Message;
             }
             catch (ArgumentException ex)
             {
-                ConceptMessage.Text = ex.Message;
+                ConceptDictionaryView.Message = ex.Message;
             }
             finally
             {
@@ -903,7 +1131,7 @@ namespace Syllanote.Desktop
         {
             if (_isConceptOperationInProgress ||
                 ViewModel.SelectedNotebook is not Notebook notebook ||
-                ConceptsListView.SelectedItem is not Concept concept ||
+                ConceptDictionaryView.SelectedConcept is not Concept concept ||
                 concept.NotebookId != notebook.Id)
             {
                 return;
@@ -921,7 +1149,7 @@ namespace Syllanote.Desktop
 
             if (await dialog.ShowAsync() != ContentDialogResult.Primary ||
                 ViewModel.SelectedNotebook != notebook ||
-                ConceptsListView.SelectedItem != concept)
+                ConceptDictionaryView.SelectedConcept != concept)
             {
                 return;
             }
@@ -937,7 +1165,7 @@ namespace Syllanote.Desktop
 
                 await ViewModel.DeleteConceptAsync(concept);
                 await ViewModel.LoadConceptsAsync(notebook.Id);
-                ConceptMessage.Text = "Concept deleted.";
+                ConceptDictionaryView.Message = "Concept deleted.";
             }
             finally
             {
@@ -945,30 +1173,30 @@ namespace Syllanote.Desktop
                 SetConceptOperationInProgress(false);
             }
         }
-        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        private async void TopBar_SearchRequested(object sender, RoutedEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress)
             {
                 return;
             }
 
-            SearchButton.IsEnabled = false;
+            TopBar.SetSearchSubmissionEnabled(false);
             try
             {
-                ViewModel.SearchText = SearchTextBox.Text;
+                ViewModel.SearchText = TopBar.SearchText;
                 await ViewModel.SearchPagesCommand.ExecuteAsync(null);
             }
             finally
             {
-                SearchButton.IsEnabled = true;
+                TopBar.SetSearchSubmissionEnabled(true);
             }
         }
 
-        private async void SearchResultsListView_SelectionChanged(
+        private async void TopBar_SearchResultSelectionChanged(
             object sender, SelectionChangedEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                SearchResultsListView.SelectedItem is not SearchPageResult result)
+                TopBar.SelectedSearchResult is not SearchPageResult result)
             {
                 return;
             }
@@ -976,9 +1204,7 @@ namespace Syllanote.Desktop
             _isSearchNavigationInProgress = true;
             _selectionNavigationVersion++;
             SetNavigationEnabled(false);
-            SearchButton.IsEnabled = false;
-            SearchTextBox.IsEnabled = false;
-            SearchResultsListView.IsEnabled = false;
+            TopBar.SetSearchEnabled(false);
             await _selectionNavigationLock.WaitAsync();
             try
             {
@@ -987,16 +1213,14 @@ namespace Syllanote.Desktop
                     ShowPageEditor();
                 }
                 RefreshSectionNavigation();
-                PagesListView.SelectedItem = ViewModel.SelectedPage;
+                PageSidebar.SelectPage(ViewModel.SelectedPage);
                 UpdatePageState();
-                SearchResultsListView.SelectedItem = null;
+                TopBar.ClearSelectedSearchResult();
             }
             finally
             {
                 _selectionNavigationLock.Release();
-                SearchResultsListView.IsEnabled = true;
-                SearchTextBox.IsEnabled = true;
-                SearchButton.IsEnabled = true;
+                TopBar.SetSearchEnabled(true);
                 SetNavigationEnabled(true);
                 _isSearchNavigationInProgress = false;
             }
@@ -1119,44 +1343,6 @@ namespace Syllanote.Desktop
                 await ViewModel.CreatePageCommand.ExecuteAsync(null);
             }
         }
-        private async void NotebookNavigationButton_Click(
-            object sender,
-            RoutedEventArgs e)
-        {
-            if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                (sender as FrameworkElement)?.DataContext
-                    is not NotebookNavigationItem navigationItem ||
-                navigationItem.Notebook is not Notebook notebook)
-            {
-                return;
-            }
-
-            var navigationVersion = ++_selectionNavigationVersion;
-            navigationItem.IsExpanded = true;
-            ViewModel.SelectedNotebook = notebook;
-            ShowPageEditor();
-            await _selectionNavigationLock.WaitAsync();
-            try
-            {
-                if (navigationVersion != _selectionNavigationVersion ||
-                    _isSearchNavigationInProgress)
-                {
-                    return;
-                }
-
-                await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
-                if (navigationVersion == _selectionNavigationVersion &&
-                    ViewModel.SelectedNotebook?.Id == notebook.Id)
-                {
-                    RefreshSectionNavigation();
-                }
-            }
-            finally
-            {
-                _selectionNavigationLock.Release();
-            }
-        }
-
         private async void SectionNavigationButton_Click(
             object sender,
             RoutedEventArgs e)
@@ -1352,7 +1538,7 @@ namespace Syllanote.Desktop
                     await ViewModel.SelectPageAsync(currentPage);
                 }
 
-                PagesListView.SelectedItem = currentPage;
+                PageSidebar.SelectPage(currentPage);
                 ShowPageEditor();
                 UpdatePageState();
                 return currentPage;
@@ -1590,13 +1776,7 @@ namespace Syllanote.Desktop
                 return;
             }
 
-            if (sender is not ListView listView)
-            {
-                return;
-            }
-
-            var page =
-                listView.SelectedItem as Syllanote.Domain.Entities.Page;
+            var page = PageSidebar.SelectedPage;
 
             var navigationVersion = _selectionNavigationVersion;
             await _selectionNavigationLock.WaitAsync();
@@ -1662,7 +1842,7 @@ namespace Syllanote.Desktop
                 {
                     await ViewModel.MoveSelectedPageDownCommand.ExecuteAsync(null);
                 }
-                PagesListView.SelectedItem = currentPage;
+                PageSidebar.SelectPage(currentPage);
                 UpdatePageState();
             }
             finally
@@ -1717,7 +1897,7 @@ namespace Syllanote.Desktop
                 try
                 {
                     await ViewModel.RenamePageCommand.ExecuteAsync(null);
-                    PagesListView.SelectedItem = page;
+                    PageSidebar.SelectPage(page);
                     UpdatePageState();
                 }
                 finally

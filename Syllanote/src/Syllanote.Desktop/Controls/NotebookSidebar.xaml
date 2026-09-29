@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<UserControl
+    x:Class="Syllanote.Desktop.Controls.NotebookSidebar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="using:Syllanote.Desktop.ViewModels">
+
+    <UserControl.Resources>
+        <Style x:Key="NavigationRowButtonStyle" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorTransparentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+            <Setter Property="FocusVisualMargin" Value="-1" />
+            <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter
+                            x:Name="ContentPresenter"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                            <ContentPresenter.BackgroundTransition>
+                                <BrushTransition Duration="0:0:0.083" />
+                            </ContentPresenter.BackgroundTransition>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentPresenter.Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentPresenter.Background" Value="{ThemeResource SubtleFillColorTertiaryBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentPresenter.Opacity" Value="0.4" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </ContentPresenter>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border
+        Padding="12"
+        Style="{StaticResource SyllanoteShellPaneStyle}">
+        <Grid RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Text="Notebooks"
+                    FontSize="18"
+                    Style="{StaticResource SyllanotePanelTitleTextStyle}" />
+
+                <Button
+                    Grid.Column="1"
+                    Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
+                    AutomationProperties.Name="New notebook"
+                    ToolTipService.ToolTip="New notebook"
+                    Click="NewNotebookButton_Click">
+                    <FontIcon
+                        Glyph="&#xE710;"
+                        FontSize="14" />
+                </Button>
+            </Grid>
+
+            <ItemsControl
+                x:Name="NotebookItemsControl"
+                Grid.Row="1">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
+                        <StackPanel Spacing="2">
+                            <Grid MinHeight="38">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                            <Grid.ContextFlyout>
+                                <MenuFlyout Opening="NotebookContextMenu_Opening">
+                                    <MenuFlyoutItem
+                                        Text="Move up"
+                                        IsEnabled="{x:Bind CanMoveUp}"
+                                        Click="MoveNotebookUpMenuItem_Click" />
+                                    <MenuFlyoutItem
+                                        Text="Move down"
+                                        IsEnabled="{x:Bind CanMoveDown}"
+                                        Click="MoveNotebookDownMenuItem_Click" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem
+                                        Text="Concept Dictionary"
+                                        Click="ConceptDictionaryMenuItem_Click" />
+                                    <MenuFlyoutItem
+                                        Text="Rename"
+                                        Click="RenameNotebookMenuItem_Click" />
+                                    <MenuFlyoutItem
+                                        Text="Delete"
+                                        Click="DeleteNotebookButton_Click" />
+                                </MenuFlyout>
+                            </Grid.ContextFlyout>
+
+                            <Border
+                                Grid.ColumnSpan="3"
+                                Margin="0,1"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="6"
+                                IsHitTestVisible="False"
+                                Visibility="{x:Bind SelectedNotebookIndicatorVisibility, Mode=OneWay}" />
+
+                            <Border
+                                Width="3"
+                                Height="24"
+                                CornerRadius="2"
+                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                Visibility="{x:Bind SelectedNotebookIndicatorVisibility, Mode=OneWay}" />
+
+                            <Button
+                                Grid.Column="1"
+                                Grid.ColumnSpan="2"
+                                Style="{StaticResource NavigationRowButtonStyle}"
+                                Padding="4,3,8,3"
+                                AutomationProperties.Name="{x:Bind Name}"
+                                ToolTipService.ToolTip="Expand or collapse sections"
+                                Click="NotebookExpandCollapseButton_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon
+                                        Glyph="{x:Bind ExpandCollapseGlyph, Mode=OneWay}"
+                                        FontSize="14"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Margin="4,0,0,0"
+                                        Text="{x:Bind Name}"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        TextTrimming="CharacterEllipsis"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+                        </Grid>
+
+                        <StackPanel Visibility="{x:Bind SectionControlsVisibility, Mode=OneWay}">
+                            <ItemsControl ItemsSource="{x:Bind Children}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
+                                        <Grid MinHeight="36" Margin="28,0,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="4" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.ContextFlyout>
+                                                <MenuFlyout Opening="SectionContextMenu_Opening">
+                                                    <MenuFlyoutItem
+                                                        Text="Move up"
+                                                        IsEnabled="{x:Bind CanMoveUp}"
+                                                        Click="MoveSectionUpMenuItem_Click" />
+                                                    <MenuFlyoutItem
+                                                        Text="Move down"
+                                                        IsEnabled="{x:Bind CanMoveDown}"
+                                                        Click="MoveSectionDownMenuItem_Click" />
+                                                    <MenuFlyoutSeparator />
+                                                    <MenuFlyoutItem
+                                                        Text="Rename"
+                                                        Click="RenameSectionMenuItem_Click" />
+                                                    <MenuFlyoutItem
+                                                        Text="Delete"
+                                                        Click="DeleteSectionButton_Click" />
+                                                </MenuFlyout>
+                                            </Grid.ContextFlyout>
+
+                                            <Border
+                                                Grid.ColumnSpan="2"
+                                                Margin="0,1"
+                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="6"
+                                                IsHitTestVisible="False"
+                                                Visibility="{x:Bind SelectedSectionIndicatorVisibility, Mode=OneWay}" />
+
+                                            <Border
+                                                Width="3"
+                                                Height="22"
+                                                CornerRadius="2"
+                                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                Visibility="{x:Bind SelectedSectionIndicatorVisibility, Mode=OneWay}" />
+
+                                            <Button
+                                                Grid.Column="1"
+                                                Style="{StaticResource NavigationRowButtonStyle}"
+                                                Padding="10,3"
+                                                Content="{x:Bind Name}"
+                                                FontSize="14"
+                                                AutomationProperties.Name="{x:Bind Name}"
+                                                Click="SectionNavigationButton_Click" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel
+                                MaxWidth="180"
+                                Margin="42,8,12,6"
+                                HorizontalAlignment="Center"
+                                Spacing="4"
+                                Visibility="{x:Bind EmptySectionsVisibility, Mode=OneWay}">
+                                <FontIcon
+                                    Glyph="&#xE8B7;"
+                                    FontSize="20"
+                                    Style="{StaticResource SyllanoteEmptyStateIconStyle}" />
+                                <TextBlock
+                                    Text="No sections yet"
+                                    Style="{StaticResource SyllanoteEmptyStateTitleTextStyle}" />
+                                <TextBlock
+                                    Text="Create a section to organize this notebook."
+                                    FontSize="12"
+                                    Style="{StaticResource SyllanoteEmptyStateDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <Button
+                                Style="{StaticResource NavigationRowButtonStyle}"
+                                Margin="28,4,0,4"
+                                Padding="10,4"
+                                AutomationProperties.Name="New section"
+                                ToolTipService.ToolTip="New section"
+                                Click="NewSectionButton_Click">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <FontIcon
+                                        Glyph="&#xE710;"
+                                        FontSize="14" />
+                                    <TextBlock
+                                        Text="New section"
+                                        VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel
+                x:Name="NotebookEmptyState"
+                Grid.Row="1"
+                MaxWidth="210"
+                Margin="12,28"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Spacing="8">
+                <FontIcon
+                    Glyph="&#xE8B7;"
+                    FontSize="28"
+                    Style="{StaticResource SyllanoteEmptyStateIconStyle}" />
+                <TextBlock
+                    Text="No notebooks yet"
+                    Style="{StaticResource SyllanoteEmptyStateTitleTextStyle}" />
+                <TextBlock
+                    Text="Create a notebook to start organizing your notes."
+                    Style="{StaticResource SyllanoteEmptyStateDescriptionTextStyle}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+
+</UserControl>

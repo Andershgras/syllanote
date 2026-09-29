@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<UserControl
+    x:Class="Syllanote.Desktop.Controls.TopBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Padding="0,0,0,12"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid>
+                <TextBlock
+                    Text="Syllanote"
+                    Style="{StaticResource SyllanotePanelTitleTextStyle}" />
+
+                <StackPanel
+                    HorizontalAlignment="Right"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <TextBox
+                        x:Name="SearchTextBox"
+                        Width="320"
+                        PlaceholderText="Search pages in all notebooks"
+                        AutomationProperties.Name="Search pages"
+                        AutomationProperties.HelpText="Press Ctrl+F to focus search and Enter to search"
+                        KeyDown="SearchTextBox_KeyDown">
+                        <TextBox.KeyboardAccelerators>
+                            <KeyboardAccelerator
+                                Key="F"
+                                Modifiers="Control"
+                                Invoked="FocusSearchKeyboardAccelerator_Invoked" />
+                        </TextBox.KeyboardAccelerators>
+                    </TextBox>
+                    <Button
+                        x:Name="SearchButton"
+                        Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
+                        AutomationProperties.Name="Search pages"
+                        ToolTipService.ToolTip="Search"
+                        Click="SearchButton_Click">
+                        <FontIcon
+                            Glyph="&#xE721;"
+                            FontSize="14" />
+                    </Button>
+                    <ProgressRing
+                        x:Name="SearchProgressRing"
+                        Width="20"
+                        Height="20"
+                        IsActive="False"
+                        Visibility="Collapsed"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="Searching pages" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel
+            Grid.Row="1"
+            Width="360"
+            Margin="0,8,0,12"
+            HorizontalAlignment="Right">
+            <TextBlock
+                Text="{Binding SearchMessage}"
+                TextWrapping="Wrap" />
+            <ListView
+                x:Name="SearchResultsListView"
+                Background="Transparent"
+                BorderThickness="0"
+                ItemsSource="{Binding SearchResults}"
+                SelectionChanged="SearchResultsListView_SelectionChanged"
+                MaxHeight="160"
+                AutomationProperties.Name="Search results">
+                <ListView.Resources>
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundPointerOver"
+                        ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundPressed"
+                        ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundSelected"
+                        ResourceKey="SubtleFillColorSecondaryBrush" />
+                    <StaticResource
+                        x:Key="ListViewItemBackgroundSelectedPointerOver"
+                        ResourceKey="SubtleFillColorTertiaryBrush" />
+                    <CornerRadius x:Key="ListViewItemCornerRadius">6</CornerRadius>
+                </ListView.Resources>
+
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="MinHeight" Value="48" />
+                        <Setter Property="Margin" Value="0,1" />
+                        <Setter Property="Padding" Value="10,8" />
+                        <Setter Property="CornerRadius" Value="6" />
+                        <Setter Property="UseSystemFocusVisuals" Value="True" />
+                        <Setter Property="FocusVisualMargin" Value="-1" />
+                        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock
+                                Text="{Binding PageTitle}"
+                                FontWeight="SemiBold" />
+                            <TextBlock
+                                Text="{Binding Location}"
+                                Opacity="0.7" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
+    </Grid>
+
+</UserControl>

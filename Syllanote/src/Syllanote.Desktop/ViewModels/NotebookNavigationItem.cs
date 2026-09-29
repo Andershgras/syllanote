@@ -42,7 +42,7 @@ public partial class NotebookNavigationItem : ObservableObject
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-    public string ExpandCollapseGlyph => IsExpanded ? "▾" : "▸";
+    public string ExpandCollapseGlyph => IsExpanded ? "\uE70D" : "\uE76C";
 
     public bool CanMoveUp { get; private set; }
 
