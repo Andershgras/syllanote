@@ -7,7 +7,7 @@
 
     <Border
         Padding="12"
-        Style="{StaticResource SyllanotePanelCardStyle}">
+        Style="{StaticResource SyllanoteShellPaneStyle}">
         <Grid RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

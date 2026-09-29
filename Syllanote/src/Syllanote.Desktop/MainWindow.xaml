@@ -8,7 +8,7 @@
 
     <Grid
         x:Name="RootGrid"
-        Padding="24"
+        Padding="16"
         DataContext="{x:Bind ViewModel}"
         ActualThemeChanged="RootGrid_ActualThemeChanged"
         Loaded="RootGrid_Loaded">
@@ -31,6 +31,11 @@
             SearchRequested="TopBar_SearchRequested"
             SearchResultSelectionChanged="TopBar_SearchResultSelectionChanged" />
 
+        <Border
+            Grid.Row="1"
+            Grid.ColumnSpan="3"
+            Style="{StaticResource SyllanotePanelCardStyle}" />
+
         <!-- ==================== -->
         <!-- NOTEBOOKS + SECTIONS -->
         <!-- ==================== -->
@@ -39,7 +44,6 @@
             x:Name="NotebookSidebar"
             Grid.Row="1"
             Grid.Column="0"
-            Margin="0,0,24,0"
             NewNotebookRequested="NewNotebookButton_Click"
             NotebookExpandCollapseRequested="NotebookExpandCollapseButton_Click"
             NotebookContextMenuOpening="NotebookContextMenu_Opening"
@@ -65,7 +69,6 @@
             x:Name="PageSidebar"
             Grid.Row="1"
             Grid.Column="1"
-            Margin="0,0,24,0"
             NewPageRequested="NewPageButton_Click"
             PageSelectionChanged="PageListView_SelectionChanged"
             PageContextMenuOpening="PageContextMenu_Opening"
@@ -95,6 +98,7 @@
             x:Name="ConceptDictionaryView"
             Grid.Row="1"
             Grid.Column="2"
+            Margin="16"
             Visibility="Collapsed"
             BackRequested="ConceptBackButton_Click"
             NewConceptRequested="NewConceptButton_Click"
@@ -103,6 +107,24 @@
             InputChanged="ConceptInput_TextChanged"
             SaveRequested="SaveConceptButton_Click"
             DeleteRequested="DeleteConceptButton_Click" />
+
+        <Border
+            Grid.Row="1"
+            Grid.Column="0"
+            Width="1"
+            Margin="0,12"
+            HorizontalAlignment="Right"
+            Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+            IsHitTestVisible="False" />
+
+        <Border
+            Grid.Row="1"
+            Grid.Column="1"
+            Width="1"
+            Margin="0,12"
+            HorizontalAlignment="Right"
+            Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+            IsHitTestVisible="False" />
 
     </Grid>
 
