@@ -80,16 +80,11 @@
 
                 <TextBlock
                     Text="Notebooks"
-                    FontSize="20"
-                    FontWeight="SemiBold"
-                    VerticalAlignment="Center" />
+                    Style="{StaticResource SyllanotePanelTitleTextStyle}" />
 
                 <Button
                     Grid.Column="1"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    CornerRadius="6"
+                    Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
                     AutomationProperties.Name="New notebook"
                     ToolTipService.ToolTip="New notebook"
                     Click="NewNotebookButton_Click">

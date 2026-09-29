@@ -22,17 +22,12 @@
 
                 <TextBlock
                     Text="Pages"
-                    FontSize="20"
-                    FontWeight="SemiBold"
-                    VerticalAlignment="Center" />
+                    Style="{StaticResource SyllanotePanelTitleTextStyle}" />
 
                 <Button
                     x:Name="NewPageButton"
                     Grid.Column="1"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    CornerRadius="6"
+                    Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
                     IsEnabled="False"
                     AutomationProperties.Name="New page"
                     ToolTipService.ToolTip="New page"
