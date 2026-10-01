@@ -3,7 +3,7 @@
 Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
 > [!NOTE]
-> Syllanote is an actively developed portfolio project. The core note-taking and data-protection workflows are implemented, while accessibility verification, packaging, and release preparation are still in progress.
+> Syllanote is an actively developed portfolio project. The core note-taking, data-protection, and accessibility workflows are implemented and verified, while packaging and the first versioned release are still in progress.
 
 ## Features
 
@@ -140,7 +140,9 @@ dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
 
 The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
 
-Milestone 2 completed with 158 automated tests and the Debug, Release, and x64 publish checks passing without warnings or errors. The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
+The current automated baseline is 160 passing tests. After Milestone 3, the Debug build completed without warnings or errors, and the keyboard-only, Narrator, display-scaling, and high-contrast walkthroughs passed on 2026-10-01. Release and x64 publish checks will be rerun as part of Milestone 4.
+
+The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
 ## Local data
 

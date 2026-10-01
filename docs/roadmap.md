@@ -26,7 +26,7 @@ This roadmap is the working plan for taking Syllanote from a functional local-fi
 
 ## Current project status
 
-Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow, failure handling, and data-protection workflow are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because accessibility verification and packaging still need focused work.
+Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow, failure handling, data-protection workflow, and accessibility baseline are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because packaging and the versioned release workflow still need focused work.
 
 ### Implemented product areas
 
@@ -41,23 +41,24 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 - Resizable navigation panels and persistent panel widths.
 - Persistent window size, placement, and maximized state.
 - Windows 11-inspired WinUI presentation with Mica, Fluent icons, and consistent empty states.
+- Verified keyboard-only, Narrator, display-scaling, and high-contrast workflows.
 
 ### Current verification baseline
 
-- 158 of 158 automated tests pass.
-- Debug and Release builds complete with no warnings or errors.
-- The x64 file-system publish completes successfully with no warnings or errors.
+- 160 of 160 automated tests pass.
+- The latest Debug build after Milestone 3 completes with no warnings or errors.
+- The most recent Release build and x64 file-system publish checks completed with no warnings or errors before the Milestone 3 accessibility changes and must be rerun for Milestone 4.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
 - Unavailable-database startup handling and locked-database autosave recovery were manually verified on 2026-10-01.
 - Manual backup creation and the confirmed close-and-reopen restore flow were verified on 2026-10-01.
+- Keyboard-only, Narrator, 125%, 150%, and 200% display scaling, and high-contrast workflows were manually verified on 2026-10-01.
 - Automated tests cover Domain, Application, and Infrastructure behavior, but do not drive the WinUI interface.
 
 ### Known release gaps
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
-- The accessibility baseline exists in parts of the UI, but keyboard and Narrator workflows have not received a complete manual audit.
-- File-system publish profiles exist for x86, x64, and ARM64, but the first installable package and release workflow are not verified.
+- File-system publish profiles exist locally for x86, x64, and ARM64, but they are ignored by Git and are not reproducible from a clean checkout.
 - Package identity, display metadata, branding, and versioning still contain development values.
 - There is no version tag, release artifact, or continuous-integration workflow yet.
 
@@ -282,6 +283,14 @@ Make the critical note-taking workflows usable without a mouse and improve the q
 - Check focus after every create, rename, delete, search, and navigation transition.
 - Inspect the main workspace at the selected scaling levels and in high contrast.
 - Rerun the automated tests and the relevant WinUI regression checks after changes.
+
+#### Recorded verification
+
+- 160 of 160 automated tests passed on 2026-10-01.
+- The Debug build completed with 0 warnings and 0 errors after the accessibility changes.
+- Keyboard-only and Narrator walkthroughs passed on 2026-10-01.
+- The workspace passed manual checks at 125%, 150%, and 200% display scaling.
+- High contrast passed after correcting editor text colors and hover states.
 
 ---
 
