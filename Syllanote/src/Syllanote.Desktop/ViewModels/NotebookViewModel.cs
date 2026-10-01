@@ -130,36 +130,40 @@ public partial class NotebookViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string _newNotebookName = string.Empty;
+    public partial string NewNotebookName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _selectedNotebookName = string.Empty;
-    [ObservableProperty]
-    private string _newSectionName = string.Empty;
+    public partial string SelectedNotebookName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _selectedSectionName = string.Empty;
-    [ObservableProperty]
-    private string _newPageTitle = string.Empty;
+    public partial string NewSectionName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _pageContent = string.Empty;
+    public partial string SelectedSectionName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _pageFormattedContent = string.Empty;
+    public partial string NewPageTitle { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _selectedPageTitle = string.Empty;
+    public partial string PageContent { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private Notebook? _selectedNotebook;
-    [ObservableProperty]
-    private Section? _selectedSection;
-    [ObservableProperty]
-    private Page? _selectedPage;
+    public partial string PageFormattedContent { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private bool _isPageDirty;
+    public partial string SelectedPageTitle { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial Notebook? SelectedNotebook { get; set; }
+
+    [ObservableProperty]
+    public partial Section? SelectedSection { get; set; }
+
+    [ObservableProperty]
+    public partial Page? SelectedPage { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsPageDirty { get; set; }
 
     [RelayCommand]
     private async Task CreateNotebookAsync()
