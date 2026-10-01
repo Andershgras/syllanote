@@ -857,9 +857,12 @@ public partial class NotebookViewModel : ObservableObject
             SearchResults.Add(result);
         }
 
-        SearchMessage = string.IsNullOrWhiteSpace(SearchText)
-            ? string.Empty
-            : results.Count == 0 ? "No pages found." : string.Empty;
+        SearchMessage = results.Count switch
+        {
+            0 => "No pages found.",
+            1 => "1 page found.",
+            _ => $"{results.Count} pages found."
+        };
     }
 
     public async Task<bool> NavigateToSearchResultAsync(SearchPageResult result)

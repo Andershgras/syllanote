@@ -1,8 +1,11 @@
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.System;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -12,6 +15,7 @@ using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
 using Syllanote.Application.Notebooks.Concepts.Recognition;
+using Syllanote.Application.Notebooks.Sections.Pages.Formatting;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
 using System;
@@ -68,6 +72,7 @@ namespace Syllanote.Desktop
         private readonly ILibraryBackupService _libraryBackupService;
         private readonly ILibraryBackupValidator _libraryBackupValidator;
         private readonly ILibraryRestoreService _libraryRestoreService;
+        private readonly ThemeSettings _themeSettings;
 
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
@@ -364,7 +369,46 @@ namespace Syllanote.Desktop
             OperationInfoBar.Title = title;
             OperationInfoBar.Message = message;
             OperationInfoBar.Severity = severity;
+            AutomationProperties.SetLiveSetting(
+                OperationInfoBar,
+                severity is InfoBarSeverity.Error or InfoBarSeverity.Warning
+                    ? AutomationLiveSetting.Assertive
+                    : AutomationLiveSetting.Polite);
             OperationInfoBar.IsOpen = true;
+        }
+
+        private void QueueKeyboardFocus(Func<bool> focusAction)
+        {
+            DispatcherQueue.TryEnqueue(
+                DispatcherQueuePriority.Low,
+                () => focusAction());
+        }
+
+        private bool FocusPageWorkspace()
+        {
+            if (IsSelectedPageCurrent())
+            {
+                return EditorView.ContentEditor.Focus(FocusState.Keyboard);
+            }
+
+            return ViewModel.SelectedSection is not null
+                ? PageSidebar.FocusNewPageButton()
+                : NotebookSidebar.FocusNotebook(ViewModel.SelectedNotebook);
+        }
+
+        private static void FocusDialogTextBox(
+            ContentDialog dialog,
+            TextBox textBox,
+            bool selectAll = false)
+        {
+            dialog.Opened += (_, _) =>
+            {
+                textBox.Focus(FocusState.Keyboard);
+                if (selectAll)
+                {
+                    textBox.SelectAll();
+                }
+            };
         }
 
         private void ClearOperationMessage()
@@ -417,6 +461,8 @@ namespace Syllanote.Desktop
             _libraryBackupValidator = libraryBackupValidator;
             _libraryRestoreService = libraryRestoreService;
             InitializeComponent();
+            _themeSettings = ThemeSettings.CreateForWindowId(AppWindow.Id);
+            _themeSettings.Changed += ThemeSettings_Changed;
             RestorePanelWidths();
             RestoreWindowPlacement();
             AppWindow.Changed += AppWindow_Changed;
@@ -631,7 +677,8 @@ namespace Syllanote.Desktop
                 {
                     EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.FormatRtf,
-                        ViewModel.PageFormattedContent);
+                        RtfThemeColorNormalizer.Normalize(
+                            ViewModel.PageFormattedContent));
                 }
             }
             finally
@@ -657,7 +704,7 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
-                if (content.Length > 0)
+                if (!_themeSettings.HighContrast && content.Length > 0)
                 {
                     var documentRange = EditorView.ContentEditor.Document.GetRange(
                         0,
@@ -670,6 +717,8 @@ namespace Syllanote.Desktop
                 EditorView.ContentEditor.Document.GetText(
                     TextGetOptions.FormatRtf,
                     out formattedContent);
+                formattedContent = RtfThemeColorNormalizer.Normalize(
+                    formattedContent);
             }
             finally
             {
@@ -922,34 +971,37 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
-                if (editorContent.Length > 0)
+                if (!_themeSettings.HighContrast)
                 {
-                    var documentRange = EditorView.ContentEditor.Document.GetRange(
-                        0,
-                        editorContent.Length);
-                    var documentFormat = documentRange.CharacterFormat;
-                    documentFormat.BackgroundColor = Colors.Transparent;
-                    documentRange.CharacterFormat = documentFormat;
-                }
-
-                foreach (var match in ViewModel.ConceptMatches)
-                {
-                    if (!IsCurrentConceptMatch(match, editorContent))
+                    if (editorContent.Length > 0)
                     {
-                        continue;
+                        var documentRange = EditorView.ContentEditor.Document.GetRange(
+                            0,
+                            editorContent.Length);
+                        var documentFormat = documentRange.CharacterFormat;
+                        documentFormat.BackgroundColor = Colors.Transparent;
+                        documentRange.CharacterFormat = documentFormat;
                     }
 
-                    var endIndex = match.StartIndex + match.Length;
-                    var conceptRange = EditorView.ContentEditor.Document.GetRange(
-                        match.StartIndex,
-                        endIndex);
-                    var conceptFormat = conceptRange.CharacterFormat;
-                    conceptFormat.BackgroundColor = ColorHelper.FromArgb(
-                        96,
-                        0,
-                        120,
-                        212);
-                    conceptRange.CharacterFormat = conceptFormat;
+                    foreach (var match in ViewModel.ConceptMatches)
+                    {
+                        if (!IsCurrentConceptMatch(match, editorContent))
+                        {
+                            continue;
+                        }
+
+                        var endIndex = match.StartIndex + match.Length;
+                        var conceptRange = EditorView.ContentEditor.Document.GetRange(
+                            match.StartIndex,
+                            endIndex);
+                        var conceptFormat = conceptRange.CharacterFormat;
+                        conceptFormat.BackgroundColor = ColorHelper.FromArgb(
+                            96,
+                            0,
+                            120,
+                            212);
+                        conceptRange.CharacterFormat = conceptFormat;
+                    }
                 }
             }
             finally
@@ -1052,6 +1104,25 @@ namespace Syllanote.Desktop
             object args)
         {
             UpdateTitleBarTheme();
+            QueueConceptHighlightRefresh();
+        }
+
+        private void ThemeSettings_Changed(
+            ThemeSettings sender,
+            object args)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                UpdateTitleBarTheme();
+                if (_themeSettings.HighContrast && IsSelectedPageCurrent())
+                {
+                    SyncPageEditorContent(force: true);
+                }
+                else
+                {
+                    QueueConceptHighlightRefresh();
+                }
+            });
         }
 
         private void UpdateTitleBarTheme()
@@ -1131,6 +1202,8 @@ namespace Syllanote.Desktop
                 ConceptDictionaryView.ClearEditor();
                 EditorView.Visibility = Visibility.Collapsed;
                 ConceptDictionaryView.Visibility = Visibility.Visible;
+                QueueKeyboardFocus(
+                    ConceptDictionaryView.FocusSelectedConceptOrNewButton);
             }
             finally
             {
@@ -1144,6 +1217,7 @@ namespace Syllanote.Desktop
             if (!_isConceptOperationInProgress)
             {
                 ShowPageEditor();
+                QueueKeyboardFocus(FocusPageWorkspace);
             }
         }
 
@@ -1156,6 +1230,7 @@ namespace Syllanote.Desktop
 
             ConceptDictionaryView.ClearEditor();
             UpdateConceptEditorState();
+            QueueKeyboardFocus(ConceptDictionaryView.FocusConceptName);
         }
 
         private async void ConceptsListView_SelectionChanged(
@@ -1214,6 +1289,8 @@ namespace Syllanote.Desktop
                     RefreshSectionNavigation();
                     PageSidebar.SelectPage(ViewModel.SelectedPage);
                     UpdatePageState();
+                    QueueKeyboardFocus(() =>
+                        EditorView.ContentEditor.Focus(FocusState.Keyboard));
                 }
                 else if (!ViewModel.HasPageSaveError)
                 {
@@ -1279,6 +1356,8 @@ namespace Syllanote.Desktop
                 ConceptDictionaryView.SelectConcept(ViewModel.Concepts
                     .FirstOrDefault(concept => concept.Id == saved.Id));
                 ConceptDictionaryView.Message = "Concept saved.";
+                QueueKeyboardFocus(
+                    ConceptDictionaryView.FocusSelectedConceptOrNewButton);
             }
             catch (DuplicateConceptNameException ex)
             {
@@ -1352,6 +1431,8 @@ namespace Syllanote.Desktop
                 }
 
                 ConceptDictionaryView.Message = "Concept deleted.";
+                QueueKeyboardFocus(
+                    ConceptDictionaryView.FocusSelectedConceptOrNewButton);
             }
             finally
             {
@@ -1613,11 +1694,11 @@ namespace Syllanote.Desktop
             }
         }
 
-        private async void TopBar_SearchResultSelectionChanged(
-            object sender, SelectionChangedEventArgs e)
+        private async void TopBar_SearchResultInvoked(
+            object sender, ItemClickEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                TopBar.SelectedSearchResult is not SearchPageResult result)
+                e.ClickedItem is not SearchPageResult result)
             {
                 return;
             }
@@ -1641,6 +1722,8 @@ namespace Syllanote.Desktop
                 if (navigation.Result)
                 {
                     ShowPageEditor();
+                    QueueKeyboardFocus(() =>
+                        EditorView.ContentEditor.Focus(FocusState.Keyboard));
                 }
                 RefreshSectionNavigation();
                 PageSidebar.SelectPage(ViewModel.SelectedPage);
@@ -1661,6 +1744,10 @@ namespace Syllanote.Desktop
         {
             if (_isRenamingSelection) return;
 
+            var existingNotebookIds = ViewModel.Notebooks
+                .Select(notebook => notebook.Id)
+                .ToHashSet();
+
             var nameTextBox = new TextBox
             {
                 Header = "Notebook name (required)",
@@ -1678,6 +1765,8 @@ namespace Syllanote.Desktop
                 IsPrimaryButtonEnabled = false
             };
 
+            FocusDialogTextBox(dialog, nameTextBox);
+
             nameTextBox.TextChanged += (_, _) =>
                 dialog.IsPrimaryButtonEnabled =
                     !string.IsNullOrWhiteSpace(nameTextBox.Text);
@@ -1685,9 +1774,15 @@ namespace Syllanote.Desktop
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
             {
                 ViewModel.NewNotebookName = nameTextBox.Text;
-                await RunOperationAsync(
-                    () => ViewModel.CreateNotebookCommand.ExecuteAsync(null),
-                    "Notebook couldn't be created");
+                if (await RunOperationAsync(
+                        () => ViewModel.CreateNotebookCommand.ExecuteAsync(null),
+                        "Notebook couldn't be created"))
+                {
+                    var createdNotebook = ViewModel.Notebooks.FirstOrDefault(
+                        notebook => !existingNotebookIds.Contains(notebook.Id));
+                    QueueKeyboardFocus(() =>
+                        NotebookSidebar.FocusNotebook(createdNotebook));
+                }
             }
         }
         private async void NewSectionButton_Click(
@@ -1704,6 +1799,10 @@ namespace Syllanote.Desktop
             {
                 return;
             }
+
+            var existingSectionIds = ViewModel.Sections
+                .Select(section => section.Id)
+                .ToHashSet();
 
             var nameTextBox = new TextBox
             {
@@ -1722,6 +1821,8 @@ namespace Syllanote.Desktop
                 IsPrimaryButtonEnabled = false
             };
 
+            FocusDialogTextBox(dialog, nameTextBox);
+
             nameTextBox.TextChanged += (_, _) =>
                 dialog.IsPrimaryButtonEnabled =
                     !string.IsNullOrWhiteSpace(nameTextBox.Text);
@@ -1730,9 +1831,15 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedNotebook == notebook)
             {
                 ViewModel.NewSectionName = nameTextBox.Text;
-                await RunOperationAsync(
-                    () => ViewModel.CreateSectionCommand.ExecuteAsync(null),
-                    "Section couldn't be created");
+                if (await RunOperationAsync(
+                        () => ViewModel.CreateSectionCommand.ExecuteAsync(null),
+                        "Section couldn't be created"))
+                {
+                    var createdSection = ViewModel.Sections.FirstOrDefault(
+                        section => !existingSectionIds.Contains(section.Id));
+                    QueueKeyboardFocus(() =>
+                        NotebookSidebar.FocusSection(createdSection));
+                }
             }
         }
         private async void NewPageButton_Click(
@@ -1747,6 +1854,10 @@ namespace Syllanote.Desktop
             {
                 return;
             }
+
+            var existingPageIds = ViewModel.Pages
+                .Select(page => page.Id)
+                .ToHashSet();
 
             var titleTextBox = new TextBox
             {
@@ -1765,6 +1876,8 @@ namespace Syllanote.Desktop
                 IsPrimaryButtonEnabled = false
             };
 
+            FocusDialogTextBox(dialog, titleTextBox);
+
             titleTextBox.TextChanged += (_, _) =>
                 dialog.IsPrimaryButtonEnabled =
                     !string.IsNullOrWhiteSpace(titleTextBox.Text);
@@ -1774,9 +1887,15 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedNotebook?.Id == section.NotebookId)
             {
                 ViewModel.NewPageTitle = titleTextBox.Text;
-                await RunOperationAsync(
-                    () => ViewModel.CreatePageCommand.ExecuteAsync(null),
-                    "Page couldn't be created");
+                if (await RunOperationAsync(
+                        () => ViewModel.CreatePageCommand.ExecuteAsync(null),
+                        "Page couldn't be created"))
+                {
+                    var createdPage = ViewModel.Pages.FirstOrDefault(
+                        page => !existingPageIds.Contains(page.Id));
+                    QueueKeyboardFocus(() =>
+                        PageSidebar.FocusPage(createdPage));
+                }
             }
         }
         private async void SectionNavigationButton_Click(
@@ -1831,6 +1950,8 @@ namespace Syllanote.Desktop
                     ViewModel.SelectedSection?.Id == currentSection.Id)
                 {
                     SyncNavigationSelection();
+                    QueueKeyboardFocus(() =>
+                        NotebookSidebar.FocusSection(currentSection));
                 }
             }
             finally
@@ -1864,6 +1985,8 @@ namespace Syllanote.Desktop
             {
                 currentItem.IsExpanded = shouldExpand;
                 currentItem.RefreshEmptySectionsVisibility();
+                QueueKeyboardFocus(() =>
+                    NotebookSidebar.FocusNotebook(notebook));
             }
         }
 
@@ -2063,6 +2186,8 @@ namespace Syllanote.Desktop
                 DefaultButton = ContentDialogButton.Primary
             };
 
+            FocusDialogTextBox(dialog, nameTextBox, selectAll: true);
+
             nameTextBox.TextChanged += (_, _) =>
                 dialog.IsPrimaryButtonEnabled =
                     !string.IsNullOrWhiteSpace(nameTextBox.Text);
@@ -2085,6 +2210,8 @@ namespace Syllanote.Desktop
 
                     ViewModel.SelectedNotebook = notebook;
                     RebuildNotebookNavigation();
+                    QueueKeyboardFocus(() =>
+                        NotebookSidebar.FocusNotebook(notebook));
                 }
                 finally
                 {
@@ -2139,6 +2266,8 @@ namespace Syllanote.Desktop
                     }
                 }
                 RebuildNotebookNavigation();
+                QueueKeyboardFocus(() =>
+                    NotebookSidebar.FocusNotebook(notebook));
             }
             finally
             {
@@ -2177,6 +2306,8 @@ namespace Syllanote.Desktop
                 DefaultButton = ContentDialogButton.Primary
             };
 
+            FocusDialogTextBox(dialog, nameTextBox, selectAll: true);
+
             nameTextBox.TextChanged += (_, _) =>
                 dialog.IsPrimaryButtonEnabled =
                     !string.IsNullOrWhiteSpace(nameTextBox.Text);
@@ -2200,6 +2331,8 @@ namespace Syllanote.Desktop
 
                     ViewModel.SelectedSection = section;
                     RefreshSectionNavigation();
+                    QueueKeyboardFocus(() =>
+                        NotebookSidebar.FocusSection(section));
                 }
                 finally
                 {
@@ -2255,6 +2388,8 @@ namespace Syllanote.Desktop
                     }
                 }
                 RefreshSectionNavigation();
+                QueueKeyboardFocus(() =>
+                    NotebookSidebar.FocusSection(currentSection));
             }
             finally
             {
@@ -2382,6 +2517,8 @@ namespace Syllanote.Desktop
                 }
                 PageSidebar.SelectPage(currentPage);
                 UpdatePageState();
+                QueueKeyboardFocus(() =>
+                    PageSidebar.FocusPage(currentPage));
             }
             finally
             {
@@ -2421,6 +2558,8 @@ namespace Syllanote.Desktop
                 DefaultButton = ContentDialogButton.Primary
             };
 
+            FocusDialogTextBox(dialog, titleTextBox, selectAll: true);
+
             titleTextBox.TextChanged += (_, _) =>
                 dialog.IsPrimaryButtonEnabled =
                     !string.IsNullOrWhiteSpace(titleTextBox.Text);
@@ -2444,6 +2583,8 @@ namespace Syllanote.Desktop
 
                     PageSidebar.SelectPage(page);
                     UpdatePageState();
+                    QueueKeyboardFocus(() =>
+                        PageSidebar.FocusPage(page));
                 }
                 finally
                 {
@@ -2468,6 +2609,7 @@ namespace Syllanote.Desktop
             }
 
             page = currentPage;
+            var deletedPageIndex = ViewModel.Pages.IndexOf(page);
 
             var dialog = new ContentDialog
             {
@@ -2483,9 +2625,19 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedPage == page &&
                 IsSelectedPageCurrent())
             {
-                await RunOperationAsync(
-                    () => ViewModel.DeletePageCommand.ExecuteAsync(null),
-                    "Page couldn't be deleted");
+                if (await RunOperationAsync(
+                        () => ViewModel.DeletePageCommand.ExecuteAsync(null),
+                        "Page couldn't be deleted"))
+                {
+                    var nextPage = ViewModel.Pages.Count == 0
+                        ? null
+                        : ViewModel.Pages[Math.Min(
+                            deletedPageIndex,
+                            ViewModel.Pages.Count - 1)];
+                    QueueKeyboardFocus(() => nextPage is not null
+                        ? PageSidebar.FocusPage(nextPage)
+                        : PageSidebar.FocusNewPageButton());
+                }
             }
         }
 
@@ -2503,6 +2655,7 @@ namespace Syllanote.Desktop
             }
 
             section = currentSection;
+            var deletedSectionIndex = ViewModel.Sections.IndexOf(section);
 
             var dialog = new ContentDialog
             {
@@ -2523,6 +2676,14 @@ namespace Syllanote.Desktop
                         "Section couldn't be deleted"))
                 {
                     RefreshSectionNavigation();
+                    var nextSection = ViewModel.Sections.Count == 0
+                        ? null
+                        : ViewModel.Sections[Math.Min(
+                            deletedSectionIndex,
+                            ViewModel.Sections.Count - 1)];
+                    QueueKeyboardFocus(() => nextSection is not null
+                        ? NotebookSidebar.FocusSection(nextSection)
+                        : NotebookSidebar.FocusNewSectionButton(notebook: ViewModel.SelectedNotebook));
                 }
             }
         }
@@ -2541,6 +2702,7 @@ namespace Syllanote.Desktop
 
             notebook = ViewModel.SelectedNotebook;
             if (notebook is null) return;
+            var deletedNotebookIndex = ViewModel.Notebooks.IndexOf(notebook);
 
             var dialog = new ContentDialog
             {
@@ -2560,6 +2722,14 @@ namespace Syllanote.Desktop
                         "Notebook couldn't be deleted"))
                 {
                     RebuildNotebookNavigation();
+                    var nextNotebook = ViewModel.Notebooks.Count == 0
+                        ? null
+                        : ViewModel.Notebooks[Math.Min(
+                            deletedNotebookIndex,
+                            ViewModel.Notebooks.Count - 1)];
+                    QueueKeyboardFocus(() => nextNotebook is not null
+                        ? NotebookSidebar.FocusNotebook(nextNotebook)
+                        : NotebookSidebar.FocusNewNotebookButton());
                 }
             }
         }

@@ -57,6 +57,22 @@ namespace Syllanote.Desktop.Controls
             PagesListView.SelectedItem = page;
         }
 
+        public bool FocusNewPageButton() =>
+            NewPageButton.Focus(FocusState.Keyboard);
+
+        public bool FocusPage(DomainPage? page)
+        {
+            if (page is null)
+            {
+                return false;
+            }
+
+            PagesListView.ScrollIntoView(page);
+            PagesListView.UpdateLayout();
+            return PagesListView.ContainerFromItem(page) is ListViewItem item &&
+                item.Focus(FocusState.Keyboard);
+        }
+
         private void NewPageButton_Click(object sender, RoutedEventArgs e)
         {
             NewPageRequested?.Invoke(this, e);
@@ -67,6 +83,22 @@ namespace Syllanote.Desktop.Controls
             SelectionChangedEventArgs e)
         {
             PageSelectionChanged?.Invoke(this, e);
+        }
+
+        private void PagesListView_ContainerContentChanging(
+            ListViewBase sender,
+            ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer is null)
+            {
+                return;
+            }
+
+            AutomationProperties.SetName(
+                args.ItemContainer,
+                args.InRecycleQueue || args.Item is not DomainPage page
+                    ? string.Empty
+                    : page.Title);
         }
 
         private void PageContextMenu_Opening(object sender, object e)

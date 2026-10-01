@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-01
 
-Current phase: **Next — Milestone 3: Accessibility and keyboard readiness**
+Current phase: **Now — Milestone 4: First versioned release**
 
 This roadmap is the working plan for taking Syllanote from a functional local-first MVP to a reliable first portfolio release. It is intentionally focused: stability, data safety, accessibility, and release readiness take priority over additional product features.
 
@@ -235,13 +235,11 @@ Protect locally stored notes with a supported backup and recovery path before th
 
 ---
 
-## Next
-
 ### Milestone 3 — Accessibility and keyboard readiness
 
 **Work types:** Stabilization, release work
 
-**Status:** Next
+**Status:** Completed
 
 **Estimated size:** Small to medium
 
@@ -287,11 +285,13 @@ Make the critical note-taking workflows usable without a mouse and improve the q
 
 ---
 
+## Next
+
 ### Milestone 4 — First versioned release
 
 **Work types:** Release work, documentation
 
-**Status:** Next
+**Status:** Now
 
 **Target:** `v0.1.0`, x64 first
 

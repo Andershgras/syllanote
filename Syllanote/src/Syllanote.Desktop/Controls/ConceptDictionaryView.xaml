@@ -25,6 +25,7 @@
             <Button
                 Grid.Column="1"
                 Content="Back to page"
+                AutomationProperties.HelpText="Return to the selected page editor"
                 Click="ConceptBackButton_Click" />
         </Grid>
 
@@ -40,11 +41,13 @@
                 <Button
                     x:Name="NewConceptButton"
                     Content="New concept"
+                    AutomationProperties.HelpText="Clear the concept editor and create a new concept"
                     Click="NewConceptButton_Click" />
                 <Grid Height="140">
                     <ListView
                         x:Name="ConceptsListView"
                         ItemsSource="{Binding Concepts}"
+                        ContainerContentChanging="ConceptsListView_ContainerContentChanging"
                         SelectionChanged="ConceptsListView_SelectionChanged"
                         AutomationProperties.Name="Concepts">
                         <ListView.ItemTemplate>
@@ -76,11 +79,13 @@
                 <TextBox
                     x:Name="ConceptNameTextBox"
                     Header="Name (required)"
+                    AutomationProperties.Name="Concept name, required"
                     PlaceholderText="e.g. Dependency Injection"
                     TextChanged="ConceptInput_TextChanged" />
                 <TextBox
                     x:Name="ConceptDefinitionTextBox"
                     Header="Definition (required)"
+                    AutomationProperties.Name="Concept definition, required"
                     PlaceholderText="Write your own definition..."
                     AcceptsReturn="True"
                     TextWrapping="Wrap"
@@ -100,6 +105,8 @@
                 </StackPanel>
                 <TextBlock
                     x:Name="ConceptMessage"
+                    AutomationProperties.Name="Concept status"
+                    AutomationProperties.LiveSetting="Polite"
                     TextWrapping="Wrap" />
                 <TextBlock
                     Text="Referenced on pages"
@@ -111,6 +118,7 @@
                         x:Name="ConceptReferencesListView"
                         ItemsSource="{Binding ConceptReferences}"
                         SelectionMode="Single"
+                        ContainerContentChanging="ConceptReferencesListView_ContainerContentChanging"
                         SelectionChanged="ConceptReferencesListView_SelectionChanged"
                         AutomationProperties.Name="Concept references">
                         <ListView.ItemTemplate>

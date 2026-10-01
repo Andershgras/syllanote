@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
@@ -11,12 +12,9 @@ namespace Syllanote.Desktop.Controls
         public event RoutedEventHandler? BackupRequested;
         public event RoutedEventHandler? RestoreRequested;
         public event RoutedEventHandler? SearchRequested;
-        public event SelectionChangedEventHandler? SearchResultSelectionChanged;
+        public event ItemClickEventHandler? SearchResultInvoked;
 
         public string SearchText => SearchTextBox.Text;
-
-        public SearchPageResult? SelectedSearchResult =>
-            SearchResultsListView.SelectedItem as SearchPageResult;
 
         public TopBar()
         {
@@ -105,11 +103,31 @@ namespace Syllanote.Desktop.Controls
             e.Handled = true;
         }
 
-        private void SearchResultsListView_SelectionChanged(
+        private void SearchResultsListView_ItemClick(
             object sender,
-            SelectionChangedEventArgs e)
+            ItemClickEventArgs e)
         {
-            SearchResultSelectionChanged?.Invoke(this, e);
+            SearchResultInvoked?.Invoke(this, e);
+        }
+
+        private void SearchResultsListView_ContainerContentChanging(
+            ListViewBase sender,
+            ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer is null)
+            {
+                return;
+            }
+
+            if (args.InRecycleQueue || args.Item is not SearchPageResult result)
+            {
+                AutomationProperties.SetName(args.ItemContainer, string.Empty);
+                AutomationProperties.SetHelpText(args.ItemContainer, string.Empty);
+                return;
+            }
+
+            AutomationProperties.SetName(args.ItemContainer, result.PageTitle);
+            AutomationProperties.SetHelpText(args.ItemContainer, result.Location);
         }
     }
 }

@@ -45,21 +45,12 @@
                 Background="Transparent"
                 BorderThickness="0"
                 ItemsSource="{Binding Pages}"
+                AutomationProperties.Name="Pages"
+                AutomationProperties.HelpText="Use the arrow keys to choose a page. Press Shift+F10 for more actions."
+                ContainerContentChanging="PagesListView_ContainerContentChanging"
                 SelectionChanged="PagesListView_SelectionChanged">
 
                 <ListView.Resources>
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundPointerOver"
-                        ResourceKey="SubtleFillColorSecondaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundPressed"
-                        ResourceKey="SubtleFillColorTertiaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundSelected"
-                        ResourceKey="SubtleFillColorSecondaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundSelectedPointerOver"
-                        ResourceKey="SubtleFillColorTertiaryBrush" />
                     <StaticResource
                         x:Key="ListViewItemSelectionIndicatorBrush"
                         ResourceKey="AccentFillColorDefaultBrush" />
@@ -78,18 +69,8 @@
                         <Setter Property="UseSystemFocusVisuals" Value="True" />
                         <Setter Property="FocusVisualMargin" Value="-1" />
                         <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Background="Transparent">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="18" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Grid.ContextFlyout>
+                        <Setter Property="ContextFlyout">
+                            <Setter.Value>
                                 <MenuFlyout Opening="PageContextMenu_Opening">
                                     <MenuFlyoutItem
                                         Text="Move up"
@@ -105,7 +86,18 @@
                                         Text="Delete"
                                         Click="DeletePageMenuItem_Click" />
                                 </MenuFlyout>
-                            </Grid.ContextFlyout>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
                             <FontIcon
                                 Glyph="&#xE8A5;"

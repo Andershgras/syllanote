@@ -69,8 +69,12 @@
                         Label="Bold"
                         AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Bold"
-                        ToolTipService.ToolTip="Bold"
+                        AutomationProperties.HelpText="Toggle bold formatting. Keyboard shortcut Ctrl+B."
+                        ToolTipService.ToolTip="Bold (Ctrl+B)"
                         Click="BoldButton_Click">
+                        <AppBarToggleButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="B" Modifiers="Control" />
+                        </AppBarToggleButton.KeyboardAccelerators>
                         <AppBarToggleButton.Icon>
                             <SymbolIcon Symbol="Bold" />
                         </AppBarToggleButton.Icon>
@@ -80,8 +84,12 @@
                         Label="Italic"
                         AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Italic"
-                        ToolTipService.ToolTip="Italic"
+                        AutomationProperties.HelpText="Toggle italic formatting. Keyboard shortcut Ctrl+I."
+                        ToolTipService.ToolTip="Italic (Ctrl+I)"
                         Click="ItalicButton_Click">
+                        <AppBarToggleButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="I" Modifiers="Control" />
+                        </AppBarToggleButton.KeyboardAccelerators>
                         <AppBarToggleButton.Icon>
                             <SymbolIcon Symbol="Italic" />
                         </AppBarToggleButton.Icon>
@@ -91,8 +99,12 @@
                         Label="Underline"
                         AllowFocusOnInteraction="False"
                         AutomationProperties.Name="Underline"
-                        ToolTipService.ToolTip="Underline"
+                        AutomationProperties.HelpText="Toggle underline formatting. Keyboard shortcut Ctrl+U."
+                        ToolTipService.ToolTip="Underline (Ctrl+U)"
                         Click="UnderlineButton_Click">
+                        <AppBarToggleButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="U" Modifiers="Control" />
+                        </AppBarToggleButton.KeyboardAccelerators>
                         <AppBarToggleButton.Icon>
                             <SymbolIcon Symbol="Underline" />
                         </AppBarToggleButton.Icon>
@@ -131,10 +143,13 @@
                 PlaceholderText="Start writing..."
                 FontSize="14"
                 Padding="20,16"
-                Background="{ThemeResource ControlFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                Background="{ThemeResource TextControlBackground}"
+                BorderBrush="{ThemeResource TextControlBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="6"
+                HighContrastAdjustment="None"
+                AutomationProperties.Name="Page content"
+                AutomationProperties.HelpText="Write and format the selected page."
                 SelectionChanged="PageContentRichEditBox_SelectionChanged"
                 TextChanged="PageContentRichEditBox_TextChanged"
                 TextWrapping="Wrap"
