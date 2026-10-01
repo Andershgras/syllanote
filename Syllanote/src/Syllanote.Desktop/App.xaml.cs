@@ -35,11 +35,9 @@ namespace Syllanote.Desktop
             services.AddTransient<NotebookViewModel>();
             services.AddTransient<MainWindow>();
 
-            var localFolder =
-                Windows.Storage.ApplicationData.Current.LocalFolder.Path;
-
-            _databasePath =
-                System.IO.Path.Combine(localFolder, "syllanote.db");
+            _databasePath = System.IO.Path.Combine(
+                ApplicationDataProvider.LocalPath,
+                "syllanote.db");
 
             services.AddInfrastructure($"Data Source={_databasePath}");
 

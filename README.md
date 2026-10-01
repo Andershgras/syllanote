@@ -3,7 +3,7 @@
 Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
 > [!NOTE]
-> Syllanote is an actively developed portfolio project. The core note-taking and data-protection workflows are implemented, while accessibility verification, packaging, and release preparation are still in progress.
+> Syllanote is an actively developed portfolio project. The core note-taking, data-protection, and accessibility workflows are implemented and verified, while packaging and the first versioned release are still in progress.
 
 ## Features
 
@@ -81,6 +81,8 @@ Automated tests live in `Syllanote.Tests` and cover domain behavior, application
 
 The current manual desktop checks are maintained in the [WinUI regression checklist](docs/manual-regression-checklist.md).
 
+Installation, upgrade, uninstall, local-data, backup, restore, and troubleshooting instructions for the portable release are maintained in the [release guide](docs/release-guide.md).
+
 ## Project structure
 
 ```text
@@ -140,11 +142,47 @@ dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
 
 The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
 
-Milestone 2 completed with 158 automated tests and the Debug, Release, and x64 publish checks passing without warnings or errors. The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
+The current automated baseline is 160 passing tests. After Milestone 3, the Debug build completed without warnings or errors, and the keyboard-only, Narrator, display-scaling, and high-contrast walkthroughs passed on 2026-10-01. Release and x64 publish checks will be rerun as part of Milestone 4.
+
+The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
+
+### Continuous integration
+
+The Windows CI workflow runs on pushes, pull requests, and manual dispatches. It restores the solution, builds the Debug configuration, and runs the complete automated test suite with .NET 9.
+
+### Build the portable x64 release
+
+The committed x64 profile produces an unpackaged, self-contained release that includes both .NET and the Windows App SDK runtime. Build the versioned ZIP from the repository root:
+
+```powershell
+.\scripts\build-portable-release.ps1
+```
+
+The ZIP and its SHA-256 checksum are written to `artifacts/`. For `v0.1.0`, the files are named `Syllanote-v0.1.0-win-x64.zip` and `Syllanote-v0.1.0-win-x64.zip.sha256`.
+
+To verify the underlying publish directly without creating the ZIP:
+
+```powershell
+dotnet publish Syllanote/src/Syllanote.Desktop/Syllanote.Desktop.csproj `
+  -c Release `
+  -p:Platform=x64 `
+  -p:PublishProfile=win-x64 `
+  -m:1
+```
+
+The published files are written to:
+
+```text
+Syllanote/src/Syllanote.Desktop/bin/x64/Release/net9.0-windows10.0.19041.0/win-x64/publish/
+```
+
+Trimming is disabled for this profile because the application uses Entity Framework Core and runtime JSON serialization. This prioritizes reliable backup, restore, search, and database behavior over a smaller first-release download.
+
+Extract the complete ZIP before starting `Syllanote.Desktop.exe`; the application depends on the files beside the executable. The portable release stores its data under `%LOCALAPPDATA%\Andershgras\Syllanote`. This is separate from the MSIX data container, so use Syllanote backup and restore when moving notes between packaged and portable installations.
 
 ## Local data
 
-Syllanote does not require an account or an external database. Notes and concepts are stored in a SQLite database named `syllanote.db` inside the application's Windows local data folder.
+Syllanote does not require an account or an external database. The portable release stores notes and concepts in `%LOCALAPPDATA%\Andershgras\Syllanote\syllanote.db`. MSIX installations use a separate Windows package data container.
 
 Manual backups are stored wherever the user chooses in the Windows file picker. Syllanote does not automatically delete these files.
 
@@ -160,7 +198,7 @@ The application also uses Windows local settings to retain interface preferences
 - Notes are local to one device; cloud sync and collaboration are not implemented
 - Scheduled backups, backup encryption, selective restore, import, and export are not implemented
 - Desktop interactions still require manual verification because the current automated suite does not drive the WinUI interface
-- A packaged public release is not yet part of the documented workflow
+- The first portable release is not code-signed and does not include an installer or automatic updates
 
 ## License
 

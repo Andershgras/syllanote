@@ -9,6 +9,10 @@ public sealed partial class StartupErrorWindow : Window
     public StartupErrorWindow(string databasePath, Exception exception)
     {
         InitializeComponent();
+        AppWindow.SetIcon(System.IO.Path.Combine(
+            AppContext.BaseDirectory,
+            "Assets",
+            "Syllanote.ico"));
 
         Title = "Syllanote startup error";
         DatabasePathTextBox.Text = databasePath;

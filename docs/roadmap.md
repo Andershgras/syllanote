@@ -26,7 +26,7 @@ This roadmap is the working plan for taking Syllanote from a functional local-fi
 
 ## Current project status
 
-Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow, failure handling, and data-protection workflow are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because accessibility verification and packaging still need focused work.
+Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow, failure handling, data-protection workflow, and accessibility baseline are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because packaging and the versioned release workflow still need focused work.
 
 ### Implemented product areas
 
@@ -41,25 +41,26 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 - Resizable navigation panels and persistent panel widths.
 - Persistent window size, placement, and maximized state.
 - Windows 11-inspired WinUI presentation with Mica, Fluent icons, and consistent empty states.
+- Verified keyboard-only, Narrator, display-scaling, and high-contrast workflows.
 
 ### Current verification baseline
 
-- 158 of 158 automated tests pass.
-- Debug and Release builds complete with no warnings or errors.
-- The x64 file-system publish completes successfully with no warnings or errors.
+- 160 of 160 automated tests pass.
+- The latest Debug build after Milestone 3 completes with no warnings or errors.
+- The self-contained `v0.1.0` x64 ZIP was built reproducibly on 2026-10-01. Startup, page persistence after restart, and the executable icon were manually verified from the extracted artifact.
+- The portable release guide documents installation, startup, upgrade, uninstall, local data, backup, restore, troubleshooting, and known limitations.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
 - Unavailable-database startup handling and locked-database autosave recovery were manually verified on 2026-10-01.
 - Manual backup creation and the confirmed close-and-reopen restore flow were verified on 2026-10-01.
+- Keyboard-only, Narrator, 125%, 150%, and 200% display scaling, and high-contrast workflows were manually verified on 2026-10-01.
 - Automated tests cover Domain, Application, and Infrastructure behavior, but do not drive the WinUI interface.
 
 ### Known release gaps
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
-- The accessibility baseline exists in parts of the UI, but keyboard and Narrator workflows have not received a complete manual audit.
-- File-system publish profiles exist for x86, x64, and ARM64, but the first installable package and release workflow are not verified.
-- Package identity, display metadata, branding, and versioning still contain development values.
-- There is no version tag, release artifact, or continuous-integration workflow yet.
+- A trusted public MSIX signing identity is not available, so `v0.1.0` uses the documented self-contained ZIP fallback.
+- There is no version tag or published release artifact yet. The Windows CI workflow is committed but still needs its first successful GitHub run.
 
 ---
 
@@ -283,6 +284,14 @@ Make the critical note-taking workflows usable without a mouse and improve the q
 - Inspect the main workspace at the selected scaling levels and in high contrast.
 - Rerun the automated tests and the relevant WinUI regression checks after changes.
 
+#### Recorded verification
+
+- 160 of 160 automated tests passed on 2026-10-01.
+- The Debug build completed with 0 warnings and 0 errors after the accessibility changes.
+- Keyboard-only and Narrator walkthroughs passed on 2026-10-01.
+- The workspace passed manual checks at 125%, 150%, and 200% display scaling.
+- High contrast passed after correcting editor text colors and hover states.
+
 ---
 
 ## Next
@@ -303,9 +312,11 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 
 #### Scope
 
-- Use `v0.1.0` as the first public Git tag and release version.
+- Use `v0.1.0` as the first public Git tag and product version, with .NET assembly and file version `0.1.0.0`.
+- Map the first product release to MSIX package version `1.0.0.0` and document that mapping in the release notes.
 - Support x64 as the required first-release architecture.
 - Update package identity, product name, publisher metadata, icons, and version values.
+- Keep the package identity name and publisher stable after installation. Before any unavoidable identity change, create a manual backup and verify restore into the new package family because Windows treats it as a separate application data container.
 - Produce MSIX as the primary release target.
 - Allow a self-contained unpackaged ZIP as a fallback if public MSIX signing is not practical for the first portfolio release.
 - Add a minimal Windows continuous-integration workflow for restore, build, and automated tests.
@@ -342,7 +353,7 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 - Run the full automated suite and manual WinUI regression checklist against the release build.
 - Verify upgrade, uninstall, reinstall, and local-data behavior.
 - Verify backup and restore using the packaged application.
-- Confirm the Git tag, artifact version, manifest version, release notes, and screenshots agree.
+- Confirm that the Git tag, artifact metadata, manifest version, release notes, and screenshots follow the documented version mapping.
 
 ---
 
