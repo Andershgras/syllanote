@@ -57,4 +57,4 @@ Complete this section without using a mouse. Repeat the Narrator checks with Win
 
 | Date | Keyboard-only | Narrator | Scaling | High contrast | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-01 | Pending | Pending | Pending | Pending | Accessibility semantics, keyboard actions, shortcuts, and focus handling implemented; 158/158 tests plus Debug and Release builds passed. Manual verification remains. |
+| 2026-10-01 | Pending | Passed | Passed | Passed | Narrator walkthrough passed. Display scaling passed at 125%, 150%, and 200%. High contrast passed after correcting editor text colors and hover states. Keyboard verification remains. |

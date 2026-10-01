@@ -112,18 +112,6 @@
                 AutomationProperties.HelpText="Use the arrow keys to choose a result. Press Enter to open it."
                 ContainerContentChanging="SearchResultsListView_ContainerContentChanging">
                 <ListView.Resources>
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundPointerOver"
-                        ResourceKey="SubtleFillColorSecondaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundPressed"
-                        ResourceKey="SubtleFillColorTertiaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundSelected"
-                        ResourceKey="SubtleFillColorSecondaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundSelectedPointerOver"
-                        ResourceKey="SubtleFillColorTertiaryBrush" />
                     <CornerRadius x:Key="ListViewItemCornerRadius">6</CornerRadius>
                 </ListView.Resources>
 

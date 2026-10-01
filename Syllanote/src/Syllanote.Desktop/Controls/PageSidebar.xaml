@@ -52,18 +52,6 @@
 
                 <ListView.Resources>
                     <StaticResource
-                        x:Key="ListViewItemBackgroundPointerOver"
-                        ResourceKey="SubtleFillColorSecondaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundPressed"
-                        ResourceKey="SubtleFillColorTertiaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundSelected"
-                        ResourceKey="SubtleFillColorSecondaryBrush" />
-                    <StaticResource
-                        x:Key="ListViewItemBackgroundSelectedPointerOver"
-                        ResourceKey="SubtleFillColorTertiaryBrush" />
-                    <StaticResource
                         x:Key="ListViewItemSelectionIndicatorBrush"
                         ResourceKey="AccentFillColorDefaultBrush" />
                     <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">True</x:Boolean>

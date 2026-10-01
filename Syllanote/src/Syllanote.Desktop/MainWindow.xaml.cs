@@ -1,5 +1,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.System;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -14,6 +15,7 @@ using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
 using Syllanote.Application.Notebooks.Concepts.Recognition;
+using Syllanote.Application.Notebooks.Sections.Pages.Formatting;
 using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
 using System;
@@ -70,6 +72,7 @@ namespace Syllanote.Desktop
         private readonly ILibraryBackupService _libraryBackupService;
         private readonly ILibraryBackupValidator _libraryBackupValidator;
         private readonly ILibraryRestoreService _libraryRestoreService;
+        private readonly ThemeSettings _themeSettings;
 
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
@@ -458,6 +461,8 @@ namespace Syllanote.Desktop
             _libraryBackupValidator = libraryBackupValidator;
             _libraryRestoreService = libraryRestoreService;
             InitializeComponent();
+            _themeSettings = ThemeSettings.CreateForWindowId(AppWindow.Id);
+            _themeSettings.Changed += ThemeSettings_Changed;
             RestorePanelWidths();
             RestoreWindowPlacement();
             AppWindow.Changed += AppWindow_Changed;
@@ -672,7 +677,8 @@ namespace Syllanote.Desktop
                 {
                     EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.FormatRtf,
-                        ViewModel.PageFormattedContent);
+                        RtfThemeColorNormalizer.Normalize(
+                            ViewModel.PageFormattedContent));
                 }
             }
             finally
@@ -698,7 +704,7 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
-                if (content.Length > 0)
+                if (!_themeSettings.HighContrast && content.Length > 0)
                 {
                     var documentRange = EditorView.ContentEditor.Document.GetRange(
                         0,
@@ -711,6 +717,8 @@ namespace Syllanote.Desktop
                 EditorView.ContentEditor.Document.GetText(
                     TextGetOptions.FormatRtf,
                     out formattedContent);
+                formattedContent = RtfThemeColorNormalizer.Normalize(
+                    formattedContent);
             }
             finally
             {
@@ -963,34 +971,37 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
-                if (editorContent.Length > 0)
+                if (!_themeSettings.HighContrast)
                 {
-                    var documentRange = EditorView.ContentEditor.Document.GetRange(
-                        0,
-                        editorContent.Length);
-                    var documentFormat = documentRange.CharacterFormat;
-                    documentFormat.BackgroundColor = Colors.Transparent;
-                    documentRange.CharacterFormat = documentFormat;
-                }
-
-                foreach (var match in ViewModel.ConceptMatches)
-                {
-                    if (!IsCurrentConceptMatch(match, editorContent))
+                    if (editorContent.Length > 0)
                     {
-                        continue;
+                        var documentRange = EditorView.ContentEditor.Document.GetRange(
+                            0,
+                            editorContent.Length);
+                        var documentFormat = documentRange.CharacterFormat;
+                        documentFormat.BackgroundColor = Colors.Transparent;
+                        documentRange.CharacterFormat = documentFormat;
                     }
 
-                    var endIndex = match.StartIndex + match.Length;
-                    var conceptRange = EditorView.ContentEditor.Document.GetRange(
-                        match.StartIndex,
-                        endIndex);
-                    var conceptFormat = conceptRange.CharacterFormat;
-                    conceptFormat.BackgroundColor = ColorHelper.FromArgb(
-                        96,
-                        0,
-                        120,
-                        212);
-                    conceptRange.CharacterFormat = conceptFormat;
+                    foreach (var match in ViewModel.ConceptMatches)
+                    {
+                        if (!IsCurrentConceptMatch(match, editorContent))
+                        {
+                            continue;
+                        }
+
+                        var endIndex = match.StartIndex + match.Length;
+                        var conceptRange = EditorView.ContentEditor.Document.GetRange(
+                            match.StartIndex,
+                            endIndex);
+                        var conceptFormat = conceptRange.CharacterFormat;
+                        conceptFormat.BackgroundColor = ColorHelper.FromArgb(
+                            96,
+                            0,
+                            120,
+                            212);
+                        conceptRange.CharacterFormat = conceptFormat;
+                    }
                 }
             }
             finally
@@ -1093,6 +1104,25 @@ namespace Syllanote.Desktop
             object args)
         {
             UpdateTitleBarTheme();
+            QueueConceptHighlightRefresh();
+        }
+
+        private void ThemeSettings_Changed(
+            ThemeSettings sender,
+            object args)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                UpdateTitleBarTheme();
+                if (_themeSettings.HighContrast && IsSelectedPageCurrent())
+                {
+                    SyncPageEditorContent(force: true);
+                }
+                else
+                {
+                    QueueConceptHighlightRefresh();
+                }
+            });
         }
 
         private void UpdateTitleBarTheme()
