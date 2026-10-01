@@ -129,37 +129,57 @@ public partial class NotebookViewModel : ObservableObject
         private set => SetProperty(ref _searchMessage, value);
     }
 
-    [ObservableProperty]
-    private string _newNotebookName = string.Empty;
+    private string _pageSaveErrorMessage = string.Empty;
+    public string PageSaveErrorMessage
+    {
+        get => _pageSaveErrorMessage;
+        private set
+        {
+            if (SetProperty(ref _pageSaveErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasPageSaveError));
+            }
+        }
+    }
+
+    public bool HasPageSaveError =>
+        !string.IsNullOrWhiteSpace(PageSaveErrorMessage);
 
     [ObservableProperty]
-    private string _selectedNotebookName = string.Empty;
-    [ObservableProperty]
-    private string _newSectionName = string.Empty;
+    public partial string NewNotebookName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _selectedSectionName = string.Empty;
-    [ObservableProperty]
-    private string _newPageTitle = string.Empty;
+    public partial string SelectedNotebookName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _pageContent = string.Empty;
+    public partial string NewSectionName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _pageFormattedContent = string.Empty;
+    public partial string SelectedSectionName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _selectedPageTitle = string.Empty;
+    public partial string NewPageTitle { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private Notebook? _selectedNotebook;
-    [ObservableProperty]
-    private Section? _selectedSection;
-    [ObservableProperty]
-    private Page? _selectedPage;
+    public partial string PageContent { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private bool _isPageDirty;
+    public partial string PageFormattedContent { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string SelectedPageTitle { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial Notebook? SelectedNotebook { get; set; }
+
+    [ObservableProperty]
+    public partial Section? SelectedSection { get; set; }
+
+    [ObservableProperty]
+    public partial Page? SelectedPage { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsPageDirty { get; set; }
 
     [RelayCommand]
     private async Task CreateNotebookAsync()
@@ -292,7 +312,10 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         _autoSaveCancellationTokenSource?.Cancel();
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         await _renameNotebookService.RenameAsync(
             SelectedNotebook,
@@ -355,19 +378,22 @@ public partial class NotebookViewModel : ObservableObject
     private async Task LoadSectionsAsync()
     {
         var notebook = SelectedNotebook;
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         if (SelectedNotebook != notebook)
         {
             return;
         }
 
-        SelectedSection = null;
-        Sections.Clear();
-        Pages.Clear();
-
         if (notebook is null)
         {
+            SelectedPage = null;
+            Pages.Clear();
+            SelectedSection = null;
+            Sections.Clear();
             return;
         }
 
@@ -386,6 +412,11 @@ public partial class NotebookViewModel : ObservableObject
         {
             return;
         }
+
+        SelectedPage = null;
+        Pages.Clear();
+        SelectedSection = null;
+        Sections.Clear();
 
         foreach (var section in sections)
         {
@@ -460,7 +491,10 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         _autoSaveCancellationTokenSource?.Cancel();
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         await _renameSectionService.RenameAsync(
             SelectedSection,
@@ -509,19 +543,21 @@ public partial class NotebookViewModel : ObservableObject
     private async Task LoadPagesAsync()
     {
         var section = SelectedSection;
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         if (SelectedSection != section)
         {
             return;
         }
 
-        SelectedPage = null;
-        Pages.Clear();
-
         if (section is null ||
             section.NotebookId != SelectedNotebook?.Id)
         {
+            SelectedPage = null;
+            Pages.Clear();
             return;
         }
 
@@ -534,6 +570,9 @@ public partial class NotebookViewModel : ObservableObject
         {
             return;
         }
+
+        SelectedPage = null;
+        Pages.Clear();
 
         foreach (var page in pages)
         {
@@ -623,7 +662,10 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         _autoSaveCancellationTokenSource?.Cancel();
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         await _renamePageService.RenameAsync(
             SelectedPage,
@@ -693,14 +735,15 @@ public partial class NotebookViewModel : ObservableObject
     {
         await SaveCurrentPageAsync();
     }
-    public async Task SaveCurrentPageAsync()
+
+    public async Task<bool> SaveCurrentPageAsync()
     {
         await _pagePersistenceLock.WaitAsync();
         try
         {
             if (SelectedPage is null || !IsPageDirty)
             {
-                return;
+                return true;
             }
 
             var page = SelectedPage;
@@ -718,6 +761,16 @@ public partial class NotebookViewModel : ObservableObject
                 IsPageDirty = false;
                 RefreshConceptMatches(page, content);
             }
+
+            PageSaveErrorMessage = string.Empty;
+            return true;
+        }
+        catch (Exception)
+        {
+            PageSaveErrorMessage =
+                "Your changes couldn't be saved. They are still in the editor. " +
+                "Check that the database is available, then try again.";
+            return false;
         }
         finally
         {
@@ -763,22 +816,39 @@ public partial class NotebookViewModel : ObservableObject
             // Expected when the user continues typing.
         }
     }
-    public async Task SelectPageAsync(Page? page)
+    public async Task<bool> SelectPageAsync(Page? page)
     {
         if (page == SelectedPage)
         {
-            return;
+            return true;
         }
 
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return false;
+        }
 
         SelectedPage = page;
+        return true;
     }
 
     [RelayCommand]
     private async Task SearchPagesAsync()
     {
-        await SaveCurrentPageAsync();
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            SearchResults.Clear();
+            SearchMessage = "Enter a word or phrase to search.";
+            return;
+        }
+
+        if (!await SaveCurrentPageAsync())
+        {
+            SearchResults.Clear();
+            SearchMessage =
+                "Search was not run because the current page could not be saved.";
+            return;
+        }
         var results = await _searchPagesService.SearchAsync(SearchText);
 
         SearchResults.Clear();
@@ -797,11 +867,15 @@ public partial class NotebookViewModel : ObservableObject
         var notebook = Notebooks.FirstOrDefault(item => item.Id == result.NotebookId);
         if (notebook is null)
         {
+            SearchResults.Remove(result);
             SearchMessage = "This page is no longer available. Search again.";
             return false;
         }
 
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return false;
+        }
         SelectedNotebook = notebook;
         await LoadSectionsAsync();
         SelectedPage = null;
@@ -809,6 +883,7 @@ public partial class NotebookViewModel : ObservableObject
         var section = Sections.FirstOrDefault(item => item.Id == result.SectionId);
         if (section is null)
         {
+            SearchResults.Remove(result);
             SearchMessage = "This page is no longer available. Search again.";
             return false;
         }
@@ -819,11 +894,16 @@ public partial class NotebookViewModel : ObservableObject
         var page = Pages.FirstOrDefault(item => item.Id == result.PageId);
         if (page is null)
         {
+            SearchResults.Remove(result);
             SearchMessage = "This page is no longer available. Search again.";
             return false;
         }
 
-        await SelectPageAsync(page);
+        if (!await SelectPageAsync(page))
+        {
+            return false;
+        }
+
         SearchMessage = string.Empty;
         return true;
     }
@@ -834,6 +914,7 @@ public partial class NotebookViewModel : ObservableObject
         var notebook = SelectedNotebook;
         if (notebook is null)
         {
+            ConceptReferences.Remove(reference);
             return false;
         }
 
@@ -842,10 +923,14 @@ public partial class NotebookViewModel : ObservableObject
             item.NotebookId == notebook.Id);
         if (section is null)
         {
+            ConceptReferences.Remove(reference);
             return false;
         }
 
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return false;
+        }
         if (SelectedNotebook != notebook)
         {
             return false;
@@ -861,10 +946,10 @@ public partial class NotebookViewModel : ObservableObject
         var page = Pages.FirstOrDefault(item => item.Id == reference.PageId);
         if (page is null)
         {
+            ConceptReferences.Remove(reference);
             return false;
         }
 
-        await SelectPageAsync(page);
-        return true;
+        return await SelectPageAsync(page);
     }
 }

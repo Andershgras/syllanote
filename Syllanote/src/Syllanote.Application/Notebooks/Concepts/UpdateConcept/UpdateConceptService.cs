@@ -22,7 +22,17 @@ public class UpdateConceptService
             throw new DuplicateConceptNameException();
         }
 
+        var originalName = concept.Name;
+        var originalDefinition = concept.Definition;
         concept.Update(name, definition);
-        await _conceptRepository.UpdateAsync(concept);
+        try
+        {
+            await _conceptRepository.UpdateAsync(concept);
+        }
+        catch
+        {
+            concept.Update(originalName, originalDefinition);
+            throw;
+        }
     }
 }

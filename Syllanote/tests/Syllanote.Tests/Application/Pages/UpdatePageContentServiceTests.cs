@@ -36,11 +36,29 @@ public class UpdatePageContentServiceTests
         Assert.AreSame(page, repository.UpdatedPage);
     }
 
+    [TestMethod]
+    public async Task UpdateAsync_WhenRepositoryFails_PropagatesFailure()
+    {
+        var repository = new FakePageRepository
+        {
+            UpdateException = new InvalidOperationException("Database unavailable")
+        };
+        var service = new UpdatePageContentService(repository);
+        var page = new Page(Guid.NewGuid(), "Unsaved note");
+
+        var exception = await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            async () => await service.UpdateAsync(page, "Draft", string.Empty));
+
+        Assert.AreEqual("Database unavailable", exception.Message);
+        Assert.AreEqual(1, repository.UpdateCallCount);
+    }
+
 
     private class FakePageRepository : IPageRepository
     {
         public Page? UpdatedPage { get; private set; }
         public int UpdateCallCount { get; private set; }
+        public Exception? UpdateException { get; init; }
 
         public Task AddAsync(Page page)
         {
@@ -62,6 +80,11 @@ public class UpdatePageContentServiceTests
         {
             UpdatedPage = page;
             UpdateCallCount++;
+
+            if (UpdateException is not null)
+            {
+                return Task.FromException(UpdateException);
+            }
 
             return Task.CompletedTask;
         }

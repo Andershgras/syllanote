@@ -14,7 +14,16 @@ public class RenameNotebookService
 
     public async Task RenameAsync(Notebook notebook, string name)
     {
+        var originalName = notebook.Name;
         notebook.Rename(name);
-        await _notebookRepository.UpdateAsync(notebook);
+        try
+        {
+            await _notebookRepository.UpdateAsync(notebook);
+        }
+        catch
+        {
+            notebook.Rename(originalName);
+            throw;
+        }
     }
 }

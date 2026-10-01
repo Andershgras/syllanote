@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddDbContext<SyllanoteDbContext>(options =>
             options.UseSqlite(connectionString));
 
+        services.AddScoped<DatabaseMigrationService>();
         services.AddScoped<INotebookRepository, NotebookRepository>();
         services.AddScoped<ISectionRepository, SectionRepository>();
         services.AddScoped<IPageRepository, PageRepository>();

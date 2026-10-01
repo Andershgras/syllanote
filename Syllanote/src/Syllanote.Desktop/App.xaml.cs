@@ -6,6 +6,7 @@ using Syllanote.Desktop.ViewModels;
 using Syllanote.Infrastructure;
 using Syllanote.Infrastructure.Persistence;
 using System;
+using System.Threading.Tasks;
 
 namespace Syllanote.Desktop
 {
@@ -15,6 +16,7 @@ namespace Syllanote.Desktop
     public partial class App : Microsoft.UI.Xaml.Application
     {
         private Window? _window;
+        private readonly string _databasePath;
 
         public IServiceProvider Services { get; }
         /// <summary>
@@ -35,30 +37,44 @@ namespace Syllanote.Desktop
             var localFolder =
                 Windows.Storage.ApplicationData.Current.LocalFolder.Path;
 
-            var databasePath =
+            _databasePath =
                 System.IO.Path.Combine(localFolder, "syllanote.db");
 
-            services.AddInfrastructure($"Data Source={databasePath}");
+            services.AddInfrastructure($"Data Source={_databasePath}");
 
             Services = services.BuildServiceProvider();
-
-            using var scope = Services.CreateScope();
-
-            var dbContext = scope.ServiceProvider
-                .GetRequiredService<SyllanoteDbContext>();
-
-            dbContext.Database.Migrate();
         }
 
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(
+        protected override async void OnLaunched(
             Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
+            try
+            {
+                await MigrateDatabaseAsync();
+            }
+            catch (Exception exception)
+            {
+                _window = new StartupErrorWindow(_databasePath, exception);
+                _window.Activate();
+                return;
+            }
+
             _window = Services.GetRequiredService<MainWindow>();
             _window.Activate();
+        }
+
+        private async Task MigrateDatabaseAsync()
+        {
+            using var scope = Services.CreateScope();
+
+            var migrationService = scope.ServiceProvider
+                .GetRequiredService<DatabaseMigrationService>();
+
+            await migrationService.MigrateAsync();
         }
     }
 }

@@ -52,17 +52,17 @@ public partial class NotebookNavigationItem : ObservableObject
     [NotifyPropertyChangedFor(nameof(SectionControlsVisibility))]
     [NotifyPropertyChangedFor(nameof(EmptySectionsVisibility))]
     [NotifyPropertyChangedFor(nameof(SelectedNotebookIndicatorVisibility))]
-    private bool _isActiveNotebook;
+    public partial bool IsActiveNotebook { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SectionControlsVisibility))]
     [NotifyPropertyChangedFor(nameof(EmptySectionsVisibility))]
     [NotifyPropertyChangedFor(nameof(ExpandCollapseGlyph))]
-    private bool _isExpanded;
+    public partial bool IsExpanded { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedSectionIndicatorVisibility))]
-    private bool _isSelectedSection;
+    public partial bool IsSelectedSection { get; set; }
 
     public static NotebookNavigationItem ForNotebook(
         Notebook notebook,
