@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Syllanote.Application.Backups;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Application.Notebooks.Concepts;
 using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
@@ -20,6 +21,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics;
 using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace Syllanote.Desktop
 {
@@ -52,6 +55,7 @@ namespace Syllanote.Desktop
         private bool _isConceptHighlightUpdateQueued;
         private bool _allowWindowClose;
         private bool _isWindowCloseInProgress;
+        private bool _isBackupInProgress;
         private bool _shouldRestoreMaximizedState;
         private bool _hasLastRestoredWindowBounds;
         private RectInt32 _lastRestoredWindowBounds;
@@ -61,6 +65,7 @@ namespace Syllanote.Desktop
         private Notebook? _notebookActionTarget;
         private Section? _sectionActionTarget;
         private Syllanote.Domain.Entities.Page? _pageActionTarget;
+        private readonly ILibraryBackupService _libraryBackupService;
 
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
@@ -326,18 +331,33 @@ namespace Syllanote.Desktop
         {
             NotebookSidebar.SetNavigationEnabled(isEnabled);
             PageSidebar.SetPageListEnabled(isEnabled);
+            TopBar.SetBackupEnabled(isEnabled);
         }
 
         private void ShowOperationError(string title, string message)
         {
-            OperationErrorInfoBar.Title = title;
-            OperationErrorInfoBar.Message = message;
-            OperationErrorInfoBar.IsOpen = true;
+            ShowOperationMessage(title, message, InfoBarSeverity.Error);
         }
 
-        private void ClearOperationError()
+        private void ShowOperationSuccess(string title, string message)
         {
-            OperationErrorInfoBar.IsOpen = false;
+            ShowOperationMessage(title, message, InfoBarSeverity.Success);
+        }
+
+        private void ShowOperationMessage(
+            string title,
+            string message,
+            InfoBarSeverity severity)
+        {
+            OperationInfoBar.Title = title;
+            OperationInfoBar.Message = message;
+            OperationInfoBar.Severity = severity;
+            OperationInfoBar.IsOpen = true;
+        }
+
+        private void ClearOperationMessage()
+        {
+            OperationInfoBar.IsOpen = false;
         }
 
         private async Task<bool> RunOperationAsync(
@@ -345,7 +365,7 @@ namespace Syllanote.Desktop
             string errorTitle,
             string errorMessage = DatabaseRetryMessage)
         {
-            ClearOperationError();
+            ClearOperationMessage();
             try
             {
                 await operation();
@@ -363,7 +383,7 @@ namespace Syllanote.Desktop
             string errorTitle,
             string errorMessage = DatabaseRetryMessage)
         {
-            ClearOperationError();
+            ClearOperationMessage();
             try
             {
                 return (true, await operation());
@@ -375,8 +395,11 @@ namespace Syllanote.Desktop
             }
         }
 
-        public MainWindow(NotebookViewModel viewModel)
+        public MainWindow(
+            NotebookViewModel viewModel,
+            ILibraryBackupService libraryBackupService)
         {
+            _libraryBackupService = libraryBackupService;
             InitializeComponent();
             RestorePanelWidths();
             RestoreWindowPlacement();
@@ -1322,12 +1345,14 @@ namespace Syllanote.Desktop
         }
         private async void TopBar_SearchRequested(object sender, RoutedEventArgs e)
         {
-            if (_isRenamingSelection || _isSearchNavigationInProgress)
+            if (_isRenamingSelection || _isSearchNavigationInProgress ||
+                _isBackupInProgress)
             {
                 return;
             }
 
             TopBar.SetSearchSubmissionEnabled(false);
+            TopBar.SetBackupEnabled(false);
             try
             {
                 ViewModel.SearchText = TopBar.SearchText;
@@ -1338,6 +1363,118 @@ namespace Syllanote.Desktop
             finally
             {
                 TopBar.SetSearchSubmissionEnabled(true);
+                TopBar.SetBackupEnabled(true);
+            }
+        }
+
+        private async void TopBar_BackupRequested(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (_isBackupInProgress || _isRenamingSelection ||
+                _isSearchNavigationInProgress ||
+                _isConceptOperationInProgress)
+            {
+                return;
+            }
+
+            _isBackupInProgress = true;
+            ClearOperationMessage();
+            SetNavigationEnabled(false);
+            TopBar.SetSearchInputEnabled(false);
+            TopBar.SetBackupInProgress(true);
+
+            StorageFile? selectedFile = null;
+            var deleteSelectedFileOnFailure = false;
+            try
+            {
+                if (!await ViewModel.SaveCurrentPageAsync())
+                {
+                    return;
+                }
+
+                var picker = CreateBackupFilePicker();
+                selectedFile = await picker.PickSaveFileAsync();
+                if (selectedFile is null)
+                {
+                    return;
+                }
+
+                var selectedFileProperties =
+                    await selectedFile.GetBasicPropertiesAsync();
+                deleteSelectedFileOnFailure =
+                    selectedFileProperties.Size == 0;
+
+                var result = await _libraryBackupService.CreateAsync(
+                    selectedFile.Path);
+                ShowOperationSuccess(
+                    "Backup created",
+                    $"Saved {FormatFileSize(result.SizeInBytes)} to " +
+                    $"{result.FilePath}");
+            }
+            catch (Exception)
+            {
+                if (deleteSelectedFileOnFailure && selectedFile is not null)
+                {
+                    await TryDeleteEmptyPickedFileAsync(selectedFile);
+                }
+
+                ShowOperationError(
+                    "Backup couldn't be created",
+                    "Check that the selected folder is available and has " +
+                    "enough free space, then try again.");
+            }
+            finally
+            {
+                _isBackupInProgress = false;
+                TopBar.SetBackupInProgress(false);
+                TopBar.SetSearchInputEnabled(true);
+                SetNavigationEnabled(true);
+            }
+        }
+
+        private FileSavePicker CreateBackupFilePicker()
+        {
+            var picker = new FileSavePicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                SuggestedFileName =
+                    $"Syllanote-backup-{DateTime.Now:yyyy-MM-dd-HHmm}"
+            };
+            picker.FileTypeChoices.Add(
+                "Syllanote backup",
+                [LibraryBackupFormat.FileExtension]);
+
+            InitializeWithWindow.Initialize(
+                picker,
+                WindowNative.GetWindowHandle(this));
+            return picker;
+        }
+
+        private static string FormatFileSize(long sizeInBytes)
+        {
+            const double bytesPerKilobyte = 1024;
+            const double bytesPerMegabyte = bytesPerKilobyte * 1024;
+
+            return sizeInBytes >= bytesPerMegabyte
+                ? $"{sizeInBytes / bytesPerMegabyte:0.##} MB"
+                : $"{Math.Max(sizeInBytes / bytesPerKilobyte, 0.01):0.##} KB";
+        }
+
+        private static async Task TryDeleteEmptyPickedFileAsync(
+            StorageFile file)
+        {
+            try
+            {
+                var properties = await file.GetBasicPropertiesAsync();
+                if (properties.Size == 0)
+                {
+                    await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                }
+            }
+            catch
+            {
+                // The original backup error remains the useful user-facing result.
             }
         }
 
