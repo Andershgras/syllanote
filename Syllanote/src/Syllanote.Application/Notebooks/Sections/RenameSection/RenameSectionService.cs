@@ -14,7 +14,16 @@ public class RenameSectionService
 
     public async Task RenameAsync(Section section, string name)
     {
+        var originalName = section.Name;
         section.Rename(name);
-        await _sectionRepository.UpdateAsync(section);
+        try
+        {
+            await _sectionRepository.UpdateAsync(section);
+        }
+        catch
+        {
+            section.Rename(originalName);
+            throw;
+        }
     }
 }

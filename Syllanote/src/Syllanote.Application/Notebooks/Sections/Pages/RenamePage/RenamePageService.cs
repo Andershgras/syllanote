@@ -14,7 +14,16 @@ public class RenamePageService
 
     public async Task RenameAsync(Page page, string title)
     {
+        var originalTitle = page.Title;
         page.Rename(title);
-        await _pageRepository.UpdateAsync(page);
+        try
+        {
+            await _pageRepository.UpdateAsync(page);
+        }
+        catch
+        {
+            page.Rename(originalTitle);
+            throw;
+        }
     }
 }

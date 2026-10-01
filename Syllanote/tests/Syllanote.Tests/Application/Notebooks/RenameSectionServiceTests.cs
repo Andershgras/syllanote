@@ -35,10 +35,28 @@ public class RenameSectionServiceTests
         Assert.AreEqual(0, repository.UpdateCallCount);
     }
 
+    [TestMethod]
+    public async Task RenameAsync_WhenRepositoryFails_RestoresOriginalName()
+    {
+        var repository = new FakeSectionRepository
+        {
+            UpdateException = new InvalidOperationException("Database unavailable")
+        };
+        var service = new RenameSectionService(repository);
+        var section = new Section(Guid.NewGuid(), "Original name");
+
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            () => service.RenameAsync(section, "Unsaved name"));
+
+        Assert.AreEqual("Original name", section.Name);
+        Assert.AreEqual(1, repository.UpdateCallCount);
+    }
+
     private class FakeSectionRepository : ISectionRepository
     {
         public Section? UpdatedSection { get; private set; }
         public int UpdateCallCount { get; private set; }
+        public Exception? UpdateException { get; init; }
 
         public Task AddAsync(Section section) => Task.CompletedTask;
 
@@ -53,6 +71,12 @@ public class RenameSectionServiceTests
         {
             UpdatedSection = section;
             UpdateCallCount++;
+
+            if (UpdateException is not null)
+            {
+                return Task.FromException(UpdateException);
+            }
+
             return Task.CompletedTask;
         }
 

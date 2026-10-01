@@ -35,10 +35,28 @@ public class RenamePageServiceTests
         Assert.AreEqual(0, repository.UpdateCallCount);
     }
 
+    [TestMethod]
+    public async Task RenameAsync_WhenRepositoryFails_RestoresOriginalTitle()
+    {
+        var repository = new FakePageRepository
+        {
+            UpdateException = new InvalidOperationException("Database unavailable")
+        };
+        var service = new RenamePageService(repository);
+        var page = new Page(Guid.NewGuid(), "Original title");
+
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            () => service.RenameAsync(page, "Unsaved title"));
+
+        Assert.AreEqual("Original title", page.Title);
+        Assert.AreEqual(1, repository.UpdateCallCount);
+    }
+
     private class FakePageRepository : IPageRepository
     {
         public Page? UpdatedPage { get; private set; }
         public int UpdateCallCount { get; private set; }
+        public Exception? UpdateException { get; init; }
 
         public Task AddAsync(Page page) => Task.CompletedTask;
 
@@ -55,6 +73,12 @@ public class RenamePageServiceTests
         {
             UpdatedPage = page;
             UpdateCallCount++;
+
+            if (UpdateException is not null)
+            {
+                return Task.FromException(UpdateException);
+            }
+
             return Task.CompletedTask;
         }
 
