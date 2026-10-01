@@ -59,3 +59,9 @@ Complete this section without using a mouse. Repeat the Narrator checks with Win
 | Date | Keyboard-only | Narrator | Scaling | High contrast | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 2026-10-01 | Passed | Passed | Passed | Passed | Keyboard-only and Narrator walkthroughs passed. Display scaling passed at 125%, 150%, and 200%. High contrast passed after correcting editor text colors and hover states. Debug build passed with 0 warnings and errors; 160/160 automated tests passed. |
+
+### Milestone 4 portable release verification record
+
+| Date | Artifact | Startup and persistence | Branding | Automated verification |
+| --- | --- | --- | --- | --- |
+| 2026-10-01 | Self-contained `Syllanote-v0.1.0-win-x64.zip` built with checksum | Passed — the extracted application opened, saved a page, and reloaded it correctly after restart | Passed — the Syllanote icon appeared on the executable | 160/160 tests passed; x64 Release publish completed successfully |

@@ -144,9 +144,17 @@ The current automated baseline is 160 passing tests. After Milestone 3, the Debu
 
 The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
-### Verify the x64 release publish
+### Build the portable x64 release
 
-The committed x64 profile makes the Release publish check reproducible from the command line without Visual Studio:
+The committed x64 profile produces an unpackaged, self-contained release that includes both .NET and the Windows App SDK runtime. Build the versioned ZIP from the repository root:
+
+```powershell
+.\scripts\build-portable-release.ps1
+```
+
+The ZIP and its SHA-256 checksum are written to `artifacts/`. For `v0.1.0`, the files are named `Syllanote-v0.1.0-win-x64.zip` and `Syllanote-v0.1.0-win-x64.zip.sha256`.
+
+To verify the underlying publish directly without creating the ZIP:
 
 ```powershell
 dotnet publish Syllanote/src/Syllanote.Desktop/Syllanote.Desktop.csproj `
@@ -164,7 +172,7 @@ Syllanote/src/Syllanote.Desktop/bin/x64/Release/net9.0-windows10.0.19041.0/win-x
 
 Trimming is disabled for this profile because the application uses Entity Framework Core and runtime JSON serialization. This prioritizes reliable backup, restore, search, and database behavior over a smaller first-release download.
 
-This folder is intermediate build output, not the installable release artifact. Syllanote currently uses Windows package identity for its local application data, so launching the published executable directly without MSIX is not supported. The versioned MSIX is produced and tested separately.
+Extract the complete ZIP before starting `Syllanote.Desktop.exe`; the application depends on the files beside the executable. The portable release stores its data under `%LOCALAPPDATA%\Andershgras\Syllanote`. This is separate from the MSIX data container, so use Syllanote backup and restore when moving notes between packaged and portable installations.
 
 ## Local data
 

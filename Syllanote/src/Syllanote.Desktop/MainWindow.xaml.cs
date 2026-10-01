@@ -135,7 +135,7 @@ namespace Syllanote.Desktop
             double minimumWidth,
             double maximumWidth)
         {
-            var settings = ApplicationData.Current.LocalSettings.Values;
+            var settings = ApplicationDataProvider.Current.LocalSettings.Values;
             return settings.TryGetValue(settingKey, out var storedValue) &&
                 storedValue is double storedWidth
                     ? Math.Clamp(storedWidth, minimumWidth, maximumWidth)
@@ -144,12 +144,12 @@ namespace Syllanote.Desktop
 
         private static void SavePanelWidth(string settingKey, double width)
         {
-            ApplicationData.Current.LocalSettings.Values[settingKey] = width;
+            ApplicationDataProvider.Current.LocalSettings.Values[settingKey] = width;
         }
 
         private void RestoreWindowPlacement()
         {
-            var settings = ApplicationData.Current.LocalSettings.Values;
+            var settings = ApplicationDataProvider.Current.LocalSettings.Values;
             _shouldRestoreMaximizedState =
                 settings.TryGetValue(
                     WindowMaximizedSettingKey,
@@ -261,7 +261,7 @@ namespace Syllanote.Desktop
             AppWindow sender,
             AppWindowClosingEventArgs args)
         {
-            var settings = ApplicationData.Current.LocalSettings.Values;
+            var settings = ApplicationDataProvider.Current.LocalSettings.Values;
             settings[WindowMaximizedSettingKey] =
                 sender.Presenter is OverlappedPresenter
                 {
