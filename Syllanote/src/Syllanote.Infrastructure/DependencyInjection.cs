@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Syllanote.Infrastructure.Persistence;
 using Syllanote.Application.Abstractions;
+using Syllanote.Application.Backups;
+using Syllanote.Infrastructure.Backups;
 using Syllanote.Infrastructure.Repositories;
 
 namespace Syllanote.Infrastructure;
@@ -16,6 +18,10 @@ public static class DependencyInjection
             options.UseSqlite(connectionString));
 
         services.AddScoped<DatabaseMigrationService>();
+        services.AddScoped<ILibraryBackupService, SqliteLibraryBackupService>();
+        services.AddScoped<ILibraryBackupValidator, SqliteLibraryBackupValidator>();
+        services.AddScoped<ILibraryRestoreService, SqliteLibraryRestoreService>();
+        services.AddScoped<PendingDatabaseRestoreService>();
         services.AddScoped<INotebookRepository, NotebookRepository>();
         services.AddScoped<ISectionRepository, SectionRepository>();
         services.AddScoped<IPageRepository, PageRepository>();

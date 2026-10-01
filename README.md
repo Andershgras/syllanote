@@ -3,7 +3,7 @@
 Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
 > [!NOTE]
-> Syllanote is an actively developed portfolio project. The core note-taking experience is implemented, while data protection, accessibility verification, packaging, and release preparation are still in progress.
+> Syllanote is an actively developed portfolio project. The core note-taking and data-protection workflows are implemented, while accessibility verification, packaging, and release preparation are still in progress.
 
 ## Features
 
@@ -33,6 +33,15 @@ Page content is stored as both Rich Text Format (RTF) and searchable plain text.
 - Recognize and highlight concepts in page content
 - Open a highlighted concept to read its definition
 - See which pages reference a concept and navigate directly to them
+
+### Protect and restore data
+
+- Create a manual whole-library backup as a `.syllanote-backup` file
+- Preserve notebooks, sections, pages, rich-text content, ordering, and concepts in one versioned archive
+- Validate the archive, checksum, SQLite integrity, relationships, and migration history before restore
+- Require explicit confirmation before a restore can replace the current library
+- Create an automatic safety backup of the current library before restore
+- Keep only the three newest automatic safety backups to limit disk usage
 
 ### Desktop experience
 
@@ -68,7 +77,7 @@ Syllanote.Desktop ───────► Syllanote.Application ─────
         └──► Syllanote.Infrastructure ────────────────► Syllanote.Domain
 ```
 
-Automated tests live in `Syllanote.Tests` and cover domain behavior, application services, dependency registration, search, concept recognition, and SQLite persistence.
+Automated tests live in `Syllanote.Tests` and cover domain behavior, application services, dependency registration, search, concept recognition, SQLite persistence, and backup and restore safety.
 
 The current manual desktop checks are maintained in the [WinUI regression checklist](docs/manual-regression-checklist.md).
 
@@ -131,11 +140,17 @@ dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
 
 The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
 
-Milestone 1 completed with 144 automated tests and the Debug, Release, and x64 publish checks passing without warnings or errors. The normal WinUI workflow, startup failure handling, and autosave recovery were also manually verified on 2026-10-01.
+Milestone 2 completed with 158 automated tests and the Debug, Release, and x64 publish checks passing without warnings or errors. The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
 ## Local data
 
 Syllanote does not require an account or an external database. Notes and concepts are stored in a SQLite database named `syllanote.db` inside the application's Windows local data folder.
+
+Manual backups are stored wherever the user chooses in the Windows file picker. Syllanote does not automatically delete these files.
+
+Before a confirmed restore, Syllanote stores a safety backup in the `SafetyBackups` directory beside the live database. This happens only as part of a restore; there is no scheduled or background backup process. At most three safety backups are retained, and older ones are removed automatically.
+
+Restore is prepared without changing the live database. Syllanote then closes and validates the prepared database again on the next start before it replaces `syllanote.db` and applies any pending migrations. If validation fails, the live database is left unchanged.
 
 The application also uses Windows local settings to retain interface preferences such as panel widths and window placement. Data currently remains on the Windows user profile and device where it was created.
 
@@ -143,7 +158,7 @@ The application also uses Windows local settings to retain interface preferences
 
 - Windows is the only supported operating system
 - Notes are local to one device; cloud sync and collaboration are not implemented
-- Import, export, and automated backup are not implemented
+- Scheduled backups, backup encryption, selective restore, import, and export are not implemented
 - Desktop interactions still require manual verification because the current automated suite does not drive the WinUI interface
 - A packaged public release is not yet part of the documented workflow
 

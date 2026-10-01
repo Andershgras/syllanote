@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-01
 
-Current phase: **Now — Milestone 2: Data protection v1**
+Current phase: **Next — Milestone 3: Accessibility and keyboard readiness**
 
 This roadmap is the working plan for taking Syllanote from a functional local-first MVP to a reliable first portfolio release. It is intentionally focused: stability, data safety, accessibility, and release readiness take priority over additional product features.
 
@@ -26,7 +26,7 @@ This roadmap is the working plan for taking Syllanote from a functional local-fi
 
 ## Current project status
 
-Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow and Milestone 1 failure handling are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because data recovery, accessibility verification, and packaging still need focused work.
+Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow, failure handling, and data-protection workflow are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because accessibility verification and packaging still need focused work.
 
 ### Implemented product areas
 
@@ -36,23 +36,26 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 - Debounced autosave with navigation safeguards.
 - Cross-notebook search of page titles and searchable plain text.
 - Notebook-scoped Concept Dictionary with recognition, highlighting, definitions, references, and reference navigation.
+- Versioned whole-library backups with integrity validation and explicit restart-based restore.
+- Automatic pre-restore safety backups with retention limited to the three newest archives.
 - Resizable navigation panels and persistent panel widths.
 - Persistent window size, placement, and maximized state.
 - Windows 11-inspired WinUI presentation with Mica, Fluent icons, and consistent empty states.
 
 ### Current verification baseline
 
-- 144 of 144 automated tests pass.
+- 158 of 158 automated tests pass.
 - Debug and Release builds complete with no warnings or errors.
 - The x64 file-system publish completes successfully with no warnings or errors.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
 - Unavailable-database startup handling and locked-database autosave recovery were manually verified on 2026-10-01.
+- Manual backup creation and the confirmed close-and-reopen restore flow were verified on 2026-10-01.
 - Automated tests cover Domain, Application, and Infrastructure behavior, but do not drive the WinUI interface.
 
 ### Known release gaps
 
-- Backup, restore, import, and export are not implemented.
+- Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
 - The accessibility baseline exists in parts of the UI, but keyboard and Narrator workflows have not received a complete manual audit.
 - File-system publish profiles exist for x86, x64, and ARM64, but the first installable package and release workflow are not verified.
 - Package identity, display metadata, branding, and versioning still contain development values.
@@ -172,13 +175,11 @@ Make the existing MVP trustworthy under persistence errors, invalid states, rapi
 
 ---
 
-## Now
-
 ### Milestone 2 — Data protection v1
 
 **Work types:** Release work, new product feature
 
-**Status:** Now
+**Status:** Completed
 
 **Estimated size:** Medium
 
@@ -221,6 +222,16 @@ Protect locally stored notes with a supported backup and recovery path before th
 - Perform a manual round trip with formatted notes, multiple notebooks, ordering, concepts, and references.
 - Test corrupt files, unsupported versions, cancelled operations, and interrupted restore preparation.
 - Repeat the critical navigation and autosave regression checks after restore.
+
+#### Recorded verification
+
+- 158 of 158 automated tests passed on 2026-10-01.
+- Debug and Release builds and the x64 publish check completed with 0 warnings and 0 errors.
+- A representative SQLite snapshot test verified notebooks, sections, pages, hierarchy order, searchable text, RTF content, concepts, backup metadata, migration history, and checksum.
+- Validation tests rejected a changed database and an unsupported newer backup format without modifying live data.
+- Restore integration tests verified safety-backup creation, three-file retention, pending restore application at startup, rejection of tampered data or a missing safety backup, and recovery after an interrupted finalization step.
+- The user manually verified backup creation and the explicit confirmation, close, reopen, and restore workflow on 2026-10-01.
+- WinUI file-picker and confirmation behavior remains a manual verification surface because the automated suite does not drive the desktop interface.
 
 ---
 

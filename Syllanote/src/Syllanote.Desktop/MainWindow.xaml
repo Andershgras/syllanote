@@ -42,6 +42,8 @@
             x:Name="TopBar"
             Grid.Row="0"
             Grid.ColumnSpan="5"
+            BackupRequested="TopBar_BackupRequested"
+            RestoreRequested="TopBar_RestoreRequested"
             SearchRequested="TopBar_SearchRequested"
             SearchResultSelectionChanged="TopBar_SearchResultSelectionChanged" />
 
@@ -57,10 +59,9 @@
                 Severity="Error"
                 Title="Changes couldn't be saved" />
             <InfoBar
-                x:Name="OperationErrorInfoBar"
+                x:Name="OperationInfoBar"
                 IsClosable="True"
-                IsOpen="False"
-                Severity="Error" />
+                IsOpen="False" />
         </StackPanel>
 
         <Border

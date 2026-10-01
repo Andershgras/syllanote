@@ -8,6 +8,8 @@ namespace Syllanote.Desktop.Controls
 {
     public sealed partial class TopBar : UserControl
     {
+        public event RoutedEventHandler? BackupRequested;
+        public event RoutedEventHandler? RestoreRequested;
         public event RoutedEventHandler? SearchRequested;
         public event SelectionChangedEventHandler? SearchResultSelectionChanged;
 
@@ -43,6 +45,21 @@ namespace Syllanote.Desktop.Controls
                 : Visibility.Visible;
         }
 
+        public void SetLibraryActionsEnabled(bool isEnabled)
+        {
+            BackupButton.IsEnabled = isEnabled;
+            RestoreButton.IsEnabled = isEnabled;
+        }
+
+        public void SetLibraryOperationInProgress(bool isInProgress)
+        {
+            SetLibraryActionsEnabled(!isInProgress);
+            LibraryOperationProgressRing.IsActive = isInProgress;
+            LibraryOperationProgressRing.Visibility = isInProgress
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
         public void ClearSelectedSearchResult()
         {
             SearchResultsListView.SelectedItem = null;
@@ -51,6 +68,16 @@ namespace Syllanote.Desktop.Controls
         private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             SearchRequested?.Invoke(this, e);
+        }
+
+        private void BackupButton_Click(object sender, RoutedEventArgs e)
+        {
+            BackupRequested?.Invoke(this, e);
+        }
+
+        private void RestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            RestoreRequested?.Invoke(this, e);
         }
 
         private void SearchTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
