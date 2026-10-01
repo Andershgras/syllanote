@@ -4,11 +4,18 @@ using Syllanote.Application.Backups;
 using Syllanote.Infrastructure.Persistence;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace Syllanote.Infrastructure.Backups;
 
 public sealed class SqliteLibraryRestoreService : ILibraryRestoreService
 {
+    private static readonly JsonSerializerOptions MetadataJsonOptions =
+        new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        };
+
     private readonly SyllanoteDbContext _dbContext;
     private readonly ILibraryBackupService _backupService;
     private readonly ILibraryBackupValidator _backupValidator;
@@ -49,11 +56,17 @@ public sealed class SqliteLibraryRestoreService : ILibraryRestoreService
             safetyBackupDirectory,
             safetyBackup.FilePath);
 
-        var pendingDatabasePath = CreatePendingDatabasePath(
-            liveDatabasePath);
+        var pendingDatabasePath = LibraryRestorePaths
+            .GetPendingDatabasePath(liveDatabasePath);
+        var pendingMetadataPath = LibraryRestorePaths
+            .GetPendingMetadataPath(liveDatabasePath);
         var temporaryPendingPath = Path.Combine(
             databaseDirectory,
             $".{Path.GetFileName(pendingDatabasePath)}." +
+            $"{Guid.NewGuid():N}.tmp");
+        var temporaryMetadataPath = Path.Combine(
+            databaseDirectory,
+            $".{Path.GetFileName(pendingMetadataPath)}." +
             $"{Guid.NewGuid():N}.tmp");
 
         try
@@ -66,21 +79,38 @@ public sealed class SqliteLibraryRestoreService : ILibraryRestoreService
                 temporaryPendingPath,
                 validation.Manifest.DatabaseSha256,
                 cancellationToken);
+            var metadata = new LibraryRestorePendingMetadata(
+                validation.FilePath,
+                safetyBackup.FilePath,
+                preparedAtUtc,
+                validation.Manifest);
+            await WriteMetadataAsync(
+                temporaryMetadataPath,
+                metadata,
+                cancellationToken);
+
+            DeleteFileIfPresent(pendingMetadataPath);
             File.Move(
                 temporaryPendingPath,
                 pendingDatabasePath,
+                overwrite: true);
+            File.Move(
+                temporaryMetadataPath,
+                pendingMetadataPath,
                 overwrite: true);
 
             return new LibraryRestorePreparationResult(
                 validation.FilePath,
                 safetyBackup.FilePath,
                 pendingDatabasePath,
+                pendingMetadataPath,
                 preparedAtUtc,
                 validation.Manifest);
         }
         finally
         {
             TryDeleteFile(temporaryPendingPath);
+            TryDeleteFile(temporaryMetadataPath);
         }
     }
 
@@ -108,16 +138,6 @@ public sealed class SqliteLibraryRestoreService : ILibraryRestoreService
             $"{Guid.NewGuid():N}" +
             LibraryBackupFormat.FileExtension;
         return Path.Combine(safetyBackupDirectory, fileName);
-    }
-
-    private static string CreatePendingDatabasePath(string liveDatabasePath)
-    {
-        var directory = Path.GetDirectoryName(liveDatabasePath)!;
-        var extension = Path.GetExtension(liveDatabasePath);
-        var fileName = Path.GetFileNameWithoutExtension(liveDatabasePath) +
-            LibraryRestorePolicy.PendingRestoreMarker +
-            extension;
-        return Path.Combine(directory, fileName);
     }
 
     private static void PruneSafetyBackups(
@@ -189,18 +209,43 @@ public sealed class SqliteLibraryRestoreService : ILibraryRestoreService
         }
     }
 
+    private static async Task WriteMetadataAsync(
+        string metadataPath,
+        LibraryRestorePendingMetadata metadata,
+        CancellationToken cancellationToken)
+    {
+        await using var metadataStream = new FileStream(
+            metadataPath,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None,
+            bufferSize: 4096,
+            useAsync: true);
+        await JsonSerializer.SerializeAsync(
+            metadataStream,
+            metadata,
+            MetadataJsonOptions,
+            cancellationToken);
+        await metadataStream.FlushAsync(cancellationToken);
+    }
+
     private static void TryDeleteFile(string filePath)
     {
         try
         {
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
+            DeleteFileIfPresent(filePath);
         }
         catch
         {
             // The restore preparation result must not be masked by cleanup errors.
+        }
+    }
+
+    private static void DeleteFileIfPresent(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
         }
     }
 }

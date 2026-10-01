@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<ILibraryBackupService, SqliteLibraryBackupService>();
         services.AddScoped<ILibraryBackupValidator, SqliteLibraryBackupValidator>();
         services.AddScoped<ILibraryRestoreService, SqliteLibraryRestoreService>();
+        services.AddScoped<PendingDatabaseRestoreService>();
         services.AddScoped<INotebookRepository, NotebookRepository>();
         services.AddScoped<ISectionRepository, SectionRepository>();
         services.AddScoped<IPageRepository, PageRepository>();

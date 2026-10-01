@@ -30,6 +30,7 @@ public class SqliteLibraryRestoreServiceTests
 
             Assert.IsTrue(File.Exists(result.SafetyBackupPath));
             Assert.IsTrue(File.Exists(result.PendingDatabasePath));
+            Assert.IsTrue(File.Exists(result.PendingMetadataPath));
             Assert.AreEqual(
                 "Current library",
                 (await liveContext.Notebooks.SingleAsync()).Name);
@@ -88,6 +89,7 @@ public class SqliteLibraryRestoreServiceTests
             Assert.AreEqual(1, Directory.GetFiles(
                 testDirectory,
                 $"*{LibraryRestorePolicy.PendingRestoreMarker}*.db").Length);
+            Assert.IsTrue(File.Exists(latestResult.PendingMetadataPath));
         }
         finally
         {
@@ -122,9 +124,218 @@ public class SqliteLibraryRestoreServiceTests
             Assert.AreEqual(0, Directory.GetFiles(
                 testDirectory,
                 $"*{LibraryRestorePolicy.PendingRestoreMarker}*.db").Length);
+            Assert.AreEqual(0, Directory.GetFiles(
+                testDirectory,
+                $"*{LibraryRestorePolicy.PendingRestoreMarker}*.json").Length);
             Assert.AreEqual(
                 "Current library",
                 (await liveContext.Notebooks.SingleAsync()).Name);
+        }
+        finally
+        {
+            DeleteTestDirectory(testDirectory);
+        }
+    }
+
+    [TestMethod]
+    public async Task ApplyAsync_WithPreparedRestore_ReplacesLiveDatabase()
+    {
+        var testDirectory = CreateTestDirectory();
+
+        try
+        {
+            var backupPath = await CreateBackupAsync(
+                testDirectory,
+                "Restored library");
+            var liveDatabasePath = Path.Combine(testDirectory, "live.db");
+            LibraryRestorePreparationResult preparation;
+
+            await using (var liveContext = CreateContext(liveDatabasePath))
+            {
+                await AddNotebookAsync(liveContext, "Current library");
+                preparation = await CreateRestoreService(liveContext)
+                    .PrepareAsync(backupPath);
+            }
+
+            await using (var startupContext = CreateContext(liveDatabasePath))
+            {
+                var applied = await new PendingDatabaseRestoreService(
+                    startupContext).ApplyAsync();
+
+                Assert.IsTrue(applied);
+            }
+
+            Assert.AreEqual(
+                "Restored library",
+                await ReadSingleNotebookNameAsync(liveDatabasePath));
+            Assert.IsFalse(File.Exists(preparation.PendingDatabasePath));
+            Assert.IsFalse(File.Exists(preparation.PendingMetadataPath));
+            Assert.IsTrue(File.Exists(preparation.SafetyBackupPath));
+        }
+        finally
+        {
+            DeleteTestDirectory(testDirectory);
+        }
+    }
+
+    [TestMethod]
+    public async Task ApplyAsync_WithTamperedPendingDatabase_LeavesLiveDatabase()
+    {
+        var testDirectory = CreateTestDirectory();
+
+        try
+        {
+            var backupPath = await CreateBackupAsync(
+                testDirectory,
+                "Restored library");
+            var liveDatabasePath = Path.Combine(testDirectory, "live.db");
+            LibraryRestorePreparationResult preparation;
+
+            await using (var liveContext = CreateContext(liveDatabasePath))
+            {
+                await AddNotebookAsync(liveContext, "Current library");
+                preparation = await CreateRestoreService(liveContext)
+                    .PrepareAsync(backupPath);
+            }
+
+            await File.AppendAllTextAsync(
+                preparation.PendingDatabasePath,
+                "tampered");
+
+            await using (var startupContext = CreateContext(liveDatabasePath))
+            {
+                await Assert.ThrowsExceptionAsync<
+                    InvalidLibraryBackupException>(
+                        () => new PendingDatabaseRestoreService(
+                            startupContext).ApplyAsync());
+            }
+
+            Assert.AreEqual(
+                "Current library",
+                await ReadSingleNotebookNameAsync(liveDatabasePath));
+            Assert.IsTrue(File.Exists(preparation.PendingDatabasePath));
+            Assert.IsTrue(File.Exists(preparation.PendingMetadataPath));
+        }
+        finally
+        {
+            DeleteTestDirectory(testDirectory);
+        }
+    }
+
+    [TestMethod]
+    public async Task ApplyAsync_WithoutSafetyBackup_LeavesLiveDatabase()
+    {
+        var testDirectory = CreateTestDirectory();
+
+        try
+        {
+            var backupPath = await CreateBackupAsync(
+                testDirectory,
+                "Restored library");
+            var liveDatabasePath = Path.Combine(testDirectory, "live.db");
+            LibraryRestorePreparationResult preparation;
+
+            await using (var liveContext = CreateContext(liveDatabasePath))
+            {
+                await AddNotebookAsync(liveContext, "Current library");
+                preparation = await CreateRestoreService(liveContext)
+                    .PrepareAsync(backupPath);
+            }
+
+            File.Delete(preparation.SafetyBackupPath);
+
+            await using (var startupContext = CreateContext(liveDatabasePath))
+            {
+                await Assert.ThrowsExceptionAsync<
+                    InvalidLibraryBackupException>(
+                        () => new PendingDatabaseRestoreService(
+                            startupContext).ApplyAsync());
+            }
+
+            Assert.AreEqual(
+                "Current library",
+                await ReadSingleNotebookNameAsync(liveDatabasePath));
+            Assert.IsTrue(File.Exists(preparation.PendingDatabasePath));
+            Assert.IsTrue(File.Exists(preparation.PendingMetadataPath));
+        }
+        finally
+        {
+            DeleteTestDirectory(testDirectory);
+        }
+    }
+
+    [TestMethod]
+    public async Task ApplyAsync_WithoutPendingRestore_LeavesLiveDatabase()
+    {
+        var testDirectory = CreateTestDirectory();
+
+        try
+        {
+            var liveDatabasePath = Path.Combine(testDirectory, "live.db");
+            await using var liveContext = CreateContext(liveDatabasePath);
+            await AddNotebookAsync(liveContext, "Current library");
+
+            var applied = await new PendingDatabaseRestoreService(
+                liveContext).ApplyAsync();
+
+            Assert.IsFalse(applied);
+            Assert.AreEqual(
+                "Current library",
+                (await liveContext.Notebooks.SingleAsync()).Name);
+        }
+        finally
+        {
+            DeleteTestDirectory(testDirectory);
+        }
+    }
+
+    [TestMethod]
+    public async Task ApplyAsync_AfterDatabaseWasAlreadyReplaced_CleansMarker()
+    {
+        var testDirectory = CreateTestDirectory();
+
+        try
+        {
+            var backupPath = await CreateBackupAsync(
+                testDirectory,
+                "Restored library");
+            var liveDatabasePath = Path.Combine(testDirectory, "live.db");
+            LibraryRestorePreparationResult preparation;
+            byte[] metadata;
+
+            await using (var liveContext = CreateContext(liveDatabasePath))
+            {
+                await AddNotebookAsync(liveContext, "Current library");
+                preparation = await CreateRestoreService(liveContext)
+                    .PrepareAsync(backupPath);
+                metadata = await File.ReadAllBytesAsync(
+                    preparation.PendingMetadataPath);
+            }
+
+            await using (var firstStartupContext = CreateContext(
+                liveDatabasePath))
+            {
+                await new PendingDatabaseRestoreService(firstStartupContext)
+                    .ApplyAsync();
+            }
+
+            await File.WriteAllBytesAsync(
+                preparation.PendingMetadataPath,
+                metadata);
+
+            await using (var secondStartupContext = CreateContext(
+                liveDatabasePath))
+            {
+                var applied = await new PendingDatabaseRestoreService(
+                    secondStartupContext).ApplyAsync();
+
+                Assert.IsTrue(applied);
+            }
+
+            Assert.AreEqual(
+                "Restored library",
+                await ReadSingleNotebookNameAsync(liveDatabasePath));
+            Assert.IsFalse(File.Exists(preparation.PendingMetadataPath));
         }
         finally
         {

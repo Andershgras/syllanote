@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Syllanote.Application;
 using Syllanote.Desktop.ViewModels;
 using Syllanote.Infrastructure;
+using Syllanote.Infrastructure.Backups;
 using Syllanote.Infrastructure.Persistence;
 using System;
 using System.Threading.Tasks;
@@ -54,6 +55,7 @@ namespace Syllanote.Desktop
         {
             try
             {
+                await ApplyPendingRestoreAsync();
                 await MigrateDatabaseAsync();
             }
             catch (Exception exception)
@@ -65,6 +67,16 @@ namespace Syllanote.Desktop
 
             _window = Services.GetRequiredService<MainWindow>();
             _window.Activate();
+        }
+
+        private async Task ApplyPendingRestoreAsync()
+        {
+            using var scope = Services.CreateScope();
+
+            var restoreService = scope.ServiceProvider
+                .GetRequiredService<PendingDatabaseRestoreService>();
+
+            await restoreService.ApplyAsync();
         }
 
         private async Task MigrateDatabaseAsync()

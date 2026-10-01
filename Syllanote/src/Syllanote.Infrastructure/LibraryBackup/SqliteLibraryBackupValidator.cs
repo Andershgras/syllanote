@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Syllanote.Application.Backups;
 using Syllanote.Infrastructure.Persistence;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace Syllanote.Infrastructure.Backups;
@@ -53,13 +52,13 @@ public sealed class SqliteLibraryBackupValidator : ILibraryBackupValidator
                     databaseEntry,
                     extractedDatabasePath,
                     cancellationToken);
-                await ValidateDatabaseHashAsync(
-                    extractedDatabasePath,
-                    manifest.DatabaseSha256,
-                    cancellationToken);
-                await ValidateDatabaseAsync(
+                var knownMigrations = _dbContext.Database
+                    .GetMigrations()
+                    .ToHashSet(StringComparer.Ordinal);
+                await SqliteLibraryDatabaseValidator.ValidateAsync(
                     extractedDatabasePath,
                     manifest,
+                    knownMigrations,
                     cancellationToken);
 
                 return new LibraryBackupValidationResult(
@@ -205,116 +204,6 @@ public sealed class SqliteLibraryBackupValidator : ILibraryBackupValidator
             bufferSize: 81920,
             useAsync: true);
         await source.CopyToAsync(destination, cancellationToken);
-    }
-
-    private static async Task ValidateDatabaseHashAsync(
-        string databasePath,
-        string expectedHash,
-        CancellationToken cancellationToken)
-    {
-        await using var databaseStream = File.OpenRead(databasePath);
-        var actualHash = Convert.ToHexString(
-            await SHA256.HashDataAsync(
-                databaseStream,
-                cancellationToken));
-
-        if (!string.Equals(
-                expectedHash,
-                actualHash,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidLibraryBackupException(
-                "The backup database checksum does not match its manifest.");
-        }
-    }
-
-    private async Task ValidateDatabaseAsync(
-        string databasePath,
-        LibraryBackupManifest manifest,
-        CancellationToken cancellationToken)
-    {
-        var connectionString = new SqliteConnectionStringBuilder
-        {
-            DataSource = databasePath,
-            Mode = SqliteOpenMode.ReadOnly,
-            Pooling = false
-        }.ToString();
-        await using var connection = new SqliteConnection(connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        await ValidateIntegrityAsync(connection, cancellationToken);
-        await ValidateForeignKeysAsync(connection, cancellationToken);
-
-        var databaseMigrations = await ReadDatabaseMigrationsAsync(
-            connection,
-            cancellationToken);
-        if (!databaseMigrations.SequenceEqual(manifest.AppliedMigrations))
-        {
-            throw new InvalidLibraryBackupException(
-                "The backup migration history does not match its manifest.");
-        }
-
-        var knownMigrations = _dbContext.Database
-            .GetMigrations()
-            .ToHashSet(StringComparer.Ordinal);
-        if (databaseMigrations.Any(migration =>
-                !knownMigrations.Contains(migration)))
-        {
-            throw new InvalidLibraryBackupException(
-                "This backup requires a newer version of Syllanote.");
-        }
-    }
-
-    private static async Task ValidateIntegrityAsync(
-        SqliteConnection connection,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA integrity_check;";
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-
-        if (!string.Equals(result as string, "ok",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidLibraryBackupException(
-                "The backup database failed SQLite's integrity check.");
-        }
-    }
-
-    private static async Task ValidateForeignKeysAsync(
-        SqliteConnection connection,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA foreign_key_check;";
-        await using var reader = await command.ExecuteReaderAsync(
-            cancellationToken);
-
-        if (await reader.ReadAsync(cancellationToken))
-        {
-            throw new InvalidLibraryBackupException(
-                "The backup database contains invalid relationships.");
-        }
-    }
-
-    private static async Task<string[]> ReadDatabaseMigrationsAsync(
-        SqliteConnection connection,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText =
-            "SELECT MigrationId FROM __EFMigrationsHistory " +
-            "ORDER BY MigrationId;";
-        await using var reader = await command.ExecuteReaderAsync(
-            cancellationToken);
-        var migrations = new List<string>();
-
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            migrations.Add(reader.GetString(0));
-        }
-
-        return [.. migrations];
     }
 
     private static void TryDeleteDirectory(string directoryPath)

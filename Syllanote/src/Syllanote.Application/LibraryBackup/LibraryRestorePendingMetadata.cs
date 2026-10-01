@@ -1,9 +1,7 @@
 namespace Syllanote.Application.Backups;
 
-public sealed record LibraryRestorePreparationResult(
+public sealed record LibraryRestorePendingMetadata(
     string SourceBackupPath,
     string SafetyBackupPath,
-    string PendingDatabasePath,
-    string PendingMetadataPath,
     DateTimeOffset PreparedAtUtc,
     LibraryBackupManifest Manifest);
