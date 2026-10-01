@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-01
 
-Current phase: **Now — Milestone 1: Stabilization and failure safety (final failure-path verification)**
+Current phase: **Now — Milestone 2: Data protection v1**
 
 This roadmap is the working plan for taking Syllanote from a functional local-first MVP to a reliable first portfolio release. It is intentionally focused: stability, data safety, accessibility, and release readiness take priority over additional product features.
 
@@ -26,7 +26,7 @@ This roadmap is the working plan for taking Syllanote from a functional local-fi
 
 ## Current project status
 
-Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow and Milestone 1 failure handling are implemented, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because data recovery, accessibility verification, packaging, and the final forced failure-path check still need focused work.
+Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow and Milestone 1 failure handling are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because data recovery, accessibility verification, and packaging still need focused work.
 
 ### Implemented product areas
 
@@ -47,11 +47,11 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 - The x64 file-system publish completes successfully with no warnings or errors.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
+- Unavailable-database startup handling and locked-database autosave recovery were manually verified on 2026-10-01.
 - Automated tests cover Domain, Application, and Infrastructure behavior, but do not drive the WinUI interface.
 
 ### Known release gaps
 
-- Milestone 1's forced unavailable-database and invalid-startup scenarios still require manual confirmation before the milestone can be marked completed.
 - Backup, restore, import, and export are not implemented.
 - The accessibility baseline exists in parts of the UI, but keyboard and Narrator workflows have not received a complete manual audit.
 - File-system publish profiles exist for x86, x64, and ARM64, but the first installable package and release workflow are not verified.
@@ -109,13 +109,11 @@ None. This milestone is the baseline for all further work.
 
 ---
 
-## Now
-
 ### Milestone 1 — Stabilization and failure safety
 
 **Work types:** Bug fixes, technical debt, stabilization
 
-**Status:** Now
+**Status:** Completed
 
 **Estimated size:** Medium
 
@@ -168,18 +166,19 @@ Make the existing MVP trustworthy under persistence errors, invalid states, rapi
 - Debug and Release builds and the x64 publish check completed with 0 warnings and 0 errors.
 - The user completed a normal manual regression pass on 2026-10-01 and reported that the application continued to work.
 - Automated failure-path coverage includes migration failures, failed page persistence, and restoration of entities after failed updates.
-- The manual forced unavailable-database and invalid-startup check remains pending.
+- An unavailable database produced the actionable startup error window without opening the editor, and the original database was restored without data loss.
+- A SQLite write lock produced the autosave error; unsaved text remained visible, navigation was blocked, and saving succeeded after the lock was released.
 - The reusable checklist is maintained in [`manual-regression-checklist.md`](manual-regression-checklist.md).
 
 ---
 
-## Next
+## Now
 
 ### Milestone 2 — Data protection v1
 
 **Work types:** Release work, new product feature
 
-**Status:** Next
+**Status:** Now
 
 **Estimated size:** Medium
 
@@ -224,6 +223,8 @@ Protect locally stored notes with a supported backup and recovery path before th
 - Repeat the critical navigation and autosave regression checks after restore.
 
 ---
+
+## Next
 
 ### Milestone 3 — Accessibility and keyboard readiness
 

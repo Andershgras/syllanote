@@ -23,4 +23,4 @@ Use this checklist after changes to navigation, persistence, startup, or the mai
 
 | Date | Automated verification | Manual core workflow | Manual failure safety |
 | --- | --- | --- | --- |
-| 2026-10-01 | 144/144 tests; Debug and Release builds plus x64 publish passed with 0 warnings and 0 errors | Passed — user reported that the manually tested application continued to work | Pending — forced database and startup failures have not been exercised manually |
+| 2026-10-01 | 144/144 tests; Debug and Release builds plus x64 publish passed with 0 warnings and 0 errors | Passed — user reported that the manually tested application continued to work | Passed — unavailable-database startup and locked-database autosave recovery were manually verified |

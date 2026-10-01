@@ -131,7 +131,7 @@ dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
 
 The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
 
-The latest Milestone 1 verification completed 144 automated tests and the Debug, Release, and x64 publish checks without warnings or errors. The normal WinUI workflow was also manually regression-tested on 2026-10-01; forced database-failure scenarios remain a separate manual check.
+Milestone 1 completed with 144 automated tests and the Debug, Release, and x64 publish checks passing without warnings or errors. The normal WinUI workflow, startup failure handling, and autosave recovery were also manually verified on 2026-10-01.
 
 ## Local data
 
