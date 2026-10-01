@@ -84,6 +84,7 @@
                     Style="{StaticResource SyllanotePanelTitleTextStyle}" />
 
                 <Button
+                    x:Name="NewNotebookButton"
                     Grid.Column="1"
                     Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
                     AutomationProperties.Name="New notebook"
@@ -97,7 +98,8 @@
 
             <ItemsControl
                 x:Name="NotebookItemsControl"
-                Grid.Row="1">
+                Grid.Row="1"
+                AutomationProperties.Name="Notebooks and sections">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:NotebookNavigationItem">
                         <StackPanel Spacing="2">
@@ -107,29 +109,6 @@
                                     <ColumnDefinition Width="32" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-
-                            <Grid.ContextFlyout>
-                                <MenuFlyout Opening="NotebookContextMenu_Opening">
-                                    <MenuFlyoutItem
-                                        Text="Move up"
-                                        IsEnabled="{x:Bind CanMoveUp}"
-                                        Click="MoveNotebookUpMenuItem_Click" />
-                                    <MenuFlyoutItem
-                                        Text="Move down"
-                                        IsEnabled="{x:Bind CanMoveDown}"
-                                        Click="MoveNotebookDownMenuItem_Click" />
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem
-                                        Text="Concept Dictionary"
-                                        Click="ConceptDictionaryMenuItem_Click" />
-                                    <MenuFlyoutItem
-                                        Text="Rename"
-                                        Click="RenameNotebookMenuItem_Click" />
-                                    <MenuFlyoutItem
-                                        Text="Delete"
-                                        Click="DeleteNotebookButton_Click" />
-                                </MenuFlyout>
-                            </Grid.ContextFlyout>
 
                             <Border
                                 Grid.ColumnSpan="3"
@@ -151,9 +130,33 @@
                                 Grid.ColumnSpan="2"
                                 Style="{StaticResource NavigationRowButtonStyle}"
                                 Padding="4,3,8,3"
-                                AutomationProperties.Name="{x:Bind Name}"
+                                AutomationProperties.Name="{x:Bind AccessibilityName}"
+                                AutomationProperties.HelpText="{x:Bind AccessibilityHelpText}"
+                                AutomationProperties.ItemStatus="{x:Bind AccessibilityItemStatus, Mode=OneWay}"
                                 ToolTipService.ToolTip="Expand or collapse sections"
                                 Click="NotebookExpandCollapseButton_Click">
+                                <Button.ContextFlyout>
+                                    <MenuFlyout Opening="NotebookContextMenu_Opening">
+                                        <MenuFlyoutItem
+                                            Text="Move up"
+                                            IsEnabled="{x:Bind CanMoveUp}"
+                                            Click="MoveNotebookUpMenuItem_Click" />
+                                        <MenuFlyoutItem
+                                            Text="Move down"
+                                            IsEnabled="{x:Bind CanMoveDown}"
+                                            Click="MoveNotebookDownMenuItem_Click" />
+                                        <MenuFlyoutSeparator />
+                                        <MenuFlyoutItem
+                                            Text="Concept Dictionary"
+                                            Click="ConceptDictionaryMenuItem_Click" />
+                                        <MenuFlyoutItem
+                                            Text="Rename"
+                                            Click="RenameNotebookMenuItem_Click" />
+                                        <MenuFlyoutItem
+                                            Text="Delete"
+                                            Click="DeleteNotebookButton_Click" />
+                                    </MenuFlyout>
+                                </Button.ContextFlyout>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="28" />
@@ -185,26 +188,6 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
 
-                                            <Grid.ContextFlyout>
-                                                <MenuFlyout Opening="SectionContextMenu_Opening">
-                                                    <MenuFlyoutItem
-                                                        Text="Move up"
-                                                        IsEnabled="{x:Bind CanMoveUp}"
-                                                        Click="MoveSectionUpMenuItem_Click" />
-                                                    <MenuFlyoutItem
-                                                        Text="Move down"
-                                                        IsEnabled="{x:Bind CanMoveDown}"
-                                                        Click="MoveSectionDownMenuItem_Click" />
-                                                    <MenuFlyoutSeparator />
-                                                    <MenuFlyoutItem
-                                                        Text="Rename"
-                                                        Click="RenameSectionMenuItem_Click" />
-                                                    <MenuFlyoutItem
-                                                        Text="Delete"
-                                                        Click="DeleteSectionButton_Click" />
-                                                </MenuFlyout>
-                                            </Grid.ContextFlyout>
-
                                             <Border
                                                 Grid.ColumnSpan="2"
                                                 Margin="0,1"
@@ -226,8 +209,30 @@
                                                 Padding="10,3"
                                                 Content="{x:Bind Name}"
                                                 FontSize="14"
-                                                AutomationProperties.Name="{x:Bind Name}"
-                                                Click="SectionNavigationButton_Click" />
+                                                AutomationProperties.Name="{x:Bind AccessibilityName}"
+                                                AutomationProperties.HelpText="{x:Bind AccessibilityHelpText}"
+                                                AutomationProperties.ItemStatus="{x:Bind AccessibilityItemStatus, Mode=OneWay}"
+                                                Click="SectionNavigationButton_Click">
+                                                <Button.ContextFlyout>
+                                                    <MenuFlyout Opening="SectionContextMenu_Opening">
+                                                        <MenuFlyoutItem
+                                                            Text="Move up"
+                                                            IsEnabled="{x:Bind CanMoveUp}"
+                                                            Click="MoveSectionUpMenuItem_Click" />
+                                                        <MenuFlyoutItem
+                                                            Text="Move down"
+                                                            IsEnabled="{x:Bind CanMoveDown}"
+                                                            Click="MoveSectionDownMenuItem_Click" />
+                                                        <MenuFlyoutSeparator />
+                                                        <MenuFlyoutItem
+                                                            Text="Rename"
+                                                            Click="RenameSectionMenuItem_Click" />
+                                                        <MenuFlyoutItem
+                                                            Text="Delete"
+                                                            Click="DeleteSectionButton_Click" />
+                                                    </MenuFlyout>
+                                                </Button.ContextFlyout>
+                                            </Button>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

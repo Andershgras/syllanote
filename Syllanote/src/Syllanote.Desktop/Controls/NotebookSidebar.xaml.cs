@@ -1,7 +1,13 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Syllanote.Desktop.ViewModels;
+using Syllanote.Domain.Entities;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Syllanote.Desktop.Controls
 {
@@ -48,6 +54,52 @@ namespace Syllanote.Desktop.Controls
             NotebookEmptyState.Visibility = hasNotebooks
                 ? Visibility.Collapsed
                 : Visibility.Visible;
+        }
+
+        public bool FocusNewNotebookButton() =>
+            NewNotebookButton.Focus(FocusState.Keyboard);
+
+        public bool FocusNotebook(Notebook? notebook) =>
+            notebook is not null && FocusNavigationButton(
+                item => item.Notebook?.Id == notebook.Id,
+                expectedAutomationName: $"{notebook.Name}, notebook");
+
+        public bool FocusSection(Section? section) =>
+            section is not null && FocusNavigationButton(
+                item => item.Section?.Id == section.Id,
+                expectedAutomationName: $"{section.Name}, section");
+
+        public bool FocusNewSectionButton(Notebook? notebook) =>
+            notebook is not null && FocusNavigationButton(
+                item => item.Notebook?.Id == notebook.Id,
+                expectedAutomationName: "New section");
+
+        private bool FocusNavigationButton(
+            Func<NotebookNavigationItem, bool> matchesItem,
+            string expectedAutomationName)
+        {
+            return FindButtons(NotebookItemsControl).FirstOrDefault(button =>
+                button.DataContext is NotebookNavigationItem item &&
+                matchesItem(item) &&
+                AutomationProperties.GetName(button) == expectedAutomationName)
+                ?.Focus(FocusState.Keyboard) == true;
+        }
+
+        private static IEnumerable<Button> FindButtons(DependencyObject root)
+        {
+            for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+            {
+                var child = VisualTreeHelper.GetChild(root, index);
+                if (child is Button button)
+                {
+                    yield return button;
+                }
+
+                foreach (var descendant in FindButtons(child))
+                {
+                    yield return descendant;
+                }
+            }
         }
 
         private void NewNotebookButton_Click(object sender, RoutedEventArgs e) =>

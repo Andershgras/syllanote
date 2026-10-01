@@ -1,7 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Windows.System;
 
 namespace Syllanote.Desktop.Controls
@@ -11,12 +10,9 @@ namespace Syllanote.Desktop.Controls
         public event RoutedEventHandler? BackupRequested;
         public event RoutedEventHandler? RestoreRequested;
         public event RoutedEventHandler? SearchRequested;
-        public event SelectionChangedEventHandler? SearchResultSelectionChanged;
+        public event ItemClickEventHandler? SearchResultInvoked;
 
         public string SearchText => SearchTextBox.Text;
-
-        public SearchPageResult? SelectedSearchResult =>
-            SearchResultsListView.SelectedItem as SearchPageResult;
 
         public TopBar()
         {
@@ -105,11 +101,11 @@ namespace Syllanote.Desktop.Controls
             e.Handled = true;
         }
 
-        private void SearchResultsListView_SelectionChanged(
+        private void SearchResultsListView_ItemClick(
             object sender,
-            SelectionChangedEventArgs e)
+            ItemClickEventArgs e)
         {
-            SearchResultSelectionChanged?.Invoke(this, e);
+            SearchResultInvoked?.Invoke(this, e);
         }
     }
 }

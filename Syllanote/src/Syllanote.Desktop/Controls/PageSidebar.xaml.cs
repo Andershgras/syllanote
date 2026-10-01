@@ -57,6 +57,22 @@ namespace Syllanote.Desktop.Controls
             PagesListView.SelectedItem = page;
         }
 
+        public bool FocusNewPageButton() =>
+            NewPageButton.Focus(FocusState.Keyboard);
+
+        public bool FocusPage(DomainPage? page)
+        {
+            if (page is null)
+            {
+                return false;
+            }
+
+            PagesListView.ScrollIntoView(page);
+            PagesListView.UpdateLayout();
+            return PagesListView.ContainerFromItem(page) is ListViewItem item &&
+                item.Focus(FocusState.Keyboard);
+        }
+
         private void NewPageButton_Click(object sender, RoutedEventArgs e)
         {
             NewPageRequested?.Invoke(this, e);

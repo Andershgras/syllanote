@@ -19,6 +19,20 @@ public partial class NotebookNavigationItem : ObservableObject
 
     public string Name => Notebook?.Name ?? Section?.Name ?? string.Empty;
 
+    public string AccessibilityName => Notebook is not null
+        ? $"{Name}, notebook"
+        : $"{Name}, section";
+
+    public string AccessibilityHelpText => Notebook is not null
+        ? "Press Enter or Space to select this notebook and expand or collapse its sections. Press Shift+F10 for more actions."
+        : "Press Enter or Space to select this section. Press Shift+F10 for more actions.";
+
+    public string AccessibilityItemStatus => Notebook is not null
+        ? $"{(IsActiveNotebook ? "Selected" : "Not selected")}, {(IsExpanded ? "expanded" : "collapsed")}"
+        : IsSelectedSection
+            ? "Selected"
+            : "Not selected";
+
     public ObservableCollection<NotebookNavigationItem> Children { get; } = [];
 
     public Visibility SectionControlsVisibility =>
@@ -52,16 +66,19 @@ public partial class NotebookNavigationItem : ObservableObject
     [NotifyPropertyChangedFor(nameof(SectionControlsVisibility))]
     [NotifyPropertyChangedFor(nameof(EmptySectionsVisibility))]
     [NotifyPropertyChangedFor(nameof(SelectedNotebookIndicatorVisibility))]
+    [NotifyPropertyChangedFor(nameof(AccessibilityItemStatus))]
     public partial bool IsActiveNotebook { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SectionControlsVisibility))]
     [NotifyPropertyChangedFor(nameof(EmptySectionsVisibility))]
     [NotifyPropertyChangedFor(nameof(ExpandCollapseGlyph))]
+    [NotifyPropertyChangedFor(nameof(AccessibilityItemStatus))]
     public partial bool IsExpanded { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedSectionIndicatorVisibility))]
+    [NotifyPropertyChangedFor(nameof(AccessibilityItemStatus))]
     public partial bool IsSelectedSection { get; set; }
 
     public static NotebookNavigationItem ForNotebook(

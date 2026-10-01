@@ -95,15 +95,19 @@
             HorizontalAlignment="Right">
             <TextBlock
                 Text="{Binding SearchMessage}"
+                AutomationProperties.Name="Search status"
+                AutomationProperties.LiveSetting="Polite"
                 TextWrapping="Wrap" />
             <ListView
                 x:Name="SearchResultsListView"
                 Background="Transparent"
                 BorderThickness="0"
                 ItemsSource="{Binding SearchResults}"
-                SelectionChanged="SearchResultsListView_SelectionChanged"
+                IsItemClickEnabled="True"
+                ItemClick="SearchResultsListView_ItemClick"
                 MaxHeight="160"
-                AutomationProperties.Name="Search results">
+                AutomationProperties.Name="Search results"
+                AutomationProperties.HelpText="Use the arrow keys to choose a result. Press Enter to open it.">
                 <ListView.Resources>
                     <StaticResource
                         x:Key="ListViewItemBackgroundPointerOver"

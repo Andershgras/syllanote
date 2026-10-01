@@ -45,7 +45,7 @@
             BackupRequested="TopBar_BackupRequested"
             RestoreRequested="TopBar_RestoreRequested"
             SearchRequested="TopBar_SearchRequested"
-            SearchResultSelectionChanged="TopBar_SearchResultSelectionChanged" />
+            SearchResultInvoked="TopBar_SearchResultInvoked" />
 
         <StackPanel
             Grid.Row="1"
@@ -56,12 +56,14 @@
                 IsClosable="False"
                 IsOpen="{x:Bind ViewModel.HasPageSaveError, Mode=OneWay}"
                 Message="{x:Bind ViewModel.PageSaveErrorMessage, Mode=OneWay}"
+                AutomationProperties.LiveSetting="Assertive"
                 Severity="Error"
                 Title="Changes couldn't be saved" />
             <InfoBar
                 x:Name="OperationInfoBar"
                 IsClosable="True"
-                IsOpen="False" />
+                IsOpen="False"
+                AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
 
         <Border

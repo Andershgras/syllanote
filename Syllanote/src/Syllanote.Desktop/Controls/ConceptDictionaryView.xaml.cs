@@ -86,6 +86,25 @@ namespace Syllanote.Desktop.Controls
             ConceptReferencesListView.SelectedItem = null;
         }
 
+        public bool FocusConceptName() =>
+            ConceptNameTextBox.Focus(FocusState.Keyboard);
+
+        public bool FocusSelectedConceptOrNewButton()
+        {
+            if (SelectedConcept is not null)
+            {
+                ConceptsListView.ScrollIntoView(SelectedConcept);
+                ConceptsListView.UpdateLayout();
+                if (ConceptsListView.ContainerFromItem(SelectedConcept)
+                    is ListViewItem item)
+                {
+                    return item.Focus(FocusState.Keyboard);
+                }
+            }
+
+            return NewConceptButton.Focus(FocusState.Keyboard);
+        }
+
         public string Message
         {
             get => ConceptMessage.Text;
