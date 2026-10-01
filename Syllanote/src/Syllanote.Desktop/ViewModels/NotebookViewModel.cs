@@ -129,6 +129,22 @@ public partial class NotebookViewModel : ObservableObject
         private set => SetProperty(ref _searchMessage, value);
     }
 
+    private string _pageSaveErrorMessage = string.Empty;
+    public string PageSaveErrorMessage
+    {
+        get => _pageSaveErrorMessage;
+        private set
+        {
+            if (SetProperty(ref _pageSaveErrorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasPageSaveError));
+            }
+        }
+    }
+
+    public bool HasPageSaveError =>
+        !string.IsNullOrWhiteSpace(PageSaveErrorMessage);
+
     [ObservableProperty]
     public partial string NewNotebookName { get; set; } = string.Empty;
 
@@ -296,7 +312,10 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         _autoSaveCancellationTokenSource?.Cancel();
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         await _renameNotebookService.RenameAsync(
             SelectedNotebook,
@@ -359,7 +378,10 @@ public partial class NotebookViewModel : ObservableObject
     private async Task LoadSectionsAsync()
     {
         var notebook = SelectedNotebook;
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         if (SelectedNotebook != notebook)
         {
@@ -464,7 +486,10 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         _autoSaveCancellationTokenSource?.Cancel();
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         await _renameSectionService.RenameAsync(
             SelectedSection,
@@ -513,7 +538,10 @@ public partial class NotebookViewModel : ObservableObject
     private async Task LoadPagesAsync()
     {
         var section = SelectedSection;
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         if (SelectedSection != section)
         {
@@ -627,7 +655,10 @@ public partial class NotebookViewModel : ObservableObject
         }
 
         _autoSaveCancellationTokenSource?.Cancel();
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return;
+        }
 
         await _renamePageService.RenameAsync(
             SelectedPage,
@@ -697,14 +728,15 @@ public partial class NotebookViewModel : ObservableObject
     {
         await SaveCurrentPageAsync();
     }
-    public async Task SaveCurrentPageAsync()
+
+    public async Task<bool> SaveCurrentPageAsync()
     {
         await _pagePersistenceLock.WaitAsync();
         try
         {
             if (SelectedPage is null || !IsPageDirty)
             {
-                return;
+                return true;
             }
 
             var page = SelectedPage;
@@ -722,6 +754,16 @@ public partial class NotebookViewModel : ObservableObject
                 IsPageDirty = false;
                 RefreshConceptMatches(page, content);
             }
+
+            PageSaveErrorMessage = string.Empty;
+            return true;
+        }
+        catch (Exception)
+        {
+            PageSaveErrorMessage =
+                "Your changes couldn't be saved. They are still in the editor. " +
+                "Check that the database is available, then try again.";
+            return false;
         }
         finally
         {
@@ -767,22 +809,32 @@ public partial class NotebookViewModel : ObservableObject
             // Expected when the user continues typing.
         }
     }
-    public async Task SelectPageAsync(Page? page)
+    public async Task<bool> SelectPageAsync(Page? page)
     {
         if (page == SelectedPage)
         {
-            return;
+            return true;
         }
 
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return false;
+        }
 
         SelectedPage = page;
+        return true;
     }
 
     [RelayCommand]
     private async Task SearchPagesAsync()
     {
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            SearchResults.Clear();
+            SearchMessage =
+                "Search was not run because the current page could not be saved.";
+            return;
+        }
         var results = await _searchPagesService.SearchAsync(SearchText);
 
         SearchResults.Clear();
@@ -805,7 +857,10 @@ public partial class NotebookViewModel : ObservableObject
             return false;
         }
 
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return false;
+        }
         SelectedNotebook = notebook;
         await LoadSectionsAsync();
         SelectedPage = null;
@@ -827,7 +882,11 @@ public partial class NotebookViewModel : ObservableObject
             return false;
         }
 
-        await SelectPageAsync(page);
+        if (!await SelectPageAsync(page))
+        {
+            return false;
+        }
+
         SearchMessage = string.Empty;
         return true;
     }
@@ -849,7 +908,10 @@ public partial class NotebookViewModel : ObservableObject
             return false;
         }
 
-        await SaveCurrentPageAsync();
+        if (!await SaveCurrentPageAsync())
+        {
+            return false;
+        }
         if (SelectedNotebook != notebook)
         {
             return false;
@@ -868,7 +930,6 @@ public partial class NotebookViewModel : ObservableObject
             return false;
         }
 
-        await SelectPageAsync(page);
-        return true;
+        return await SelectPageAsync(page);
     }
 }

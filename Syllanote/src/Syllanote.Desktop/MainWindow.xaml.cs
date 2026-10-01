@@ -48,6 +48,8 @@ namespace Syllanote.Desktop
         private bool _isSuppressingEditorChanges;
         private bool _isUpdatingFormattingToolbar;
         private bool _isConceptHighlightUpdateQueued;
+        private bool _allowWindowClose;
+        private bool _isWindowCloseInProgress;
         private bool _shouldRestoreMaximizedState;
         private bool _hasLastRestoredWindowBounds;
         private RectInt32 _lastRestoredWindowBounds;
@@ -241,7 +243,7 @@ namespace Syllanote.Desktop
             _hasLastRestoredWindowBounds = true;
         }
 
-        private void MainWindow_Closing(
+        private async void MainWindow_Closing(
             AppWindow sender,
             AppWindowClosingEventArgs args)
         {
@@ -260,6 +262,61 @@ namespace Syllanote.Desktop
                     _lastRestoredWindowBounds.Width;
                 settings[WindowHeightSettingKey] =
                     _lastRestoredWindowBounds.Height;
+            }
+
+            if (_allowWindowClose)
+            {
+                return;
+            }
+
+            args.Cancel = true;
+            if (_isWindowCloseInProgress)
+            {
+                return;
+            }
+
+            _isWindowCloseInProgress = true;
+            try
+            {
+                if (await ViewModel.SaveCurrentPageAsync())
+                {
+                    _allowWindowClose = true;
+                    Close();
+                    return;
+                }
+
+                var dialog = new ContentDialog
+                {
+                    XamlRoot = RootGrid.XamlRoot,
+                    Title = "Changes couldn't be saved",
+                    Content =
+                        "Your latest changes are still in the editor. You can " +
+                        "try saving again, keep editing, or close Syllanote " +
+                        "without saving those changes.",
+                    PrimaryButtonText = "Try again",
+                    SecondaryButtonText = "Close without saving",
+                    CloseButtonText = "Keep editing",
+                    DefaultButton = ContentDialogButton.Close
+                };
+
+                var result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    if (await ViewModel.SaveCurrentPageAsync())
+                    {
+                        _allowWindowClose = true;
+                        Close();
+                    }
+                }
+                else if (result == ContentDialogResult.Secondary)
+                {
+                    _allowWindowClose = true;
+                    Close();
+                }
+            }
+            finally
+            {
+                _isWindowCloseInProgress = false;
             }
         }
 
@@ -964,7 +1021,11 @@ namespace Syllanote.Desktop
                     return;
                 }
 
-                await ViewModel.SaveCurrentPageAsync();
+                if (!await ViewModel.SaveCurrentPageAsync())
+                {
+                    return;
+                }
+
                 await ViewModel.LoadConceptsAsync(notebook.Id);
                 if (ViewModel.SelectedNotebook != notebook)
                 {
@@ -1364,8 +1425,6 @@ namespace Syllanote.Desktop
             }
 
             var navigationVersion = ++_selectionNavigationVersion;
-            ViewModel.SelectedSection = currentSection;
-            ShowPageEditor();
             await _selectionNavigationLock.WaitAsync();
             try
             {
@@ -1375,6 +1434,14 @@ namespace Syllanote.Desktop
                     return;
                 }
 
+                if (!await ViewModel.SaveCurrentPageAsync())
+                {
+                    SyncNavigationSelection();
+                    return;
+                }
+
+                ViewModel.SelectedSection = currentSection;
+                ShowPageEditor();
                 await ViewModel.LoadPagesCommand.ExecuteAsync(null);
                 if (navigationVersion == _selectionNavigationVersion &&
                     ViewModel.SelectedSection?.Id == currentSection.Id)
@@ -1469,6 +1536,12 @@ namespace Syllanote.Desktop
 
                 if (ViewModel.SelectedNotebook?.Id != currentNotebook.Id)
                 {
+                    if (!await ViewModel.SaveCurrentPageAsync())
+                    {
+                        RefreshSectionNavigation();
+                        return false;
+                    }
+
                     ViewModel.SelectedNotebook = currentNotebook;
                     await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
                 }
@@ -1504,6 +1577,12 @@ namespace Syllanote.Desktop
 
                 if (ViewModel.SelectedSection?.Id != currentSection.Id)
                 {
+                    if (!await ViewModel.SaveCurrentPageAsync())
+                    {
+                        SyncNavigationSelection();
+                        return null;
+                    }
+
                     ViewModel.SelectedSection = currentSection;
                     await ViewModel.LoadPagesCommand.ExecuteAsync(null);
                 }
@@ -1535,7 +1614,11 @@ namespace Syllanote.Desktop
 
                 if (ViewModel.SelectedPage != currentPage)
                 {
-                    await ViewModel.SelectPageAsync(currentPage);
+                    if (!await ViewModel.SelectPageAsync(currentPage))
+                    {
+                        PageSidebar.SelectPage(ViewModel.SelectedPage);
+                        return null;
+                    }
                 }
 
                 PageSidebar.SelectPage(currentPage);
@@ -1788,12 +1871,19 @@ namespace Syllanote.Desktop
                     return;
                 }
 
+                if (!await ViewModel.SelectPageAsync(page))
+                {
+                    PageSidebar.SelectPage(ViewModel.SelectedPage);
+                    UpdatePageState();
+                    return;
+                }
+
                 if (page is not null)
                 {
                     ShowPageEditor();
                 }
+
                 UpdatePageState();
-                await ViewModel.SelectPageAsync(page);
             }
             finally
             {
@@ -1833,7 +1923,11 @@ namespace Syllanote.Desktop
             SetNavigationEnabled(false);
             try
             {
-                await ViewModel.SaveCurrentPageAsync();
+                if (!await ViewModel.SaveCurrentPageAsync())
+                {
+                    return;
+                }
+
                 if (moveUp)
                 {
                     await ViewModel.MoveSelectedPageUpCommand.ExecuteAsync(null);
