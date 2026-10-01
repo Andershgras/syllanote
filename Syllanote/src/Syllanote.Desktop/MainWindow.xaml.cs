@@ -37,6 +37,8 @@ namespace Syllanote.Desktop
         private const string WindowXSettingKey = "Window.X";
         private const string WindowYSettingKey = "Window.Y";
         private const string WindowMaximizedSettingKey = "Window.Maximized";
+        private const string DatabaseRetryMessage =
+            "Check that the local database is available, then try again.";
         private const int MinimumWindowWidth = 900;
         private const int MinimumWindowHeight = 600;
 
@@ -324,6 +326,53 @@ namespace Syllanote.Desktop
         {
             NotebookSidebar.SetNavigationEnabled(isEnabled);
             PageSidebar.SetPageListEnabled(isEnabled);
+        }
+
+        private void ShowOperationError(string title, string message)
+        {
+            OperationErrorInfoBar.Title = title;
+            OperationErrorInfoBar.Message = message;
+            OperationErrorInfoBar.IsOpen = true;
+        }
+
+        private void ClearOperationError()
+        {
+            OperationErrorInfoBar.IsOpen = false;
+        }
+
+        private async Task<bool> RunOperationAsync(
+            Func<Task> operation,
+            string errorTitle,
+            string errorMessage = DatabaseRetryMessage)
+        {
+            ClearOperationError();
+            try
+            {
+                await operation();
+                return true;
+            }
+            catch (Exception)
+            {
+                ShowOperationError(errorTitle, errorMessage);
+                return false;
+            }
+        }
+
+        private async Task<(bool Succeeded, T Result)> RunOperationAsync<T>(
+            Func<Task<T>> operation,
+            string errorTitle,
+            string errorMessage = DatabaseRetryMessage)
+        {
+            ClearOperationError();
+            try
+            {
+                return (true, await operation());
+            }
+            catch (Exception)
+            {
+                ShowOperationError(errorTitle, errorMessage);
+                return (false, default!);
+            }
         }
 
         public MainWindow(NotebookViewModel viewModel)
@@ -954,7 +1003,9 @@ namespace Syllanote.Desktop
                 _shouldRestoreMaximizedState = false;
                 presenter.Maximize();
             }
-            await ViewModel.LoadNotebooksCommand.ExecuteAsync(null);
+            await RunOperationAsync(
+                () => ViewModel.LoadNotebooksCommand.ExecuteAsync(null),
+                "Notebooks couldn't be loaded");
         }
 
         private void RootGrid_ActualThemeChanged(
@@ -1026,7 +1077,13 @@ namespace Syllanote.Desktop
                     return;
                 }
 
-                await ViewModel.LoadConceptsAsync(notebook.Id);
+                if (!await RunOperationAsync(
+                        () => ViewModel.LoadConceptsAsync(notebook.Id),
+                        "Concepts couldn't be loaded"))
+                {
+                    return;
+                }
+
                 if (ViewModel.SelectedNotebook != notebook)
                 {
                     return;
@@ -1081,8 +1138,10 @@ namespace Syllanote.Desktop
 
             ConceptDictionaryView.Message = string.Empty;
             UpdateConceptEditorState();
-            await ViewModel.LoadConceptReferencesAsync(
-                ConceptDictionaryView.SelectedConcept);
+            await RunOperationAsync(
+                () => ViewModel.LoadConceptReferencesAsync(
+                    ConceptDictionaryView.SelectedConcept),
+                "Concept references couldn't be loaded");
             UpdateConceptEditorState();
         }
 
@@ -1101,14 +1160,23 @@ namespace Syllanote.Desktop
             await _selectionNavigationLock.WaitAsync();
             try
             {
-                if (await ViewModel.NavigateToConceptReferenceAsync(reference))
+                var navigation = await RunOperationAsync(
+                    () => ViewModel.NavigateToConceptReferenceAsync(reference),
+                    "Referenced page couldn't be opened");
+                if (!navigation.Succeeded)
+                {
+                    ConceptDictionaryView.ClearSelectedReference();
+                    return;
+                }
+
+                if (navigation.Result)
                 {
                     ShowPageEditor();
                     RefreshSectionNavigation();
                     PageSidebar.SelectPage(ViewModel.SelectedPage);
                     UpdatePageState();
                 }
-                else
+                else if (!ViewModel.HasPageSaveError)
                 {
                     ConceptDictionaryView.Message =
                         "This page is no longer available.";
@@ -1181,6 +1249,12 @@ namespace Syllanote.Desktop
             {
                 ConceptDictionaryView.Message = ex.Message;
             }
+            catch (Exception)
+            {
+                ShowOperationError(
+                    "Concept couldn't be saved",
+                    DatabaseRetryMessage);
+            }
             finally
             {
                 _selectionNavigationLock.Release();
@@ -1224,8 +1298,20 @@ namespace Syllanote.Desktop
                     return;
                 }
 
-                await ViewModel.DeleteConceptAsync(concept);
-                await ViewModel.LoadConceptsAsync(notebook.Id);
+                if (!await RunOperationAsync(
+                        () => ViewModel.DeleteConceptAsync(concept),
+                        "Concept couldn't be deleted"))
+                {
+                    return;
+                }
+
+                if (!await RunOperationAsync(
+                        () => ViewModel.LoadConceptsAsync(notebook.Id),
+                        "Concepts couldn't be refreshed"))
+                {
+                    return;
+                }
+
                 ConceptDictionaryView.Message = "Concept deleted.";
             }
             finally
@@ -1245,7 +1331,9 @@ namespace Syllanote.Desktop
             try
             {
                 ViewModel.SearchText = TopBar.SearchText;
-                await ViewModel.SearchPagesCommand.ExecuteAsync(null);
+                await RunOperationAsync(
+                    () => ViewModel.SearchPagesCommand.ExecuteAsync(null),
+                    "Search couldn't be completed");
             }
             finally
             {
@@ -1269,7 +1357,16 @@ namespace Syllanote.Desktop
             await _selectionNavigationLock.WaitAsync();
             try
             {
-                if (await ViewModel.NavigateToSearchResultAsync(result))
+                var navigation = await RunOperationAsync(
+                    () => ViewModel.NavigateToSearchResultAsync(result),
+                    "Search result couldn't be opened");
+                if (!navigation.Succeeded)
+                {
+                    TopBar.ClearSelectedSearchResult();
+                    return;
+                }
+
+                if (navigation.Result)
                 {
                     ShowPageEditor();
                 }
@@ -1294,7 +1391,7 @@ namespace Syllanote.Desktop
 
             var nameTextBox = new TextBox
             {
-                Header = "Notebook name",
+                Header = "Notebook name (required)",
                 PlaceholderText = "e.g. Machine Learning"
             };
 
@@ -1316,7 +1413,9 @@ namespace Syllanote.Desktop
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
             {
                 ViewModel.NewNotebookName = nameTextBox.Text;
-                await ViewModel.CreateNotebookCommand.ExecuteAsync(null);
+                await RunOperationAsync(
+                    () => ViewModel.CreateNotebookCommand.ExecuteAsync(null),
+                    "Notebook couldn't be created");
             }
         }
         private async void NewSectionButton_Click(
@@ -1336,7 +1435,7 @@ namespace Syllanote.Desktop
 
             var nameTextBox = new TextBox
             {
-                Header = "Section name",
+                Header = "Section name (required)",
                 PlaceholderText = "e.g. Classification"
             };
 
@@ -1359,7 +1458,9 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedNotebook == notebook)
             {
                 ViewModel.NewSectionName = nameTextBox.Text;
-                await ViewModel.CreateSectionCommand.ExecuteAsync(null);
+                await RunOperationAsync(
+                    () => ViewModel.CreateSectionCommand.ExecuteAsync(null),
+                    "Section couldn't be created");
             }
         }
         private async void NewPageButton_Click(
@@ -1377,7 +1478,7 @@ namespace Syllanote.Desktop
 
             var titleTextBox = new TextBox
             {
-                Header = "Page title",
+                Header = "Page title (required)",
                 PlaceholderText = "e.g. Confusion Matrix"
             };
 
@@ -1401,7 +1502,9 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedNotebook?.Id == section.NotebookId)
             {
                 ViewModel.NewPageTitle = titleTextBox.Text;
-                await ViewModel.CreatePageCommand.ExecuteAsync(null);
+                await RunOperationAsync(
+                    () => ViewModel.CreatePageCommand.ExecuteAsync(null),
+                    "Page couldn't be created");
             }
         }
         private async void SectionNavigationButton_Click(
@@ -1440,9 +1543,18 @@ namespace Syllanote.Desktop
                     return;
                 }
 
+                var previousSection = ViewModel.SelectedSection;
                 ViewModel.SelectedSection = currentSection;
                 ShowPageEditor();
-                await ViewModel.LoadPagesCommand.ExecuteAsync(null);
+                if (!await RunOperationAsync(
+                        () => ViewModel.LoadPagesCommand.ExecuteAsync(null),
+                        "Pages couldn't be loaded"))
+                {
+                    ViewModel.SelectedSection = previousSection;
+                    SyncNavigationSelection();
+                    return;
+                }
+
                 if (navigationVersion == _selectionNavigationVersion &&
                     ViewModel.SelectedSection?.Id == currentSection.Id)
                 {
@@ -1542,8 +1654,16 @@ namespace Syllanote.Desktop
                         return false;
                     }
 
+                    var previousNotebook = ViewModel.SelectedNotebook;
                     ViewModel.SelectedNotebook = currentNotebook;
-                    await ViewModel.LoadSectionsCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.LoadSectionsCommand.ExecuteAsync(null),
+                            "Notebook couldn't be opened"))
+                    {
+                        ViewModel.SelectedNotebook = previousNotebook;
+                        RefreshSectionNavigation();
+                        return false;
+                    }
                 }
 
                 ShowPageEditor();
@@ -1583,8 +1703,16 @@ namespace Syllanote.Desktop
                         return null;
                     }
 
+                    var previousSection = ViewModel.SelectedSection;
                     ViewModel.SelectedSection = currentSection;
-                    await ViewModel.LoadPagesCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.LoadPagesCommand.ExecuteAsync(null),
+                            "Section couldn't be opened"))
+                    {
+                        ViewModel.SelectedSection = previousSection;
+                        SyncNavigationSelection();
+                        return null;
+                    }
                 }
 
                 SyncNavigationSelection();
@@ -1649,7 +1777,7 @@ namespace Syllanote.Desktop
 
             var nameTextBox = new TextBox
             {
-                Header = "Notebook name",
+                Header = "Notebook name (required)",
                 Text = notebook.Name
             };
 
@@ -1675,7 +1803,14 @@ namespace Syllanote.Desktop
                 SetNavigationEnabled(false);
                 try
                 {
-                    await ViewModel.RenameNotebookCommand.ExecuteAsync(null);
+                    var renamed = await RunOperationAsync(
+                        () => ViewModel.RenameNotebookCommand.ExecuteAsync(null),
+                        "Notebook couldn't be renamed");
+                    if (!renamed || ViewModel.HasPageSaveError)
+                    {
+                        return;
+                    }
+
                     ViewModel.SelectedNotebook = notebook;
                     RebuildNotebookNavigation();
                 }
@@ -1715,11 +1850,21 @@ namespace Syllanote.Desktop
             {
                 if (moveUp)
                 {
-                    await ViewModel.MoveSelectedNotebookUpCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.MoveSelectedNotebookUpCommand.ExecuteAsync(null),
+                            "Notebook couldn't be moved"))
+                    {
+                        return;
+                    }
                 }
                 else
                 {
-                    await ViewModel.MoveSelectedNotebookDownCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.MoveSelectedNotebookDownCommand.ExecuteAsync(null),
+                            "Notebook couldn't be moved"))
+                    {
+                        return;
+                    }
                 }
                 RebuildNotebookNavigation();
             }
@@ -1746,7 +1891,7 @@ namespace Syllanote.Desktop
 
             var nameTextBox = new TextBox
             {
-                Header = "Section name",
+                Header = "Section name (required)",
                 Text = section.Name
             };
 
@@ -1773,7 +1918,14 @@ namespace Syllanote.Desktop
                 SetNavigationEnabled(false);
                 try
                 {
-                    await ViewModel.RenameSectionCommand.ExecuteAsync(null);
+                    var renamed = await RunOperationAsync(
+                        () => ViewModel.RenameSectionCommand.ExecuteAsync(null),
+                        "Section couldn't be renamed");
+                    if (!renamed || ViewModel.HasPageSaveError)
+                    {
+                        return;
+                    }
+
                     ViewModel.SelectedSection = section;
                     RefreshSectionNavigation();
                 }
@@ -1814,11 +1966,21 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedSection = currentSection;
                 if (moveUp)
                 {
-                    await ViewModel.MoveSelectedSectionUpCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.MoveSelectedSectionUpCommand.ExecuteAsync(null),
+                            "Section couldn't be moved"))
+                    {
+                        return;
+                    }
                 }
                 else
                 {
-                    await ViewModel.MoveSelectedSectionDownCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.MoveSelectedSectionDownCommand.ExecuteAsync(null),
+                            "Section couldn't be moved"))
+                    {
+                        return;
+                    }
                 }
                 RefreshSectionNavigation();
             }
@@ -1930,11 +2092,21 @@ namespace Syllanote.Desktop
 
                 if (moveUp)
                 {
-                    await ViewModel.MoveSelectedPageUpCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.MoveSelectedPageUpCommand.ExecuteAsync(null),
+                            "Page couldn't be moved"))
+                    {
+                        return;
+                    }
                 }
                 else
                 {
-                    await ViewModel.MoveSelectedPageDownCommand.ExecuteAsync(null);
+                    if (!await RunOperationAsync(
+                            () => ViewModel.MoveSelectedPageDownCommand.ExecuteAsync(null),
+                            "Page couldn't be moved"))
+                    {
+                        return;
+                    }
                 }
                 PageSidebar.SelectPage(currentPage);
                 UpdatePageState();
@@ -1963,7 +2135,7 @@ namespace Syllanote.Desktop
 
             var titleTextBox = new TextBox
             {
-                Header = "Page title",
+                Header = "Page title (required)",
                 Text = page.Title
             };
 
@@ -1990,7 +2162,14 @@ namespace Syllanote.Desktop
                 SetNavigationEnabled(false);
                 try
                 {
-                    await ViewModel.RenamePageCommand.ExecuteAsync(null);
+                    var renamed = await RunOperationAsync(
+                        () => ViewModel.RenamePageCommand.ExecuteAsync(null),
+                        "Page couldn't be renamed");
+                    if (!renamed || ViewModel.HasPageSaveError)
+                    {
+                        return;
+                    }
+
                     PageSidebar.SelectPage(page);
                     UpdatePageState();
                 }
@@ -2032,7 +2211,9 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedPage == page &&
                 IsSelectedPageCurrent())
             {
-                await ViewModel.DeletePageCommand.ExecuteAsync(null);
+                await RunOperationAsync(
+                    () => ViewModel.DeletePageCommand.ExecuteAsync(null),
+                    "Page couldn't be deleted");
             }
         }
 
@@ -2065,8 +2246,12 @@ namespace Syllanote.Desktop
                 ViewModel.SelectedSection?.Id == section.Id &&
                 ViewModel.SelectedNotebook?.Id == section.NotebookId)
             {
-                await ViewModel.DeleteSectionCommand.ExecuteAsync(null);
-                RefreshSectionNavigation();
+                if (await RunOperationAsync(
+                        () => ViewModel.DeleteSectionCommand.ExecuteAsync(null),
+                        "Section couldn't be deleted"))
+                {
+                    RefreshSectionNavigation();
+                }
             }
         }
 
@@ -2098,8 +2283,12 @@ namespace Syllanote.Desktop
             if (await dialog.ShowAsync() == ContentDialogResult.Primary &&
                 ViewModel.SelectedNotebook?.Id == notebook.Id)
             {
-                await ViewModel.DeleteNotebookCommand.ExecuteAsync(null);
-                RebuildNotebookNavigation();
+                if (await RunOperationAsync(
+                        () => ViewModel.DeleteNotebookCommand.ExecuteAsync(null),
+                        "Notebook couldn't be deleted"))
+                {
+                    RebuildNotebookNavigation();
+                }
             }
         }
     }

@@ -75,12 +75,12 @@
                 </Grid>
                 <TextBox
                     x:Name="ConceptNameTextBox"
-                    Header="Name"
+                    Header="Name (required)"
                     PlaceholderText="e.g. Dependency Injection"
                     TextChanged="ConceptInput_TextChanged" />
                 <TextBox
                     x:Name="ConceptDefinitionTextBox"
-                    Header="Definition"
+                    Header="Definition (required)"
                     PlaceholderText="Write your own definition..."
                     AcceptsReturn="True"
                     TextWrapping="Wrap"

@@ -45,15 +45,23 @@
             SearchRequested="TopBar_SearchRequested"
             SearchResultSelectionChanged="TopBar_SearchResultSelectionChanged" />
 
-        <InfoBar
+        <StackPanel
             Grid.Row="1"
             Grid.ColumnSpan="5"
             Margin="0,12,0,0"
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.HasPageSaveError, Mode=OneWay}"
-            Message="{x:Bind ViewModel.PageSaveErrorMessage, Mode=OneWay}"
-            Severity="Error"
-            Title="Changes couldn't be saved" />
+            Spacing="8">
+            <InfoBar
+                IsClosable="False"
+                IsOpen="{x:Bind ViewModel.HasPageSaveError, Mode=OneWay}"
+                Message="{x:Bind ViewModel.PageSaveErrorMessage, Mode=OneWay}"
+                Severity="Error"
+                Title="Changes couldn't be saved" />
+            <InfoBar
+                x:Name="OperationErrorInfoBar"
+                IsClosable="True"
+                IsOpen="False"
+                Severity="Error" />
+        </StackPanel>
 
         <Border
             Grid.Row="2"

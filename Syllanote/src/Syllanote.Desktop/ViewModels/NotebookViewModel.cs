@@ -388,12 +388,12 @@ public partial class NotebookViewModel : ObservableObject
             return;
         }
 
-        SelectedSection = null;
-        Sections.Clear();
-        Pages.Clear();
-
         if (notebook is null)
         {
+            SelectedPage = null;
+            Pages.Clear();
+            SelectedSection = null;
+            Sections.Clear();
             return;
         }
 
@@ -412,6 +412,11 @@ public partial class NotebookViewModel : ObservableObject
         {
             return;
         }
+
+        SelectedPage = null;
+        Pages.Clear();
+        SelectedSection = null;
+        Sections.Clear();
 
         foreach (var section in sections)
         {
@@ -548,12 +553,11 @@ public partial class NotebookViewModel : ObservableObject
             return;
         }
 
-        SelectedPage = null;
-        Pages.Clear();
-
         if (section is null ||
             section.NotebookId != SelectedNotebook?.Id)
         {
+            SelectedPage = null;
+            Pages.Clear();
             return;
         }
 
@@ -566,6 +570,9 @@ public partial class NotebookViewModel : ObservableObject
         {
             return;
         }
+
+        SelectedPage = null;
+        Pages.Clear();
 
         foreach (var page in pages)
         {
@@ -828,6 +835,13 @@ public partial class NotebookViewModel : ObservableObject
     [RelayCommand]
     private async Task SearchPagesAsync()
     {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            SearchResults.Clear();
+            SearchMessage = "Enter a word or phrase to search.";
+            return;
+        }
+
         if (!await SaveCurrentPageAsync())
         {
             SearchResults.Clear();
@@ -853,6 +867,7 @@ public partial class NotebookViewModel : ObservableObject
         var notebook = Notebooks.FirstOrDefault(item => item.Id == result.NotebookId);
         if (notebook is null)
         {
+            SearchResults.Remove(result);
             SearchMessage = "This page is no longer available. Search again.";
             return false;
         }
@@ -868,6 +883,7 @@ public partial class NotebookViewModel : ObservableObject
         var section = Sections.FirstOrDefault(item => item.Id == result.SectionId);
         if (section is null)
         {
+            SearchResults.Remove(result);
             SearchMessage = "This page is no longer available. Search again.";
             return false;
         }
@@ -878,6 +894,7 @@ public partial class NotebookViewModel : ObservableObject
         var page = Pages.FirstOrDefault(item => item.Id == result.PageId);
         if (page is null)
         {
+            SearchResults.Remove(result);
             SearchMessage = "This page is no longer available. Search again.";
             return false;
         }
@@ -897,6 +914,7 @@ public partial class NotebookViewModel : ObservableObject
         var notebook = SelectedNotebook;
         if (notebook is null)
         {
+            ConceptReferences.Remove(reference);
             return false;
         }
 
@@ -905,6 +923,7 @@ public partial class NotebookViewModel : ObservableObject
             item.NotebookId == notebook.Id);
         if (section is null)
         {
+            ConceptReferences.Remove(reference);
             return false;
         }
 
@@ -927,6 +946,7 @@ public partial class NotebookViewModel : ObservableObject
         var page = Pages.FirstOrDefault(item => item.Id == reference.PageId);
         if (page is null)
         {
+            ConceptReferences.Remove(reference);
             return false;
         }
 
