@@ -461,6 +461,10 @@ namespace Syllanote.Desktop
             _libraryBackupValidator = libraryBackupValidator;
             _libraryRestoreService = libraryRestoreService;
             InitializeComponent();
+            AppWindow.SetIcon(System.IO.Path.Combine(
+                AppContext.BaseDirectory,
+                "Assets",
+                "Syllanote.ico"));
             _themeSettings = ThemeSettings.CreateForWindowId(AppWindow.Id);
             _themeSettings.Changed += ThemeSettings_Changed;
             RestorePanelWidths();

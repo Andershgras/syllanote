@@ -59,7 +59,7 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
 - File-system publish profiles exist locally for x86, x64, and ARM64, but they are ignored by Git and are not reproducible from a clean checkout.
-- App icons still use placeholder assets, and the public MSIX signing identity has not yet been verified against a trusted certificate.
+- The public MSIX signing identity has not yet been verified against a trusted certificate.
 - There is no version tag, release artifact, or continuous-integration workflow yet.
 
 ---
