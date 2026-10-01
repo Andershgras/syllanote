@@ -48,6 +48,7 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 - 160 of 160 automated tests pass.
 - The latest Debug build after Milestone 3 completes with no warnings or errors.
 - The self-contained `v0.1.0` x64 ZIP was built reproducibly on 2026-10-01. Startup, page persistence after restart, and the executable icon were manually verified from the extracted artifact.
+- The portable release guide documents installation, startup, upgrade, uninstall, local data, backup, restore, troubleshooting, and known limitations.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
 - Unavailable-database startup handling and locked-database autosave recovery were manually verified on 2026-10-01.

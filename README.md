@@ -81,6 +81,8 @@ Automated tests live in `Syllanote.Tests` and cover domain behavior, application
 
 The current manual desktop checks are maintained in the [WinUI regression checklist](docs/manual-regression-checklist.md).
 
+Installation, upgrade, uninstall, local-data, backup, restore, and troubleshooting instructions for the portable release are maintained in the [release guide](docs/release-guide.md).
+
 ## Project structure
 
 ```text
@@ -180,7 +182,7 @@ Extract the complete ZIP before starting `Syllanote.Desktop.exe`; the applicatio
 
 ## Local data
 
-Syllanote does not require an account or an external database. Notes and concepts are stored in a SQLite database named `syllanote.db` inside the application's Windows local data folder.
+Syllanote does not require an account or an external database. The portable release stores notes and concepts in `%LOCALAPPDATA%\Andershgras\Syllanote\syllanote.db`. MSIX installations use a separate Windows package data container.
 
 Manual backups are stored wherever the user chooses in the Windows file picker. Syllanote does not automatically delete these files.
 
@@ -196,7 +198,7 @@ The application also uses Windows local settings to retain interface preferences
 - Notes are local to one device; cloud sync and collaboration are not implemented
 - Scheduled backups, backup encryption, selective restore, import, and export are not implemented
 - Desktop interactions still require manual verification because the current automated suite does not drive the WinUI interface
-- A packaged public release is not yet part of the documented workflow
+- The first portable release is not code-signed and does not include an installer or automatic updates
 
 ## License
 
