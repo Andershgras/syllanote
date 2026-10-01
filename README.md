@@ -1,46 +1,148 @@
 # Syllanote
 
-A local-first desktop note-taking application for students with organized notebooks, sections, pages, and an integrated concept dictionary.
+Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
-## Tech stack
+> [!NOTE]
+> Syllanote is an actively developed portfolio project. The core note-taking experience is implemented, while packaging, broader manual testing, and release preparation are still in progress.
+
+## Features
+
+### Organize notes
+
+- Create, rename, delete, and manually reorder notebooks, sections, and pages
+- Navigate through a three-pane workspace with expandable notebooks and clear selection states
+- Keep the selected page and navigation hierarchy stable while moving between notes
+- Persist the order of notebooks, sections, and pages locally
+
+### Write and format
+
+- Edit a page title and body in a dedicated writing surface
+- Autosave changes while navigating between pages
+- Format paragraphs as Normal, Heading 1, or Heading 2
+- Apply bold, italic, and underline formatting
+- Create bulleted and numbered lists
+- Preserve rich-text formatting between application sessions
+
+Page content is stored as both Rich Text Format (RTF) and searchable plain text. This keeps formatting independent from search and concept recognition.
+
+### Search and concepts
+
+- Search page titles and content across all notebooks
+- Start a search with `Enter` or focus search with `Ctrl+F`
+- Create, update, and delete concepts within each notebook
+- Recognize and highlight concepts in page content
+- Open a highlighted concept to read its definition
+- See which pages reference a concept and navigate directly to them
+
+### Desktop experience
+
+- Resize the notebook and page panels
+- Restore panel widths, window size, position, and maximized state between sessions
+- Use a Windows 11-inspired interface with Mica, a themed title bar, Fluent icons, and consistent empty states
+
+## Technology
 
 - C# and .NET 9
-- WinUI 3 with Windows App SDK
+- WinUI 3 and Windows App SDK
 - CommunityToolkit.Mvvm
 - Entity Framework Core with SQLite
 - Microsoft.Extensions.DependencyInjection
 - MSTest
-- Layered Domain, Application, Infrastructure, and Desktop projects
 
-## Features
+## Architecture
 
-- Create, rename, and delete notebooks, sections, and pages
-- Navigate notebooks, sections, and pages in a three-pane workspace with expandable notebooks and clear selection states
-- Write notes in a dedicated page editor with a separate title field
-- Autosave page content and rich-text formatting locally
-- Format paragraphs as Normal, Heading 1, or Heading 2
-- Toggle bold, italic, and underline formatting from a native Windows command bar
-- Create and remove bulleted and numbered lists
-- Search page titles and content across all notebooks from the app header using Enter or Ctrl+F
-- Resize the notebook and page panels and retain their widths between sessions
-- Restore the window size, screen position, and maximized state between sessions
-- Use a Windows 11-inspired interface with Mica, a themed title bar, Fluent icons, and consistent empty states
-- Create, update, and delete Concepts for each notebook
-- Recognize Concepts in page content
-- Highlight recognized Concepts in the page editor
-- Click a highlighted Concept to view its definition
-- View which pages reference a Concept and navigate to them from the Concept Dictionary
-- Persist notebooks, sections, pages, and Concepts locally in SQLite
-- Manually reorder notebooks, sections, and pages and persist their order locally
+The solution is separated into four application layers:
 
-### Rich-text editor
+| Project | Responsibility |
+| --- | --- |
+| `Syllanote.Domain` | Core entities and domain rules for notebooks, sections, pages, and concepts |
+| `Syllanote.Application` | Use-case services and repository abstractions |
+| `Syllanote.Infrastructure` | Entity Framework Core, SQLite persistence, migrations, and repository implementations |
+| `Syllanote.Desktop` | WinUI views, controls, view models, navigation, and dependency-injection composition |
 
-The page editor stores both searchable plain text and Rich Text Format (RTF).
-This keeps formatting persistent across autosave, page navigation, and app
-restarts without affecting page search or Concept recognition.
+The dependency direction keeps the domain independent of the user interface and persistence details:
 
-The formatting toolbar currently supports:
+```text
+Syllanote.Desktop ───────► Syllanote.Application ───────► Syllanote.Domain
+        │                           ▲
+        └──► Syllanote.Infrastructure ────────────────► Syllanote.Domain
+```
 
-- Normal text, Heading 1, and Heading 2 paragraph styles
-- Bold, italic, and underline toggles that follow the current cursor position
-- Bulleted and numbered lists that can be converted back to plain paragraphs
+Automated tests live in `Syllanote.Tests` and cover domain behavior, application services, dependency registration, search, concept recognition, and SQLite persistence.
+
+## Project structure
+
+```text
+syllanote/
+├── README.md
+├── LICENSE
+└── Syllanote/
+    ├── Syllanote.sln
+    ├── src/
+    │   ├── Syllanote.Domain/
+    │   ├── Syllanote.Application/
+    │   ├── Syllanote.Infrastructure/
+    │   └── Syllanote.Desktop/
+    └── tests/
+        └── Syllanote.Tests/
+```
+
+## Getting started
+
+### Requirements
+
+- Windows 10 version 1809 or later; Windows 11 is recommended
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- Visual Studio 2022 with the components required for WinUI 3 and Windows App SDK development
+
+### Run the application
+
+1. Clone the repository:
+
+   ```powershell
+   git clone https://github.com/Andershgras/syllanote.git
+   cd syllanote
+   ```
+
+2. Open `Syllanote/Syllanote.sln` in Visual Studio.
+3. Set `Syllanote.Desktop` as the startup project.
+4. Select the `x64` platform and run the application with `F5`.
+
+Entity Framework Core applies pending database migrations automatically when the application starts.
+
+### Build from the command line
+
+From the repository root:
+
+```powershell
+dotnet restore Syllanote/Syllanote.sln
+dotnet build Syllanote/Syllanote.sln -c Debug
+```
+
+The desktop project is configured as `x64` by the solution when building the `Any CPU` solution configuration.
+
+### Run the tests
+
+```powershell
+dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
+```
+
+The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
+
+## Local data
+
+Syllanote does not require an account or an external database. Notes and concepts are stored in a SQLite database named `syllanote.db` inside the application's Windows local data folder.
+
+The application also uses Windows local settings to retain interface preferences such as panel widths and window placement. Data currently remains on the Windows user profile and device where it was created.
+
+## Current limitations
+
+- Windows is the only supported operating system
+- Notes are local to one device; cloud sync and collaboration are not implemented
+- Import, export, and automated backup are not implemented
+- Desktop interactions still require manual verification because the current automated suite does not drive the WinUI interface
+- A packaged public release is not yet part of the documented workflow
+
+## License
+
+Syllanote is available under the [MIT License](LICENSE).
