@@ -145,6 +145,7 @@
                 Padding="20,16"
                 Background="{ThemeResource TextControlBackground}"
                 BorderBrush="{ThemeResource TextControlBorderBrush}"
+                Foreground="{ThemeResource TextControlForeground}"
                 BorderThickness="1"
                 CornerRadius="6"
                 HighContrastAdjustment="None"

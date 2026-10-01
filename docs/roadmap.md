@@ -316,6 +316,7 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 - Map the first product release to MSIX package version `1.0.0.0` and document that mapping in the release notes.
 - Support x64 as the required first-release architecture.
 - Update package identity, product name, publisher metadata, icons, and version values.
+- Keep the package identity name and publisher stable after installation. Before any unavoidable identity change, create a manual backup and verify restore into the new package family because Windows treats it as a separate application data container.
 - Produce MSIX as the primary release target.
 - Allow a self-contained unpackaged ZIP as a fallback if public MSIX signing is not practical for the first portfolio release.
 - Add a minimal Windows continuous-integration workflow for restore, build, and automated tests.

@@ -43,6 +43,7 @@ Complete this section without using a mouse. Repeat the Narrator checks with Win
 
 ### Display and contrast
 
+- With Windows app mode set to dark, create a page, type text, navigate away, reopen the page, and restart the application. Confirm that new and restored editor text remains light and readable.
 - Inspect the complete workspace at 125%, 150%, and 200% Windows display scaling. Confirm that controls remain reachable, text is not clipped, and important content can scroll.
 - Enable a Windows high-contrast theme and confirm that text, selection, keyboard focus, borders, editor formatting controls, errors, and disabled states remain distinguishable.
 - Return Windows to the original scaling and theme, then repeat a short create, edit, navigate, and autosave check.

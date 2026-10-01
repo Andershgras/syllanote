@@ -680,6 +680,8 @@ namespace Syllanote.Desktop
                         RtfThemeColorNormalizer.Normalize(
                             ViewModel.PageFormattedContent));
                 }
+
+                ApplyEditorThemeForeground();
             }
             finally
             {
@@ -689,6 +691,58 @@ namespace Syllanote.Desktop
 
             QueueConceptHighlightRefresh();
             UpdateFormattingToolbarState();
+        }
+
+        private void ApplyEditorThemeForeground()
+        {
+            if (EditorView.ContentEditor.Foreground is not SolidColorBrush foregroundBrush)
+            {
+                return;
+            }
+
+            var document = EditorView.ContentEditor.Document;
+            var defaultFormat = document.GetDefaultCharacterFormat();
+            defaultFormat.ForegroundColor = foregroundBrush.Color;
+            document.SetDefaultCharacterFormat(defaultFormat);
+
+            var selection = document.Selection;
+            var selectionStart = selection.StartPosition;
+            var selectionEnd = selection.EndPosition;
+            var selectionFormat = selection.CharacterFormat;
+            selectionFormat.ForegroundColor = foregroundBrush.Color;
+            selection.CharacterFormat = selectionFormat;
+
+            document.GetText(TextGetOptions.None, out var content);
+            if (content.Length == 0)
+            {
+                return;
+            }
+
+            var documentRange = document.GetRange(0, content.Length);
+            var documentFormat = documentRange.CharacterFormat;
+            documentFormat.ForegroundColor = foregroundBrush.Color;
+            documentRange.CharacterFormat = documentFormat;
+            selection.SetRange(selectionStart, selectionEnd);
+        }
+
+        private void RefreshEditorThemeForeground()
+        {
+            if (!IsSelectedPageCurrent())
+            {
+                return;
+            }
+
+            BeginInternalEditorChange();
+            EditorView.ContentEditor.Document.BatchDisplayUpdates();
+            try
+            {
+                ApplyEditorThemeForeground();
+            }
+            finally
+            {
+                EditorView.ContentEditor.Document.ApplyDisplayUpdates();
+                EndInternalEditorChange();
+            }
         }
 
         private void GetPersistedPageEditorContent(
@@ -1104,6 +1158,7 @@ namespace Syllanote.Desktop
             object args)
         {
             UpdateTitleBarTheme();
+            RefreshEditorThemeForeground();
             QueueConceptHighlightRefresh();
         }
 
