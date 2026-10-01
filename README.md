@@ -144,6 +144,10 @@ The current automated baseline is 160 passing tests. After Milestone 3, the Debu
 
 The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
+### Continuous integration
+
+The Windows CI workflow runs on pushes, pull requests, and manual dispatches. It restores the solution, builds the Debug configuration, and runs the complete automated test suite with .NET 9.
+
 ### Build the portable x64 release
 
 The committed x64 profile produces an unpackaged, self-contained release that includes both .NET and the Windows App SDK runtime. Build the versioned ZIP from the repository root:

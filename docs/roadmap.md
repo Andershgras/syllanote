@@ -59,7 +59,7 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
 - A trusted public MSIX signing identity is not available, so `v0.1.0` uses the documented self-contained ZIP fallback.
-- There is no version tag, published release artifact, or continuous-integration workflow yet.
+- There is no version tag or published release artifact yet. The Windows CI workflow is committed but still needs its first successful GitHub run.
 
 ---
 
