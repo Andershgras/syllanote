@@ -59,7 +59,7 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
 - File-system publish profiles exist locally for x86, x64, and ARM64, but they are ignored by Git and are not reproducible from a clean checkout.
-- Package identity, display metadata, branding, and versioning still contain development values.
+- App icons still use placeholder assets, and the public MSIX signing identity has not yet been verified against a trusted certificate.
 - There is no version tag, release artifact, or continuous-integration workflow yet.
 
 ---
@@ -312,7 +312,8 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 
 #### Scope
 
-- Use `v0.1.0` as the first public Git tag and release version.
+- Use `v0.1.0` as the first public Git tag and product version, with .NET assembly and file version `0.1.0.0`.
+- Map the first product release to MSIX package version `1.0.0.0` and document that mapping in the release notes.
 - Support x64 as the required first-release architecture.
 - Update package identity, product name, publisher metadata, icons, and version values.
 - Produce MSIX as the primary release target.
@@ -351,7 +352,7 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 - Run the full automated suite and manual WinUI regression checklist against the release build.
 - Verify upgrade, uninstall, reinstall, and local-data behavior.
 - Verify backup and restore using the packaged application.
-- Confirm the Git tag, artifact version, manifest version, release notes, and screenshots agree.
+- Confirm that the Git tag, artifact metadata, manifest version, release notes, and screenshots follow the documented version mapping.
 
 ---
 
