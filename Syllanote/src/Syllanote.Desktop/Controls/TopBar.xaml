@@ -27,7 +27,8 @@
                     <Button
                         x:Name="BackupButton"
                         Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
-                        AutomationProperties.Name="Create library backup"
+                        AutomationProperties.Name="Create full backup"
+                        AutomationProperties.HelpText="Back up all notebooks, pages, and concepts"
                         ToolTipService.ToolTip="Create backup"
                         Click="BackupButton_Click">
                         <FontIcon
@@ -37,7 +38,8 @@
                     <Button
                         x:Name="RestoreButton"
                         Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
-                        AutomationProperties.Name="Restore library backup"
+                        AutomationProperties.Name="Restore full backup"
+                        AutomationProperties.HelpText="Restore all notebooks, pages, and concepts from a backup"
                         ToolTipService.ToolTip="Restore backup"
                         Click="RestoreButton_Click">
                         <FontIcon
@@ -55,8 +57,8 @@
                     <TextBox
                         x:Name="SearchTextBox"
                         Width="320"
-                        PlaceholderText="Search pages in all notebooks"
-                        AutomationProperties.Name="Search pages"
+                        PlaceholderText="Enter a page title or note text"
+                        AutomationProperties.Name="Search all notebooks"
                         AutomationProperties.HelpText="Press Ctrl+F to focus search and Enter to search"
                         KeyDown="SearchTextBox_KeyDown">
                         <TextBox.KeyboardAccelerators>
@@ -107,7 +109,8 @@
                 ItemClick="SearchResultsListView_ItemClick"
                 MaxHeight="160"
                 AutomationProperties.Name="Search results"
-                AutomationProperties.HelpText="Use the arrow keys to choose a result. Press Enter to open it.">
+                AutomationProperties.HelpText="Use the arrow keys to choose a result. Press Enter to open it."
+                ContainerContentChanging="SearchResultsListView_ContainerContentChanging">
                 <ListView.Resources>
                     <StaticResource
                         x:Key="ListViewItemBackgroundPointerOver"

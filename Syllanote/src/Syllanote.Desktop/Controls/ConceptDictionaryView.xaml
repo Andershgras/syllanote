@@ -47,6 +47,7 @@
                     <ListView
                         x:Name="ConceptsListView"
                         ItemsSource="{Binding Concepts}"
+                        ContainerContentChanging="ConceptsListView_ContainerContentChanging"
                         SelectionChanged="ConceptsListView_SelectionChanged"
                         AutomationProperties.Name="Concepts">
                         <ListView.ItemTemplate>
@@ -117,6 +118,7 @@
                         x:Name="ConceptReferencesListView"
                         ItemsSource="{Binding ConceptReferences}"
                         SelectionMode="Single"
+                        ContainerContentChanging="ConceptReferencesListView_ContainerContentChanging"
                         SelectionChanged="ConceptReferencesListView_SelectionChanged"
                         AutomationProperties.Name="Concept references">
                         <ListView.ItemTemplate>

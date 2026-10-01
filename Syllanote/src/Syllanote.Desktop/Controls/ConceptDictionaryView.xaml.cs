@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Syllanote.Application.Notebooks.Concepts.FindConceptReferences;
 using Syllanote.Domain.Entities;
@@ -122,10 +123,46 @@ namespace Syllanote.Desktop.Controls
             SelectionChangedEventArgs e) =>
             ConceptSelectionChanged?.Invoke(sender, e);
 
+        private void ConceptsListView_ContainerContentChanging(
+            ListViewBase sender,
+            ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer is null)
+            {
+                return;
+            }
+
+            AutomationProperties.SetName(
+                args.ItemContainer,
+                args.InRecycleQueue || args.Item is not Concept concept
+                    ? string.Empty
+                    : concept.Name);
+        }
+
         private void ConceptReferencesListView_SelectionChanged(
             object sender,
             SelectionChangedEventArgs e) =>
             ReferenceSelectionChanged?.Invoke(sender, e);
+
+        private void ConceptReferencesListView_ContainerContentChanging(
+            ListViewBase sender,
+            ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer is null)
+            {
+                return;
+            }
+
+            if (args.InRecycleQueue || args.Item is not ConceptReference reference)
+            {
+                AutomationProperties.SetName(args.ItemContainer, string.Empty);
+                AutomationProperties.SetHelpText(args.ItemContainer, string.Empty);
+                return;
+            }
+
+            AutomationProperties.SetName(args.ItemContainer, reference.PageTitle);
+            AutomationProperties.SetHelpText(args.ItemContainer, reference.SectionName);
+        }
 
         private void ConceptInput_TextChanged(
             object sender,

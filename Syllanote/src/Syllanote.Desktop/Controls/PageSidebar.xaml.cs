@@ -85,6 +85,22 @@ namespace Syllanote.Desktop.Controls
             PageSelectionChanged?.Invoke(this, e);
         }
 
+        private void PagesListView_ContainerContentChanging(
+            ListViewBase sender,
+            ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer is null)
+            {
+                return;
+            }
+
+            AutomationProperties.SetName(
+                args.ItemContainer,
+                args.InRecycleQueue || args.Item is not DomainPage page
+                    ? string.Empty
+                    : page.Title);
+        }
+
         private void PageContextMenu_Opening(object sender, object e)
         {
             PageContextMenuOpening?.Invoke(sender, e);

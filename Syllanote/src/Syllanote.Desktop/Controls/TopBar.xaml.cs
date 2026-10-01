@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Windows.System;
 
 namespace Syllanote.Desktop.Controls
@@ -106,6 +108,26 @@ namespace Syllanote.Desktop.Controls
             ItemClickEventArgs e)
         {
             SearchResultInvoked?.Invoke(this, e);
+        }
+
+        private void SearchResultsListView_ContainerContentChanging(
+            ListViewBase sender,
+            ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer is null)
+            {
+                return;
+            }
+
+            if (args.InRecycleQueue || args.Item is not SearchPageResult result)
+            {
+                AutomationProperties.SetName(args.ItemContainer, string.Empty);
+                AutomationProperties.SetHelpText(args.ItemContainer, string.Empty);
+                return;
+            }
+
+            AutomationProperties.SetName(args.ItemContainer, result.PageTitle);
+            AutomationProperties.SetHelpText(args.ItemContainer, result.Location);
         }
     }
 }

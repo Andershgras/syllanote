@@ -47,6 +47,7 @@
                 ItemsSource="{Binding Pages}"
                 AutomationProperties.Name="Pages"
                 AutomationProperties.HelpText="Use the arrow keys to choose a page. Press Shift+F10 for more actions."
+                ContainerContentChanging="PagesListView_ContainerContentChanging"
                 SelectionChanged="PagesListView_SelectionChanged">
 
                 <ListView.Resources>
