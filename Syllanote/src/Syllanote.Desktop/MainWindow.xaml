@@ -43,6 +43,7 @@
             Grid.Row="0"
             Grid.ColumnSpan="5"
             BackupRequested="TopBar_BackupRequested"
+            RestoreRequested="TopBar_RestoreRequested"
             SearchRequested="TopBar_SearchRequested"
             SearchResultSelectionChanged="TopBar_SearchResultSelectionChanged" />
 

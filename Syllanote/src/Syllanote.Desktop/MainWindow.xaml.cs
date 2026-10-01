@@ -55,7 +55,7 @@ namespace Syllanote.Desktop
         private bool _isConceptHighlightUpdateQueued;
         private bool _allowWindowClose;
         private bool _isWindowCloseInProgress;
-        private bool _isBackupInProgress;
+        private bool _isLibraryOperationInProgress;
         private bool _shouldRestoreMaximizedState;
         private bool _hasLastRestoredWindowBounds;
         private RectInt32 _lastRestoredWindowBounds;
@@ -66,6 +66,8 @@ namespace Syllanote.Desktop
         private Section? _sectionActionTarget;
         private Syllanote.Domain.Entities.Page? _pageActionTarget;
         private readonly ILibraryBackupService _libraryBackupService;
+        private readonly ILibraryBackupValidator _libraryBackupValidator;
+        private readonly ILibraryRestoreService _libraryRestoreService;
 
         public NotebookViewModel ViewModel { get; }
         public ObservableCollection<NotebookNavigationItem> NotebookNavigationItems { get; } = [];
@@ -277,6 +279,16 @@ namespace Syllanote.Desktop
             }
 
             args.Cancel = true;
+            if (_isLibraryOperationInProgress)
+            {
+                ShowOperationMessage(
+                    "Library operation in progress",
+                    "Wait for the backup or restore preparation to finish " +
+                    "before closing Syllanote.",
+                    InfoBarSeverity.Warning);
+                return;
+            }
+
             if (_isWindowCloseInProgress)
             {
                 return;
@@ -331,7 +343,7 @@ namespace Syllanote.Desktop
         {
             NotebookSidebar.SetNavigationEnabled(isEnabled);
             PageSidebar.SetPageListEnabled(isEnabled);
-            TopBar.SetBackupEnabled(isEnabled);
+            TopBar.SetLibraryActionsEnabled(isEnabled);
         }
 
         private void ShowOperationError(string title, string message)
@@ -397,9 +409,13 @@ namespace Syllanote.Desktop
 
         public MainWindow(
             NotebookViewModel viewModel,
-            ILibraryBackupService libraryBackupService)
+            ILibraryBackupService libraryBackupService,
+            ILibraryBackupValidator libraryBackupValidator,
+            ILibraryRestoreService libraryRestoreService)
         {
             _libraryBackupService = libraryBackupService;
+            _libraryBackupValidator = libraryBackupValidator;
+            _libraryRestoreService = libraryRestoreService;
             InitializeComponent();
             RestorePanelWidths();
             RestoreWindowPlacement();
@@ -1346,13 +1362,13 @@ namespace Syllanote.Desktop
         private async void TopBar_SearchRequested(object sender, RoutedEventArgs e)
         {
             if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                _isBackupInProgress)
+                _isLibraryOperationInProgress)
             {
                 return;
             }
 
             TopBar.SetSearchSubmissionEnabled(false);
-            TopBar.SetBackupEnabled(false);
+            TopBar.SetLibraryActionsEnabled(false);
             try
             {
                 ViewModel.SearchText = TopBar.SearchText;
@@ -1363,7 +1379,7 @@ namespace Syllanote.Desktop
             finally
             {
                 TopBar.SetSearchSubmissionEnabled(true);
-                TopBar.SetBackupEnabled(true);
+                TopBar.SetLibraryActionsEnabled(true);
             }
         }
 
@@ -1371,18 +1387,18 @@ namespace Syllanote.Desktop
             object sender,
             RoutedEventArgs e)
         {
-            if (_isBackupInProgress || _isRenamingSelection ||
+            if (_isLibraryOperationInProgress || _isRenamingSelection ||
                 _isSearchNavigationInProgress ||
                 _isConceptOperationInProgress)
             {
                 return;
             }
 
-            _isBackupInProgress = true;
+            _isLibraryOperationInProgress = true;
             ClearOperationMessage();
             SetNavigationEnabled(false);
             TopBar.SetSearchInputEnabled(false);
-            TopBar.SetBackupInProgress(true);
+            TopBar.SetLibraryOperationInProgress(true);
 
             StorageFile? selectedFile = null;
             var deleteSelectedFileOnFailure = false;
@@ -1426,11 +1442,130 @@ namespace Syllanote.Desktop
             }
             finally
             {
-                _isBackupInProgress = false;
-                TopBar.SetBackupInProgress(false);
+                _isLibraryOperationInProgress = false;
+                TopBar.SetLibraryOperationInProgress(false);
                 TopBar.SetSearchInputEnabled(true);
                 SetNavigationEnabled(true);
             }
+        }
+
+        private async void TopBar_RestoreRequested(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (_isLibraryOperationInProgress || _isRenamingSelection ||
+                _isSearchNavigationInProgress ||
+                _isConceptOperationInProgress)
+            {
+                return;
+            }
+
+            _isLibraryOperationInProgress = true;
+            ClearOperationMessage();
+            SetNavigationEnabled(false);
+            TopBar.SetSearchInputEnabled(false);
+            TopBar.SetLibraryOperationInProgress(true);
+            var isClosingForRestore = false;
+
+            try
+            {
+                var picker = CreateRestoreFilePicker();
+                var selectedFile = await picker.PickSingleFileAsync();
+                if (selectedFile is null)
+                {
+                    return;
+                }
+
+                var validation = await _libraryBackupValidator.ValidateAsync(
+                    selectedFile.Path);
+                if (!await ConfirmRestoreAsync(
+                        selectedFile.Name,
+                        validation.Manifest.CreatedAtUtc))
+                {
+                    return;
+                }
+
+                if (!await ViewModel.SaveCurrentPageAsync())
+                {
+                    return;
+                }
+
+                await _libraryRestoreService.PrepareAsync(selectedFile.Path);
+
+                _allowWindowClose = true;
+                try
+                {
+                    Close();
+                    isClosingForRestore = true;
+                }
+                catch
+                {
+                    _allowWindowClose = false;
+                    throw;
+                }
+            }
+            catch (InvalidLibraryBackupException exception)
+            {
+                ShowOperationError(
+                    "Backup can't be restored",
+                    exception.Message);
+            }
+            catch (Exception)
+            {
+                ShowOperationError(
+                    "Restore couldn't be prepared",
+                    "Your current library was not replaced. Check that the " +
+                    "backup and local data folders are available and have " +
+                    "enough free space, then try again.");
+            }
+            finally
+            {
+                _isLibraryOperationInProgress = false;
+                if (!isClosingForRestore)
+                {
+                    TopBar.SetLibraryOperationInProgress(false);
+                    TopBar.SetSearchInputEnabled(true);
+                    SetNavigationEnabled(true);
+                }
+            }
+        }
+
+        private async Task<bool> ConfirmRestoreAsync(
+            string backupFileName,
+            DateTimeOffset backupCreatedAtUtc)
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Restore this backup?",
+                Content =
+                    $"Restore \"{backupFileName}\" from " +
+                    $"{backupCreatedAtUtc.ToLocalTime():g}?\n\n" +
+                    "This will replace every notebook, section, page, " +
+                    "formatted note, and concept in your current library. " +
+                    "Syllanote will create a safety backup first and then " +
+                    "close. Reopen it to finish the restore.",
+                PrimaryButtonText = "Restore and close",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+
+        private FileOpenPicker CreateRestoreFilePicker()
+        {
+            var picker = new FileOpenPicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                ViewMode = PickerViewMode.List
+            };
+            picker.FileTypeFilter.Add(LibraryBackupFormat.FileExtension);
+
+            InitializeWithWindow.Initialize(
+                picker,
+                WindowNative.GetWindowHandle(this));
+            return picker;
         }
 
         private FileSavePicker CreateBackupFilePicker()

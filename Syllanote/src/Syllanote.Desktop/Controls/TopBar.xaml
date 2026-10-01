@@ -34,14 +34,24 @@
                             Glyph="&#xE74E;"
                             FontSize="14" />
                     </Button>
+                    <Button
+                        x:Name="RestoreButton"
+                        Style="{StaticResource SyllanoteHeaderIconButtonStyle}"
+                        AutomationProperties.Name="Restore library backup"
+                        ToolTipService.ToolTip="Restore backup"
+                        Click="RestoreButton_Click">
+                        <FontIcon
+                            Glyph="&#xE8E5;"
+                            FontSize="14" />
+                    </Button>
                     <ProgressRing
-                        x:Name="BackupProgressRing"
+                        x:Name="LibraryOperationProgressRing"
                         Width="20"
                         Height="20"
                         IsActive="False"
                         Visibility="Collapsed"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="Creating backup" />
+                        AutomationProperties.Name="Working with library backup" />
                     <TextBox
                         x:Name="SearchTextBox"
                         Width="320"
