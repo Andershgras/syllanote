@@ -144,6 +144,28 @@ The current automated baseline is 160 passing tests. After Milestone 3, the Debu
 
 The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
+### Verify the x64 release publish
+
+The committed x64 profile makes the Release publish check reproducible from the command line without Visual Studio:
+
+```powershell
+dotnet publish Syllanote/src/Syllanote.Desktop/Syllanote.Desktop.csproj `
+  -c Release `
+  -p:Platform=x64 `
+  -p:PublishProfile=win-x64 `
+  -m:1
+```
+
+The published files are written to:
+
+```text
+Syllanote/src/Syllanote.Desktop/bin/x64/Release/net9.0-windows10.0.19041.0/win-x64/publish/
+```
+
+Trimming is disabled for this profile because the application uses Entity Framework Core and runtime JSON serialization. This prioritizes reliable backup, restore, search, and database behavior over a smaller first-release download.
+
+This folder is intermediate build output, not the installable release artifact. Syllanote currently uses Windows package identity for its local application data, so launching the published executable directly without MSIX is not supported. The versioned MSIX is produced and tested separately.
+
 ## Local data
 
 Syllanote does not require an account or an external database. Notes and concepts are stored in a SQLite database named `syllanote.db` inside the application's Windows local data folder.

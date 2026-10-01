@@ -47,7 +47,7 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 
 - 160 of 160 automated tests pass.
 - The latest Debug build after Milestone 3 completes with no warnings or errors.
-- The most recent Release build and x64 file-system publish checks completed with no warnings or errors before the Milestone 3 accessibility changes and must be rerun for Milestone 4.
+- The committed x64 file-system profile completed the Release publish check with 0 warnings and 0 errors on 2026-10-01; the installable artifact still requires the MSIX packaging step.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
 - Unavailable-database startup handling and locked-database autosave recovery were manually verified on 2026-10-01.
@@ -58,7 +58,6 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 ### Known release gaps
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
-- File-system publish profiles exist locally for x86, x64, and ARM64, but they are ignored by Git and are not reproducible from a clean checkout.
 - The public MSIX signing identity has not yet been verified against a trusted certificate.
 - There is no version tag, release artifact, or continuous-integration workflow yet.
 
