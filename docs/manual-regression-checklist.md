@@ -65,3 +65,4 @@ Complete this section without using a mouse. Repeat the Narrator checks with Win
 | Date | Artifact | Startup and persistence | Branding | Automated verification |
 | --- | --- | --- | --- | --- |
 | 2026-10-01 | Self-contained `Syllanote-v0.1.0-win-x64.zip` built with checksum | Passed — the extracted application opened, saved a page, and reloaded it correctly after restart | Passed — the Syllanote icon appeared on the executable | 160/160 tests passed; x64 Release publish completed successfully |
+| 2026-10-09 | Rebuilt `Syllanote-v0.1.0-win-x64.zip`; SHA-256 `e32c164694f0e2bb6f40058a7e3b05f14b3e39ede657d5f4c1603bc9b3994d33` matches its checksum file | Pending final manual release regression | Pending recheck on the rebuilt artifact | 160/160 tests passed; Debug and Release builds completed with 0 warnings and 0 errors; x64 publish passed |
