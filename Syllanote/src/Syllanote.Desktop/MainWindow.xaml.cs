@@ -20,6 +20,7 @@ using Syllanote.Application.Notebooks.Sections.Pages.SearchPages;
 using Syllanote.Domain.Entities;
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,6 +36,7 @@ namespace Syllanote.Desktop
         private const float NormalFontSizeInPoints = 10.5f;
         private const float Heading1FontSizeInPoints = 18;
         private const float Heading2FontSizeInPoints = 15;
+        private const float ParagraphIndentStepInPoints = 18;
         private const string NotebookColumnWidthSettingKey =
             "Workspace.NotebookColumnWidth";
         private const string PageColumnWidthSettingKey =
@@ -48,6 +50,8 @@ namespace Syllanote.Desktop
             "Check that the local database is available, then try again.";
         private const int MinimumWindowWidth = 900;
         private const int MinimumWindowHeight = 600;
+        private static readonly Windows.UI.Color ConceptHighlightColor =
+            ColorHelper.FromArgb(96, 0, 120, 212);
 
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
@@ -654,6 +658,10 @@ namespace Syllanote.Desktop
             var hasPage = IsSelectedPageCurrent();
             PageSidebar.UpdateState(hasSection, ViewModel.Pages.Count > 0);
             EditorView.UpdatePageState(hasPage);
+            if (!hasPage)
+            {
+                EditorView.UpdateStatistics(0, 0);
+            }
         }
 
         private void SyncPageEditorContent(bool force = false)
@@ -671,6 +679,7 @@ namespace Syllanote.Desktop
             BeginInternalEditorChange();
             try
             {
+                ApplyEditorThemeForeground();
                 if (string.IsNullOrEmpty(ViewModel.PageFormattedContent))
                 {
                     EditorView.ContentEditor.Document.SetText(
@@ -679,10 +688,18 @@ namespace Syllanote.Desktop
                 }
                 else
                 {
+                    var editorForeground =
+                        (EditorView.ContentEditor.Foreground as SolidColorBrush)?.Color;
                     EditorView.ContentEditor.Document.SetText(
                         TextSetOptions.FormatRtf,
-                        RtfThemeColorNormalizer.Normalize(
-                            ViewModel.PageFormattedContent));
+                        editorForeground is { } foreground
+                            ? RtfThemeColorNormalizer.PrepareForDisplay(
+                                ViewModel.PageFormattedContent,
+                                foreground.R,
+                                foreground.G,
+                                foreground.B)
+                            : RtfThemeColorNormalizer.PrepareForDisplay(
+                                ViewModel.PageFormattedContent));
                 }
 
                 ApplyEditorThemeForeground();
@@ -694,6 +711,7 @@ namespace Syllanote.Desktop
             }
 
             QueueConceptHighlightRefresh();
+            UpdateEditorStatistics(ViewModel.PageContent);
             UpdateFormattingToolbarState();
         }
 
@@ -710,43 +728,14 @@ namespace Syllanote.Desktop
             document.SetDefaultCharacterFormat(defaultFormat);
 
             var selection = document.Selection;
-            var selectionStart = selection.StartPosition;
-            var selectionEnd = selection.EndPosition;
-            var selectionFormat = selection.CharacterFormat;
-            selectionFormat.ForegroundColor = foregroundBrush.Color;
-            selection.CharacterFormat = selectionFormat;
-
-            document.GetText(TextGetOptions.None, out var content);
-            if (content.Length == 0)
+            if (selection.StartPosition != selection.EndPosition)
             {
                 return;
             }
 
-            var documentRange = document.GetRange(0, content.Length);
-            var documentFormat = documentRange.CharacterFormat;
-            documentFormat.ForegroundColor = foregroundBrush.Color;
-            documentRange.CharacterFormat = documentFormat;
-            selection.SetRange(selectionStart, selectionEnd);
-        }
-
-        private void RefreshEditorThemeForeground()
-        {
-            if (!IsSelectedPageCurrent())
-            {
-                return;
-            }
-
-            BeginInternalEditorChange();
-            EditorView.ContentEditor.Document.BatchDisplayUpdates();
-            try
-            {
-                ApplyEditorThemeForeground();
-            }
-            finally
-            {
-                EditorView.ContentEditor.Document.ApplyDisplayUpdates();
-                EndInternalEditorChange();
-            }
+            var insertionFormat = selection.CharacterFormat;
+            insertionFormat.ForegroundColor = foregroundBrush.Color;
+            selection.CharacterFormat = insertionFormat;
         }
 
         private void GetPersistedPageEditorContent(
@@ -762,21 +751,21 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
-                if (!_themeSettings.HighContrast && content.Length > 0)
-                {
-                    var documentRange = EditorView.ContentEditor.Document.GetRange(
-                        0,
-                        content.Length);
-                    var documentFormat = documentRange.CharacterFormat;
-                    documentFormat.BackgroundColor = Colors.Transparent;
-                    documentRange.CharacterFormat = documentFormat;
-                }
+                ClearConceptHighlights(content.Length);
 
                 EditorView.ContentEditor.Document.GetText(
                     TextGetOptions.FormatRtf,
                     out formattedContent);
-                formattedContent = RtfThemeColorNormalizer.Normalize(
-                    formattedContent);
+                var editorForeground =
+                    (EditorView.ContentEditor.Foreground as SolidColorBrush)?.Color;
+                formattedContent = editorForeground is { } foreground
+                    ? RtfThemeColorNormalizer.PrepareForStorage(
+                        formattedContent,
+                        foreground.R,
+                        foreground.G,
+                        foreground.B)
+                    : RtfThemeColorNormalizer.PrepareForStorage(
+                        formattedContent);
             }
             finally
             {
@@ -796,6 +785,15 @@ namespace Syllanote.Desktop
                 out var formattedContent);
             ViewModel.PageContent = content;
             ViewModel.PageFormattedContent = formattedContent;
+            UpdateEditorStatistics(content);
+        }
+
+        private void UpdateEditorStatistics(string? content)
+        {
+            var statistics = PageTextStatistics.Calculate(content);
+            EditorView.UpdateStatistics(
+                statistics.WordCount,
+                statistics.CharacterCount);
         }
 
         private void ParagraphStyleComboBox_SelectionChanged(
@@ -866,6 +864,34 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
+        private void FontSizeComboBox_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar ||
+                !IsSelectedPageCurrent() ||
+                EditorView.FontSizeSelector.SelectedItem
+                    is not ComboBoxItem selectedItem ||
+                selectedItem.Tag is not string sizeText ||
+                !float.TryParse(
+                    sizeText,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var fontSize))
+            {
+                return;
+            }
+
+            var selection = EditorView.ContentEditor.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Size = fontSize;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
+        }
+
         private void ItalicButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isUpdatingFormattingToolbar)
@@ -902,6 +928,25 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
+        private void StrikethroughButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingFormattingToolbar || !IsSelectedPageCurrent())
+            {
+                return;
+            }
+
+            var selection = EditorView.ContentEditor.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.Strikethrough =
+                EditorView.StrikethroughToggle.IsChecked == true
+                    ? FormatEffect.On
+                    : FormatEffect.Off;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
+        }
+
         private void BulletedListButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isUpdatingFormattingToolbar)
@@ -924,6 +969,172 @@ namespace Syllanote.Desktop
             ApplyListFormatting(
                 MarkerType.Arabic,
                 EditorView.NumberedListToggle.IsChecked == true);
+        }
+
+        private void AlignLeftButton_Click(object sender, RoutedEventArgs e) =>
+            ApplyParagraphAlignment(ParagraphAlignment.Left);
+
+        private void AlignCenterButton_Click(object sender, RoutedEventArgs e) =>
+            ApplyParagraphAlignment(ParagraphAlignment.Center);
+
+        private void AlignRightButton_Click(object sender, RoutedEventArgs e) =>
+            ApplyParagraphAlignment(ParagraphAlignment.Right);
+
+        private void ApplyParagraphAlignment(ParagraphAlignment alignment)
+        {
+            if (_isUpdatingFormattingToolbar || !IsSelectedPageCurrent())
+            {
+                return;
+            }
+
+            var selection = EditorView.ContentEditor.Document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+            var paragraphFormat = paragraphRange.ParagraphFormat;
+            paragraphFormat.Alignment = alignment;
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
+        }
+
+        private void DecreaseIndentButton_Click(object sender, RoutedEventArgs e) =>
+            ChangeParagraphIndent(-1);
+
+        private void IncreaseIndentButton_Click(object sender, RoutedEventArgs e) =>
+            ChangeParagraphIndent(1);
+
+        private void ChangeParagraphIndent(int direction)
+        {
+            if (!IsSelectedPageCurrent() || direction == 0)
+            {
+                return;
+            }
+
+            var selection = EditorView.ContentEditor.Document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+            var paragraphFormat = paragraphRange.ParagraphFormat;
+
+            if (paragraphFormat.ListType is not MarkerType.None and
+                not MarkerType.Undefined)
+            {
+                paragraphFormat.ListLevelIndex = Math.Clamp(
+                    paragraphFormat.ListLevelIndex + direction,
+                    1,
+                    9);
+            }
+            else
+            {
+                var currentLeftIndent = paragraphFormat.LeftIndent < 0
+                    ? 0
+                    : paragraphFormat.LeftIndent;
+                paragraphFormat.SetIndents(
+                    paragraphFormat.FirstLineIndent,
+                    Math.Max(
+                        0,
+                        currentLeftIndent +
+                            (ParagraphIndentStepInPoints * direction)),
+                    paragraphFormat.RightIndent);
+            }
+
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
+        }
+
+        private void ClearFormattingButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsSelectedPageCurrent())
+            {
+                return;
+            }
+
+            var document = EditorView.ContentEditor.Document;
+            var selection = document.Selection;
+            var paragraphRange = selection.GetClone();
+            paragraphRange.Expand(TextRangeUnit.Paragraph);
+
+            selection.CharacterFormat = document.GetDefaultCharacterFormat();
+
+            var paragraphFormat = document.GetDefaultParagraphFormat();
+            paragraphFormat.Style = ParagraphStyle.Normal;
+            paragraphFormat.Alignment = ParagraphAlignment.Left;
+            paragraphFormat.ListType = MarkerType.None;
+            paragraphFormat.ListLevelIndex = 0;
+            paragraphFormat.SetIndents(0, 0, 0);
+            paragraphFormat.ClearAllTabs();
+            paragraphRange.ParagraphFormat = paragraphFormat;
+            selection.ParagraphFormat = paragraphFormat;
+
+            UpdatePageContentFromEditor();
+            UpdateFormattingToolbarState();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
+        }
+
+        private void TextColorMenuFlyoutItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (!IsSelectedPageCurrent() ||
+                sender is not MenuFlyoutItem { Tag: string colorName })
+            {
+                return;
+            }
+
+            var color = colorName switch
+            {
+                "Red" => ColorHelper.FromArgb(255, 231, 72, 86),
+                "Orange" => ColorHelper.FromArgb(255, 247, 99, 12),
+                "Green" => ColorHelper.FromArgb(255, 19, 161, 14),
+                "Blue" => ColorHelper.FromArgb(255, 0, 120, 212),
+                "Purple" => ColorHelper.FromArgb(255, 136, 108, 228),
+                "Gray" => ColorHelper.FromArgb(255, 118, 118, 118),
+                _ => EditorView.ContentEditor.Document
+                    .GetDefaultCharacterFormat()
+                    .ForegroundColor
+            };
+
+            var selection = EditorView.ContentEditor.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.ForegroundColor = color;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
+        }
+
+        private void HighlightColorMenuFlyoutItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (!IsSelectedPageCurrent() ||
+                sender is not MenuFlyoutItem { Tag: string colorName })
+            {
+                return;
+            }
+
+            var color = colorName switch
+            {
+                "Yellow" => ColorHelper.FromArgb(255, 255, 241, 0),
+                "Green" => ColorHelper.FromArgb(255, 168, 230, 207),
+                "Blue" => ColorHelper.FromArgb(255, 167, 216, 255),
+                "Pink" => ColorHelper.FromArgb(255, 255, 192, 203),
+                "Gray" => ColorHelper.FromArgb(255, 208, 208, 208),
+                _ => Colors.Transparent
+            };
+
+            var selection = EditorView.ContentEditor.Document.Selection;
+            var characterFormat = selection.CharacterFormat;
+            characterFormat.BackgroundColor = color;
+            selection.CharacterFormat = characterFormat;
+
+            UpdatePageContentFromEditor();
+            EditorView.ContentEditor.Focus(FocusState.Programmatic);
         }
 
         private void ApplyListFormatting(MarkerType listType, bool isEnabled)
@@ -971,6 +1182,8 @@ namespace Syllanote.Desktop
                 EditorView.ContentEditor.Document.Selection.ParagraphFormat.Style;
             var listType =
                 EditorView.ContentEditor.Document.Selection.ParagraphFormat.ListType;
+            var paragraphFormat =
+                EditorView.ContentEditor.Document.Selection.ParagraphFormat;
 
             _isUpdatingFormattingToolbar = true;
             try
@@ -987,13 +1200,42 @@ namespace Syllanote.Desktop
                 EditorView.UnderlineToggle.IsChecked =
                     characterFormat.Underline != UnderlineType.None &&
                     characterFormat.Underline != UnderlineType.Undefined;
+                EditorView.StrikethroughToggle.IsChecked =
+                    characterFormat.Strikethrough == FormatEffect.On;
                 EditorView.BulletedListToggle.IsChecked = listType == MarkerType.Bullet;
                 EditorView.NumberedListToggle.IsChecked = listType == MarkerType.Arabic;
+                EditorView.AlignLeftToggle.IsChecked =
+                    paragraphFormat.Alignment is ParagraphAlignment.Left or
+                        ParagraphAlignment.Undefined;
+                EditorView.AlignCenterToggle.IsChecked =
+                    paragraphFormat.Alignment == ParagraphAlignment.Center;
+                EditorView.AlignRightToggle.IsChecked =
+                    paragraphFormat.Alignment == ParagraphAlignment.Right;
+                EditorView.DecreaseIndentAction.IsEnabled =
+                    (listType is not MarkerType.None and not MarkerType.Undefined &&
+                        paragraphFormat.ListLevelIndex > 1) ||
+                    paragraphFormat.LeftIndent > 0;
+                UpdateFontSizeSelector(characterFormat.Size);
             }
             finally
             {
                 _isUpdatingFormattingToolbar = false;
             }
+        }
+
+        private void UpdateFontSizeSelector(float fontSize)
+        {
+            var matchingItem = EditorView.FontSizeSelector.Items
+                .OfType<ComboBoxItem>()
+                .FirstOrDefault(item =>
+                    item.Tag is string sizeText &&
+                    float.TryParse(
+                        sizeText,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out var itemSize) &&
+                    Math.Abs(itemSize - fontSize) < 0.01f);
+            EditorView.FontSizeSelector.SelectedItem = matchingItem;
         }
 
         private void QueueConceptHighlightRefresh()
@@ -1029,18 +1271,10 @@ namespace Syllanote.Desktop
             EditorView.ContentEditor.Document.BatchDisplayUpdates();
             try
             {
+                ClearConceptHighlights(editorContent.Length);
+
                 if (!_themeSettings.HighContrast)
                 {
-                    if (editorContent.Length > 0)
-                    {
-                        var documentRange = EditorView.ContentEditor.Document.GetRange(
-                            0,
-                            editorContent.Length);
-                        var documentFormat = documentRange.CharacterFormat;
-                        documentFormat.BackgroundColor = Colors.Transparent;
-                        documentRange.CharacterFormat = documentFormat;
-                    }
-
                     foreach (var match in ViewModel.ConceptMatches)
                     {
                         if (!IsCurrentConceptMatch(match, editorContent))
@@ -1049,15 +1283,16 @@ namespace Syllanote.Desktop
                         }
 
                         var endIndex = match.StartIndex + match.Length;
+                        if (HasUserHighlight(match.StartIndex, endIndex))
+                        {
+                            continue;
+                        }
+
                         var conceptRange = EditorView.ContentEditor.Document.GetRange(
                             match.StartIndex,
                             endIndex);
                         var conceptFormat = conceptRange.CharacterFormat;
-                        conceptFormat.BackgroundColor = ColorHelper.FromArgb(
-                            96,
-                            0,
-                            120,
-                            212);
+                        conceptFormat.BackgroundColor = ConceptHighlightColor;
                         conceptRange.CharacterFormat = conceptFormat;
                     }
                 }
@@ -1075,6 +1310,71 @@ namespace Syllanote.Desktop
                 selection.SetRange(selectionStart, selectionEnd);
             }
         }
+
+        private bool HasUserHighlight(int startPosition, int endPosition)
+        {
+            var document = EditorView.ContentEditor.Document;
+            var position = startPosition;
+            while (position < endPosition)
+            {
+                var formatRange = document.GetRange(position, position);
+                formatRange.MoveEnd(TextRangeUnit.CharacterFormat, 1);
+                if (formatRange.EndPosition <= position)
+                {
+                    formatRange.SetRange(
+                        position,
+                        Math.Min(position + 1, endPosition));
+                }
+                else if (formatRange.EndPosition > endPosition)
+                {
+                    formatRange.SetRange(position, endPosition);
+                }
+
+                if (formatRange.CharacterFormat.BackgroundColor.A != 0)
+                {
+                    return true;
+                }
+
+                position = formatRange.EndPosition;
+            }
+
+            return false;
+        }
+
+        private void ClearConceptHighlights(int contentLength)
+        {
+            var document = EditorView.ContentEditor.Document;
+            var position = 0;
+            while (position < contentLength)
+            {
+                var formatRange = document.GetRange(position, position);
+                formatRange.MoveEnd(TextRangeUnit.CharacterFormat, 1);
+                if (formatRange.EndPosition <= position)
+                {
+                    formatRange.SetRange(
+                        position,
+                        Math.Min(position + 1, contentLength));
+                }
+                else if (formatRange.EndPosition > contentLength)
+                {
+                    formatRange.SetRange(position, contentLength);
+                }
+
+                var characterFormat = formatRange.CharacterFormat;
+                if (IsConceptHighlightColor(characterFormat.BackgroundColor))
+                {
+                    characterFormat.BackgroundColor = Colors.Transparent;
+                    formatRange.CharacterFormat = characterFormat;
+                }
+
+                position = formatRange.EndPosition;
+            }
+        }
+
+        private static bool IsConceptHighlightColor(Windows.UI.Color color) =>
+            color.R == ConceptHighlightColor.R &&
+            color.G == ConceptHighlightColor.G &&
+            color.B == ConceptHighlightColor.B;
 
         private static bool IsCurrentConceptMatch(
             ConceptMatch match,
@@ -1162,7 +1462,6 @@ namespace Syllanote.Desktop
             object args)
         {
             UpdateTitleBarTheme();
-            RefreshEditorThemeForeground();
             QueueConceptHighlightRefresh();
         }
 

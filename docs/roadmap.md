@@ -429,6 +429,10 @@ Give users more control over note presentation while preserving autosave, search
 - The formatting toolbar remains reachable with mouse, keyboard, and Narrator at supported display scales and narrow window widths.
 - Word and character counts update without marking an otherwise unchanged page as dirty.
 
+#### Known limitation
+
+- WinUI 3 `RichEditBox` can temporarily render user-selected foreground colors as the automatic theme foreground when the Windows app theme changes while Syllanote is open. The persisted RTF retains the selected colors, and they return after reopening Syllanote. Track a focused editor-theme stabilization task before the `v0.2.0` release; this acceptance gap does not block work on the next roadmap milestone.
+
 #### Verification
 
 - Add focused tests for any non-UI RTF color-preservation or normalization behavior.
