@@ -69,8 +69,13 @@
                         <Setter Property="UseSystemFocusVisuals" Value="True" />
                         <Setter Property="FocusVisualMargin" Value="-1" />
                         <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                        <Setter Property="ContextFlyout">
-                            <Setter.Value>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Background="Transparent">
+                            <Grid.ContextFlyout>
                                 <MenuFlyout Opening="PageContextMenu_Opening">
                                     <MenuFlyoutItem
                                         Text="Move up"
@@ -86,14 +91,8 @@
                                         Text="Delete"
                                         Click="DeletePageMenuItem_Click" />
                                 </MenuFlyout>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListView.ItemContainerStyle>
+                            </Grid.ContextFlyout>
 
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Background="Transparent">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="18" />
                                 <ColumnDefinition Width="*" />

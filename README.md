@@ -154,7 +154,7 @@ dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
 
 The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
 
-The current automated baseline is 160 passing tests. After Milestone 3, the Debug build completed without warnings or errors, and the keyboard-only, Narrator, display-scaling, and high-contrast walkthroughs passed on 2026-10-01. Release and x64 publish checks will be rerun as part of Milestone 4.
+The current automated baseline is 160 passing tests. On 2026-10-09, restore, Debug and Release builds, and the x64 portable publish completed successfully; both builds finished with no warnings or errors.
 
 The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
