@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Syllanote.Domain.Entities;
 using System.Collections.ObjectModel;
 
@@ -25,7 +27,38 @@ public partial class NotebookNavigationItem : ObservableObject
 
     public string AccessibilityHelpText => Notebook is not null
         ? "Press Enter or Space to select this notebook and expand or collapse its sections. Press Shift+F10 for more actions."
-        : "Press Enter or Space to select this section. Press Shift+F10 for more actions.";
+        : $"Press Enter or Space to select this section. Press Shift+F10 for more actions.{SectionColorAccessibilityText}";
+
+    public Visibility SectionColorMarkerVisibility =>
+        SectionColorBrush is not null
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public SolidColorBrush? SectionColorBrush => Section?.ColorKey switch
+    {
+        SectionColorKeys.Red => new(ColorHelper.FromArgb(255, 232, 72, 86)),
+        SectionColorKeys.Orange => new(ColorHelper.FromArgb(255, 247, 99, 12)),
+        SectionColorKeys.Yellow => new(ColorHelper.FromArgb(255, 255, 185, 0)),
+        SectionColorKeys.Green => new(ColorHelper.FromArgb(255, 16, 124, 16)),
+        SectionColorKeys.Teal => new(ColorHelper.FromArgb(255, 0, 183, 195)),
+        SectionColorKeys.Blue => new(ColorHelper.FromArgb(255, 0, 120, 212)),
+        SectionColorKeys.Purple => new(ColorHelper.FromArgb(255, 136, 108, 228)),
+        SectionColorKeys.Pink => new(ColorHelper.FromArgb(255, 227, 0, 140)),
+        _ => null
+    };
+
+    private string SectionColorAccessibilityText => Section?.ColorKey switch
+    {
+        SectionColorKeys.Red => " Color: Red.",
+        SectionColorKeys.Orange => " Color: Orange.",
+        SectionColorKeys.Yellow => " Color: Yellow.",
+        SectionColorKeys.Green => " Color: Green.",
+        SectionColorKeys.Teal => " Color: Teal.",
+        SectionColorKeys.Blue => " Color: Blue.",
+        SectionColorKeys.Purple => " Color: Purple.",
+        SectionColorKeys.Pink => " Color: Pink.",
+        _ => string.Empty
+    };
 
     public string AccessibilityItemStatus => Notebook is not null
         ? $"{(IsActiveNotebook ? "Selected" : "Not selected")}, {(IsExpanded ? "expanded" : "collapsed")}"

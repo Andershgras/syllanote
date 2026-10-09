@@ -12,6 +12,7 @@ using Syllanote.Application.Notebooks.GetNotebooks;
 using Syllanote.Application.Notebooks.MoveNotebook;
 using Syllanote.Application.Notebooks.RenameNotebook;
 using Syllanote.Application.Notebooks.Sections.CreateSection;
+using Syllanote.Application.Notebooks.Sections.ChangeSectionColor;
 using Syllanote.Application.Notebooks.Sections.DeleteSection;
 using Syllanote.Application.Notebooks.Sections.GetSections;
 using Syllanote.Application.Notebooks.Sections.MoveSection;
@@ -46,6 +47,7 @@ public partial class NotebookViewModel : ObservableObject
     private readonly RenameNotebookService _renameNotebookService;
     private readonly GetSectionsService _getSectionsService;
     private readonly CreateSectionService _createSectionService;
+    private readonly ChangeSectionColorService _changeSectionColorService;
     private readonly DeleteSectionService _deleteSectionService;
     private readonly MoveSectionService _moveSectionService;
     private readonly RenameSectionService _renameSectionService;
@@ -71,6 +73,7 @@ public partial class NotebookViewModel : ObservableObject
         RenameNotebookService renameNotebookService,
         GetSectionsService getSectionsService,
         CreateSectionService createSectionService,
+        ChangeSectionColorService changeSectionColorService,
         DeleteSectionService deleteSectionService,
         MoveSectionService moveSectionService,
         RenameSectionService renameSectionService,
@@ -95,6 +98,7 @@ public partial class NotebookViewModel : ObservableObject
         _renameNotebookService = renameNotebookService;
         _getSectionsService = getSectionsService;
         _createSectionService = createSectionService;
+        _changeSectionColorService = changeSectionColorService;
         _deleteSectionService = deleteSectionService;
         _moveSectionService = moveSectionService;
         _renameSectionService = renameSectionService;
@@ -478,6 +482,23 @@ public partial class NotebookViewModel : ObservableObject
             await _moveSectionService.MoveDownAsync(section))
         {
             Sections.Move(index, index + 1);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ChangeSelectedSectionColorAsync(string? colorKey)
+    {
+        if (SelectedSection is null)
+        {
+            return;
+        }
+
+        await _changeSectionColorService.ChangeAsync(SelectedSection, colorKey);
+
+        var index = Sections.IndexOf(SelectedSection);
+        if (index >= 0)
+        {
+            Sections[index] = SelectedSection;
         }
     }
 

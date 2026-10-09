@@ -2368,6 +2368,37 @@ namespace Syllanote.Desktop
                     : null;
         }
 
+        private async void SectionColorMenuItem_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            if (_isRenamingSelection)
+            {
+                return;
+            }
+
+            var requestedColorKey = (sender as FrameworkElement)?.Tag as string;
+            var colorKey = requestedColorKey == "none"
+                ? null
+                : requestedColorKey;
+            var section = _sectionActionTarget;
+            if ((colorKey is not null && !SectionColorKeys.IsSupported(colorKey)) ||
+                section is null ||
+                await EnsureSectionSelectedAsync(section) is not Section currentSection)
+            {
+                return;
+            }
+
+            if (await RunOperationAsync(
+                    () => ViewModel.ChangeSelectedSectionColorCommand.ExecuteAsync(colorKey),
+                    "Section color couldn't be changed"))
+            {
+                RefreshSectionNavigation();
+                QueueKeyboardFocus(() =>
+                    NotebookSidebar.FocusSection(currentSection));
+            }
+        }
+
         private void PageContextMenu_Opening(
             object sender,
             object e)

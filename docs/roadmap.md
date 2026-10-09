@@ -450,7 +450,7 @@ Give users more control over note presentation while preserving autosave, search
 
 **Work types:** New product feature, persistence, navigation UI
 
-**Status:** Next
+**Status:** Completed
 
 **Estimated size:** Medium
 
@@ -499,6 +499,13 @@ Help users visually distinguish subjects and work areas without changing the exi
 - Verify backup and restore with both colored and uncolored Sections.
 - Manually test color selection, removal, navigation, ordering, rename, delete, restart, themes, keyboard use, and Narrator.
 - Run the full automated suite and sequential Debug and Release builds.
+
+#### Recorded verification
+
+- 193 of 193 automated tests passed on 2026-10-10, including Section color validation, persistence, `v0.1.0` database upgrade, backup, and restore coverage.
+- Sequential x64 Debug and Release builds completed successfully on 2026-10-10.
+- Assigning, changing, removing, and retaining Section colors across restart passed manual verification on 2026-10-10.
+- Section markers and existing navigation states passed manual checks in both light and dark themes.
 
 ---
 

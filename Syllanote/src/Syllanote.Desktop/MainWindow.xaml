@@ -91,6 +91,7 @@
             SectionContextMenuOpening="SectionContextMenu_Opening"
             MoveSectionUpRequested="MoveSectionUpMenuItem_Click"
             MoveSectionDownRequested="MoveSectionDownMenuItem_Click"
+            SectionColorChangeRequested="SectionColorMenuItem_Click"
             RenameSectionRequested="RenameSectionMenuItem_Click"
             DeleteSectionRequested="DeleteSectionButton_Click"
             NewSectionRequested="NewSectionButton_Click" />

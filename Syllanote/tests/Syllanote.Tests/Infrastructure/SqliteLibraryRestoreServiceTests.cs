@@ -168,6 +168,12 @@ public class SqliteLibraryRestoreServiceTests
             Assert.AreEqual(
                 "Restored library",
                 await ReadSingleNotebookNameAsync(liveDatabasePath));
+            var restoredSectionColors = await ReadSectionColorsAsync(
+                liveDatabasePath);
+            Assert.AreEqual(
+                SectionColorKeys.Purple,
+                restoredSectionColors[0]);
+            Assert.IsNull(restoredSectionColors[1]);
             Assert.IsFalse(File.Exists(preparation.PendingDatabasePath));
             Assert.IsFalse(File.Exists(preparation.PendingMetadataPath));
             Assert.IsTrue(File.Exists(preparation.SafetyBackupPath));
@@ -367,6 +373,15 @@ public class SqliteLibraryRestoreServiceTests
             LibraryBackupFormat.FileExtension);
         await using var context = CreateContext(sourcePath);
         await AddNotebookAsync(context, notebookName);
+        var notebook = await context.Notebooks.SingleAsync();
+        var section = new Section(notebook.Id, "Restored section");
+        section.ChangeColor(SectionColorKeys.Purple);
+        var uncoloredSection = new Section(
+            notebook.Id,
+            "Uncolored restored section",
+            1);
+        context.Sections.AddRange(section, uncoloredSection);
+        await context.SaveChangesAsync();
         var backupService = new SqliteLibraryBackupService(context);
         await backupService.CreateAsync(backupPath);
         return backupPath;
@@ -386,6 +401,16 @@ public class SqliteLibraryRestoreServiceTests
     {
         await using var context = CreateContext(databasePath);
         return (await context.Notebooks.SingleAsync()).Name;
+    }
+
+    private static async Task<IReadOnlyList<string?>> ReadSectionColorsAsync(
+        string databasePath)
+    {
+        await using var context = CreateContext(databasePath);
+        return await context.Sections
+            .OrderBy(section => section.SortOrder)
+            .Select(section => section.ColorKey)
+            .ToListAsync();
     }
 
     private static void ExtractDatabase(
