@@ -3,7 +3,7 @@
 Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
 > [!NOTE]
-> Syllanote `v0.1.0` is prepared as the first versioned x64 Windows release. The portable artifact, release notes, and installation guide are ready; final release verification and GitHub publication are still in progress.
+> Syllanote `v0.1.0` is the first published x64 Windows release. Download the portable ZIP and its SHA-256 checksum from the [GitHub release](https://github.com/Andershgras/syllanote/releases/tag/v0.1.0).
 
 ## Screenshots
 

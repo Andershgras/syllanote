@@ -1,8 +1,8 @@
 # Syllanote Roadmap
 
-Last reviewed: 2026-10-01
+Last reviewed: 2026-10-09
 
-Current phase: **Now — Milestone 4: First versioned release**
+Current phase: **Milestone 4 completed — `v0.1.0` published**
 
 This roadmap is the working plan for taking Syllanote from a functional local-first MVP to a reliable first portfolio release. It is intentionally focused: stability, data safety, accessibility, and release readiness take priority over additional product features.
 
@@ -26,7 +26,7 @@ This roadmap is the working plan for taking Syllanote from a functional local-fi
 
 ## Current project status
 
-Syllanote is a strong functional MVP in an alpha-level release state. The core note-taking workflow, failure handling, data-protection workflow, and accessibility baseline are implemented and verified, the solution has clear project boundaries, and the automated suite provides a useful safety net. The application is not yet release-ready because packaging and the versioned release workflow still need focused work.
+Syllanote `v0.1.0` is published as the first versioned x64 Windows release. The core note-taking workflow, failure handling, data-protection workflow, accessibility baseline, portable packaging, and release process are implemented and verified. The solution has clear project boundaries, and the automated suite and Windows CI provide a useful safety net for further development.
 
 ### Implemented product areas
 
@@ -47,7 +47,9 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 
 - 160 of 160 automated tests passed on 2026-10-09.
 - The latest Debug and Release builds complete with no warnings or errors.
-- The self-contained `v0.1.0` x64 ZIP was rebuilt on 2026-10-09 with a matching SHA-256 checksum. The 2026-10-01 artifact passed startup, page persistence after restart, and executable-icon checks; the rebuilt artifact awaits the final manual release regression.
+- The final self-contained `v0.1.0` x64 ZIP was rebuilt from `main` on 2026-10-09. SHA-256 `4470b4d699d250e730247772cf87146e0d4711c994523da615b78ecd65aeeefb` matches the published checksum file.
+- Portable startup, page persistence after restart, executable branding, and the corrected Page move-up, move-down, and rename context-menu actions passed manual release checks.
+- Windows CI passed for release commit `a84e586`, and the tagged release is published through [GitHub Releases](https://github.com/Andershgras/syllanote/releases/tag/v0.1.0).
 - The portable release guide documents installation, startup, upgrade, uninstall, local data, backup, restore, troubleshooting, and known limitations.
 - The 15 `MVVMTK0045` warnings were removed by converting field-based `[ObservableProperty]` members to AOT-compatible partial properties.
 - The normal WinUI workflow was manually regression-tested successfully on 2026-10-01.
@@ -60,7 +62,6 @@ Syllanote is a strong functional MVP in an alpha-level release state. The core n
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
 - A trusted public MSIX signing identity is not available, so `v0.1.0` uses the documented self-contained ZIP fallback.
-- There is no version tag or published release artifact yet. The Windows CI workflow is committed but still needs its first successful GitHub run.
 
 ---
 
@@ -294,13 +295,11 @@ Make the critical note-taking workflows usable without a mouse and improve the q
 
 ---
 
-## Next
-
 ### Milestone 4 — First versioned release
 
 **Work types:** Release work, documentation
 
-**Status:** Now
+**Status:** Completed
 
 **Target:** `v0.1.0`, x64 first
 
@@ -354,6 +353,15 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 - Verify upgrade, uninstall, reinstall, and local-data behavior.
 - Verify backup and restore using the packaged application.
 - Confirm that the Git tag, artifact metadata, manifest version, release notes, and screenshots follow the documented version mapping.
+
+#### Recorded verification
+
+- 160 of 160 automated tests passed on 2026-10-09; Debug, Release, and x64 publish builds completed successfully.
+- The final x64 artifact was built from `main` commit `a84e586`. Its SHA-256 is `4470b4d699d250e730247772cf87146e0d4711c994523da615b78ecd65aeeefb`, matching the published checksum file.
+- Portable startup, page persistence across restart, and executable branding passed manual checks. After correcting the Page context-menu target, move up, move down, and rename were manually retested successfully.
+- Windows CI completed successfully for release commit `a84e586`.
+- Annotated tag `v0.1.0` and the release notes, portable ZIP, and checksum were published through [GitHub Releases](https://github.com/Andershgras/syllanote/releases/tag/v0.1.0) on 2026-10-09.
+- README screenshots, release notes, installation guidance, and known limitations match the published portable release.
 
 ---
 
