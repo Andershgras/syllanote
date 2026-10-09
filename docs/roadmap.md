@@ -1,10 +1,10 @@
 # Syllanote Roadmap
 
-Last reviewed: 2026-10-09
+Last reviewed: 2026-10-10
 
-Current phase: **Milestone 4 completed — `v0.1.0` published**
+Current phase: **Milestone 5 — Rich-text editor v2**
 
-This roadmap is the working plan for taking Syllanote from a functional local-first MVP to a reliable first portfolio release. It is intentionally focused: stability, data safety, accessibility, and release readiness take priority over additional product features.
+This roadmap is the working plan for evolving the published local-first MVP into `v0.2.0 — Writing & Organization`. The next release is intentionally focused on a richer writing experience, clearer visual organization, and easier access to the notebook-scoped Concept Dictionary while preserving the stability, data safety, and accessibility established in `v0.1.0`.
 
 ## How to use this roadmap
 
@@ -21,7 +21,7 @@ This roadmap is the working plan for taking Syllanote from a functional local-fi
 | **Completed** | Implemented and verified to the level described by the milestone. |
 | **Now** | The current priority and the only planned implementation focus. |
 | **Next** | Committed work that follows the current milestone. |
-| **Later** | Valuable work that should wait until the first release is stable. |
+| **Later** | Valuable work that should wait until the next planned release is complete. |
 | **Ideas / Not committed** | Possible directions, not promises or scheduled work. |
 
 ## Current project status
@@ -62,6 +62,13 @@ Syllanote `v0.1.0` is published as the first versioned x64 Windows release. The 
 
 - Scheduled backup, backup encryption, selective restore, import, and export are not implemented.
 - A trusted public MSIX signing identity is not available, so `v0.1.0` uses the documented self-contained ZIP fallback.
+
+### Next release direction
+
+- Target `v0.2.0` as the next minor release under the theme **Writing & Organization**.
+- Deliver Rich-text editor v2, persistent Section colors, and a visible Concept Dictionary entry point before beginning release stabilization.
+- Keep Markdown export committed, but schedule it after `v0.2.0` so editor, navigation, persistence, and export risks are not combined in one release.
+- Continue shipping x64 first through GitHub Releases with the documented portable ZIP fallback unless a trusted MSIX signing path becomes available.
 
 ---
 
@@ -365,9 +372,247 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 
 ---
 
+## Now
+
+### Milestone 5 — Rich-text editor v2
+
+**Work types:** New product feature, editor stabilization, accessibility
+
+**Status:** Now
+
+**Estimated size:** Large
+
+#### Purpose
+
+Give users more control over note presentation while preserving autosave, searchable plain text, Concept recognition, theme handling, and reliable RTF persistence.
+
+#### Scope
+
+- Add a deliberately small set of font-size choices.
+- Add strikethrough formatting.
+- Add left, center, and right paragraph alignment.
+- Add increase-indent and decrease-indent actions.
+- Add a clear-formatting action with a predictable result for selections and the insertion point.
+- Show page word and character counts without storing derived counts in the database.
+- Make the formatting toolbar usable at narrow window widths through a deliberate overflow or compact layout.
+- Add controlled palettes for text color and text highlighting.
+- Refactor color handling so intentional user colors persist while theme normalization and transient Concept highlighting remain separate concerns.
+- Keep toolbar state synchronized with the current selection, including mixed-format selections where practical.
+
+#### Product decisions
+
+- Use a curated, accessible color palette rather than an unrestricted color picker in this milestone.
+- User-applied text colors and highlights are persistent page formatting; Concept highlighting remains transient and must never be saved as user formatting.
+- Preserve searchable plain text in `Page.Content` and RTF in `Page.FormattedContent`.
+- Word and character counts are informational UI state, not new persisted domain properties.
+
+#### Deliberately excluded
+
+- Arbitrary installed font families.
+- Tables, images, attachments, code blocks, and embedded media.
+- A general Word-compatible editing surface.
+- Markdown editing or round-trip Markdown conversion.
+
+#### Dependencies
+
+- Milestone 4 completed.
+- Existing editor update guards, autosave ownership, selection preservation, and Concept recognition must be retained.
+- The current RTF theme-color normalization and Concept background-highlighting paths must be separated before persistent foreground or highlight colors are enabled.
+
+#### Acceptance criteria
+
+- Every new format can be applied to selected text and to text typed after a collapsed selection.
+- Supported formatting survives autosave, page navigation, application restart, backup, and restore.
+- Search and Concept recognition continue to use correct plain text regardless of formatting.
+- Concept highlighting never removes, replaces, or persists as a user's text highlight.
+- Theme changes and high contrast do not make formatted text unreadable.
+- The formatting toolbar remains reachable with mouse, keyboard, and Narrator at supported display scales and narrow window widths.
+- Word and character counts update without marking an otherwise unchanged page as dirty.
+
+#### Verification
+
+- Add focused tests for any non-UI RTF color-preservation or normalization behavior.
+- Run the full automated test suite, then Debug and Release builds sequentially.
+- Manually test each format on selected text, a collapsed selection, mixed-format text, and empty pages.
+- Verify save, navigation, restart, search, Concept recognition, Concept flyouts, theme changes, and high contrast with colored and highlighted text.
+- Exercise undo and redo around every new formatting command even though dedicated undo and redo buttons are outside this milestone.
+- Inspect the toolbar at 125%, 150%, and 200% display scaling and at the minimum supported window width.
+
+---
+
+## Next
+
+### Milestone 6 — Persistent Section colors
+
+**Work types:** New product feature, persistence, navigation UI
+
+**Status:** Next
+
+**Estimated size:** Medium
+
+#### Purpose
+
+Help users visually distinguish subjects and work areas without changing the existing Notebook → Section → Page hierarchy.
+
+#### Scope
+
+- Add an optional persisted color key to each Section.
+- Provide a curated palette of approximately six to eight colors plus **No color**.
+- Add a **Change color** action to the existing Section context menu.
+- Represent the chosen color as a small marker or leading strip instead of coloring the entire navigation row.
+- Preserve existing selection, hover, keyboard-focus, and high-contrast states.
+- Include the new value in Entity Framework Core migrations, repository behavior, backup, restore, and upgrade verification.
+
+#### Product decisions
+
+- Persist a stable palette key rather than an arbitrary hex value so colors can be adapted safely across themes.
+- Color supplements the Section name and selection state; it must never be the only way information is communicated.
+- Existing Sections upgrade to **No color**.
+
+#### Deliberately excluded
+
+- Notebook and Page colors.
+- Custom color creation or a full color picker.
+- Automatic color assignment.
+- Filtering, grouping, or search by color.
+
+#### Dependencies
+
+- Milestone 5 completed.
+- The Section domain, persistence, application-service, and navigation binding paths must use one consistent color-key contract.
+
+#### Acceptance criteria
+
+- A user can assign, change, and remove a Section color.
+- The selected color survives application restart, backup, and restore.
+- A `v0.1.0` database migrates without data loss and gives existing Sections **No color**.
+- Section rename, delete, ordering, selection, and Page navigation remain unchanged.
+- Section rows remain understandable in light theme, dark theme, high contrast, and for users who cannot distinguish the palette colors.
+
+#### Verification
+
+- Add Domain, application-service, migration, and SQLite persistence tests for valid, missing, and unsupported color keys.
+- Verify backup and restore with both colored and uncolored Sections.
+- Manually test color selection, removal, navigation, ordering, rename, delete, restart, themes, keyboard use, and Narrator.
+- Run the full automated suite and sequential Debug and Release builds.
+
+---
+
+### Milestone 7 — Concept Dictionary discoverability
+
+**Work types:** Usability, navigation UI, accessibility
+
+**Status:** Next
+
+**Estimated size:** Small
+
+#### Purpose
+
+Make the existing Concept Dictionary discoverable without requiring users to know that the Notebook row has a right-click menu.
+
+#### Scope
+
+- Add a visible **Concepts** entry point with both icon and text in the Notebook navigation area.
+- Make the action operate on the selected Notebook and disable it when no Notebook is selected.
+- Keep the existing Notebook context-menu action as a secondary route.
+- Add a documented keyboard accelerator, provisionally `Ctrl+Shift+D`.
+- Add tooltip, accessible name, and help text that identify the selected-Notebook scope.
+- Improve the empty state so first-time users understand that Concepts define terms and connect them to referenced Pages.
+- Preserve the current **Back to page** behavior, selected Page, and predictable keyboard focus.
+
+#### Product decisions
+
+- Place the primary entry point in the Notebook navigation area because the Dictionary is notebook-scoped.
+- Do not create a permanent fifth workspace column or a global cross-notebook Dictionary in this milestone.
+
+#### Deliberately excluded
+
+- Changing the notebook-scoped Concept data model.
+- A global Concept Dictionary.
+- Concept aliases, relationships, graphs, or automatic definition generation.
+- A redesign of Concept CRUD or reference navigation.
+
+#### Dependencies
+
+- Milestone 6 completed.
+- Existing navigation locks, autosave-before-navigation behavior, and focus restoration must be preserved.
+
+#### Acceptance criteria
+
+- A user can find and open the Dictionary without using a context menu.
+- The UI clearly identifies which Notebook owns the displayed Concepts.
+- Mouse, keyboard, and Narrator users can open the Dictionary and return to the current Page.
+- Concept create, update, delete, recognition, reference loading, and reference navigation behave as before.
+- Rapid navigation cannot open or modify Concepts for the wrong Notebook.
+
+#### Verification
+
+- Manually open the Dictionary through the visible entry point, context menu, and keyboard accelerator.
+- Verify no-Notebook, empty-Dictionary, populated-Dictionary, and rapid Notebook-switch states.
+- Repeat Concept CRUD, recognition, reference navigation, autosave, focus, keyboard, and Narrator checks.
+- Run the full automated suite and sequential Debug and Release builds.
+
+---
+
+### Milestone 8 — `v0.2.0` stabilization and release
+
+**Work types:** Stabilization, release work, documentation
+
+**Status:** Next
+
+**Target:** `v0.2.0`, x64 first
+
+**Estimated size:** Medium
+
+#### Purpose
+
+Ship Rich-text editor v2, Section colors, and improved Concept Dictionary access as one coherent and reproducible minor release.
+
+#### Scope
+
+- Set product, assembly, file, and release metadata for `v0.2.0` using the established version mapping rules.
+- Verify upgrade from the published `v0.1.0` portable release without losing notes, formatting, hierarchy, Concepts, ordering, or workspace settings.
+- Verify migration and restore behavior with representative `v0.1.0` data and backups.
+- Run the full automated, build, publish, and manual WinUI regression workflows.
+- Update README feature documentation, screenshots, release notes, release guide, known limitations, and roadmap evidence.
+- Build and publish the x64 portable ZIP and SHA-256 checksum through GitHub Releases.
+- Use MSIX only if a trusted signing path is available without changing the stable package identity or weakening the documented fallback.
+
+#### Deliberately excluded
+
+- Portable Markdown export.
+- Microsoft Store publication and automatic updates.
+- Required x86 or ARM64 artifacts.
+- Tags, templates, import, sync, and collaboration.
+- Additional product features after release stabilization begins.
+
+#### Dependencies
+
+- Milestones 5, 6, and 7 completed with recorded verification.
+- The manual regression checklist and upgrade fixtures must be current before producing the release candidate.
+
+#### Acceptance criteria
+
+- A representative `v0.1.0` library opens and migrates successfully in `v0.2.0` without data loss.
+- New editor formatting, Section colors, and Concept access work in the published Release build.
+- Existing create, edit, navigate, search, Concept, autosave, backup, and restore workflows remain functional.
+- CI and the documented local release workflow pass from the release commit.
+- Release notes, screenshots, version metadata, artifact checksum, tag, and known limitations match the shipped application.
+
+#### Verification
+
+- Run automated upgrade and persistence tests using representative pre-`v0.2.0` data.
+- Run the full automated suite and clean Debug, Release, and x64 publish builds sequentially.
+- Complete the full manual WinUI regression checklist against the release candidate.
+- Smoke-test the portable artifact from a clean extraction path and verify persistence across restart.
+- Verify backup creation and restoration across the supported version boundary.
+- Confirm Git tag, GitHub Release, artifact, checksum, version metadata, screenshots, and documentation before marking the milestone complete.
+
+---
+
 ## Later
 
-### Milestone 5 — Portable content export
+### Milestone 9 — Portable content export
 
 **Work types:** New product feature
 
@@ -398,8 +643,8 @@ Give users a readable copy of their notes that does not require Syllanote.
 
 #### Dependencies
 
-- Milestone 4 completed.
-- The backup format and first-release data contracts must be stable.
+- Milestone 8 completed and `v0.2.0` published.
+- The expanded editor format set and first post-release data contracts must be stable enough to define explicit Markdown conversion rules.
 
 #### Acceptance criteria
 
@@ -411,8 +656,8 @@ Give users a readable copy of their notes that does not require Syllanote.
 
 #### Verification
 
-- Add automated export tests for hierarchy, filename handling, collisions, Unicode, and empty content.
-- Manually inspect an export containing headings, lists, emphasis, concepts, and non-ASCII text.
+- Add automated export tests for hierarchy, filename handling, collisions, Unicode, empty content, and every supported editor format.
+- Manually inspect an export containing headings, lists, emphasis, colors, highlights, Concepts, and non-ASCII text.
 - Open the exported Markdown in at least one independent Markdown viewer.
 - Confirm that cancelling or failing an export leaves no misleading partial-success state.
 
@@ -421,6 +666,18 @@ Give users a readable copy of their notes that does not require Syllanote.
 ## Ideas / Not committed
 
 The following ideas are intentionally outside the committed roadmap. Each requires a separate product decision before design or implementation begins.
+
+### Search scope and result previews
+
+Allow users to choose between the selected Notebook and all Notebooks, and show a clearer matching-text preview. This should be designed as one coherent search improvement so filtering, keyboard navigation, stale-result handling, and accessibility remain consistent.
+
+### Favorite Pages
+
+Pinned or favorite Pages could provide fast access to frequently used notes. This requires a persistence decision, ordering behavior, an obvious navigation location, and rules for rename, delete, backup, and restore.
+
+### Duplicate Page
+
+Duplicating a Page could make repeated note structures faster without committing to a full template system. A first version would need clear naming, ordering, RTF-copy, plain-text-copy, Concept-recognition, and rollback behavior.
 
 ### Tags
 
