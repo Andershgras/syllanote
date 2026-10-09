@@ -3,7 +3,17 @@
 Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
 > [!NOTE]
-> Syllanote is an actively developed portfolio project. The core note-taking, data-protection, and accessibility workflows are implemented and verified, while packaging and the first versioned release are still in progress.
+> Syllanote `v0.1.0` is prepared as the first versioned x64 Windows release. The portable artifact, release notes, and installation guide are ready; final release verification and GitHub publication are still in progress.
+
+## Screenshots
+
+### Notes and formatting
+
+![Syllanote dark-mode workspace showing notebooks, pages, rich-text formatting, and concept highlighting](docs/images/syllanote-workspace.jpg)
+
+### Concept Dictionary
+
+![Syllanote Concept Dictionary showing a definition and its page reference](docs/images/syllanote-concept-dictionary.jpg)
 
 ## Features
 
@@ -82,6 +92,8 @@ Automated tests live in `Syllanote.Tests` and cover domain behavior, application
 The current manual desktop checks are maintained in the [WinUI regression checklist](docs/manual-regression-checklist.md).
 
 Installation, upgrade, uninstall, local-data, backup, restore, and troubleshooting instructions for the portable release are maintained in the [release guide](docs/release-guide.md).
+
+The complete version mapping, highlights, verification record, and known limitations for the first release are documented in the [`v0.1.0` release notes](docs/release-notes/v0.1.0.md).
 
 ## Project structure
 
