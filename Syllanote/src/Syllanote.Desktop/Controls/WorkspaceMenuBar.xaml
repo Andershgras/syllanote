@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<UserControl
+    x:Class="Syllanote.Desktop.Controls.WorkspaceMenuBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Style x:Key="WorkspaceMenuButtonStyle" TargetType="Button">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="14,4,14,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+        </Style>
+    </UserControl.Resources>
+
+    <Border
+        Padding="4,0"
+        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+        BorderThickness="0,0,0,1">
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <DropDownButton
+                x:Name="ConceptsButton"
+                Style="{StaticResource WorkspaceMenuButtonStyle}"
+                AutomationProperties.Name="Choose a notebook's Concepts"
+                AutomationProperties.HelpText="Open the Concepts menu and choose a notebook. Keyboard shortcut Ctrl+Shift+D."
+                ToolTipService.ToolTip="Choose a notebook's Concepts (Ctrl+Shift+D)">
+                <DropDownButton.KeyboardAccelerators>
+                    <KeyboardAccelerator
+                        Key="D"
+                        Modifiers="Control,Shift"
+                        Invoked="ConceptsKeyboardAccelerator_Invoked" />
+                </DropDownButton.KeyboardAccelerators>
+                <DropDownButton.Flyout>
+                    <MenuFlyout x:Name="ConceptsFlyout" />
+                </DropDownButton.Flyout>
+                <Grid MinWidth="68">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="2" />
+                    </Grid.RowDefinitions>
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="Concepts" />
+                    <Border
+                        x:Name="ConceptsSelectionIndicator"
+                        Grid.Row="1"
+                        Height="2"
+                        Margin="2,0"
+                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                        CornerRadius="1"
+                        Visibility="Collapsed" />
+                </Grid>
+            </DropDownButton>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -353,6 +353,7 @@ namespace Syllanote.Desktop
             NotebookSidebar.SetNavigationEnabled(isEnabled);
             PageSidebar.SetPageListEnabled(isEnabled);
             TopBar.SetLibraryActionsEnabled(isEnabled);
+            WorkspaceMenuBar.SetInteractionEnabled(isEnabled);
         }
 
         private void ShowOperationError(string title, string message)
@@ -504,6 +505,11 @@ namespace Syllanote.Desktop
                 if (e.PropertyName == nameof(ViewModel.SelectedNotebook) ||
                     e.PropertyName == nameof(ViewModel.SelectedSection))
                 {
+                    if (e.PropertyName == nameof(ViewModel.SelectedNotebook))
+                    {
+                        UpdateWorkspaceMenuState();
+                    }
+
                     HideConceptDefinition();
                     RefreshSectionNavigation();
                     UpdatePageState();
@@ -530,6 +536,15 @@ namespace Syllanote.Desktop
         {
             ConceptDictionaryView.Visibility = Visibility.Collapsed;
             EditorView.Visibility = Visibility.Visible;
+            UpdateWorkspaceMenuState();
+        }
+
+        private void UpdateWorkspaceMenuState()
+        {
+            WorkspaceMenuBar.UpdateState(
+                ViewModel.Notebooks,
+                ViewModel.SelectedNotebook,
+                ConceptDictionaryView.Visibility == Visibility.Visible);
         }
 
         private void UpdateConceptEditorState()
@@ -594,6 +609,7 @@ namespace Syllanote.Desktop
                         canMoveDown: index < ViewModel.Notebooks.Count - 1));
             }
 
+            UpdateWorkspaceMenuState();
             RefreshSectionNavigation();
         }
 
@@ -1517,12 +1533,25 @@ namespace Syllanote.Desktop
             titleBar.ButtonPressedForegroundColor = titleBar.ForegroundColor;
         }
 
+        private async void WorkspaceMenuBar_ConceptDictionaryRequested(
+            object sender, Notebook notebook)
+        {
+            await OpenConceptDictionaryAsync(notebook);
+        }
+
         private async void ConceptDictionaryMenuItem_Click(
             object sender, RoutedEventArgs e)
         {
+            if (_notebookActionTarget is Notebook notebook)
+            {
+                await OpenConceptDictionaryAsync(notebook);
+            }
+        }
+
+        private async Task OpenConceptDictionaryAsync(Notebook notebook)
+        {
             if (_isRenamingSelection || _isSearchNavigationInProgress ||
-                _isConceptOperationInProgress ||
-                _notebookActionTarget is not Notebook notebook ||
+                _isConceptOperationInProgress || _isLibraryOperationInProgress ||
                 !await EnsureNotebookSelectedAsync(notebook) ||
                 ViewModel.SelectedNotebook is not Notebook selectedNotebook)
             {
@@ -1560,6 +1589,7 @@ namespace Syllanote.Desktop
                 ConceptDictionaryView.ClearEditor();
                 EditorView.Visibility = Visibility.Collapsed;
                 ConceptDictionaryView.Visibility = Visibility.Visible;
+                UpdateWorkspaceMenuState();
                 QueueKeyboardFocus(
                     ConceptDictionaryView.FocusSelectedConceptOrNewButton);
             }

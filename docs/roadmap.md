@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-10
 
-Current phase: **Milestone 7 — Concept Dictionary discoverability**
+Current phase: **Milestone 8 — `v0.2.0` stabilization and release**
 
 This roadmap is the working plan for evolving the published local-first MVP into `v0.2.0 — Writing & Organization`. The next release is intentionally focused on a richer writing experience, clearer visual organization, and easier access to the notebook-scoped Concept Dictionary while preserving the stability, data safety, and accessibility established in `v0.1.0`.
 
@@ -514,13 +514,11 @@ Help users visually distinguish subjects and work areas without changing the exi
 
 ---
 
-## Now
-
 ### Milestone 7 — Concept Dictionary discoverability
 
 **Work types:** Usability, navigation UI, accessibility
 
-**Status:** Now
+**Status:** Completed
 
 **Estimated size:** Small
 
@@ -530,17 +528,19 @@ Make the existing Concept Dictionary discoverable without requiring users to kno
 
 #### Scope
 
-- Add a visible **Concepts** entry point with both icon and text in the Notebook navigation area.
-- Make the action operate on the selected Notebook and disable it when no Notebook is selected.
+- Add a visible **Concepts** dropdown to a horizontal workspace menu below the top bar.
+- List every Notebook in the dropdown, mark the selected Notebook, and allow direct access to any Notebook's Concept Dictionary.
+- Keep the dropdown available before a Notebook is selected and show **Create a notebook first** when the library is empty.
 - Keep the existing Notebook context-menu action as a secondary route.
-- Add a documented keyboard accelerator, provisionally `Ctrl+Shift+D`.
-- Add tooltip, accessible name, and help text that identify the selected-Notebook scope.
+- Add the documented `Ctrl+Shift+D` keyboard accelerator to open the dropdown.
+- Add tooltip, accessible name, help text, and active-state information that explain the notebook-scoped choice.
 - Improve the empty state so first-time users understand that Concepts define terms and connect them to referenced Pages.
 - Preserve the current **Back to page** behavior, selected Page, and predictable keyboard focus.
 
 #### Product decisions
 
-- Place the primary entry point in the Notebook navigation area because the Dictionary is notebook-scoped.
+- Place the primary entry point in an extensible horizontal workspace menu so future top-level choices can use the same location.
+- Use a Notebook dropdown rather than a disabled action or prerequisite message so the notebook scope is visible before navigation.
 - Do not create a permanent fifth workspace column or a global cross-notebook Dictionary in this milestone.
 
 #### Deliberately excluded
@@ -570,15 +570,22 @@ Make the existing Concept Dictionary discoverable without requiring users to kno
 - Repeat Concept CRUD, recognition, reference navigation, autosave, focus, keyboard, and Narrator checks.
 - Run the full automated suite and sequential Debug and Release builds.
 
+#### Recorded verification
+
+- 193 of 193 automated tests passed on 2026-10-10 after the final dropdown implementation.
+- Sequential x64 Debug and Release builds completed with no warnings or errors on 2026-10-10.
+- The final workspace-menu placement, empty-library guidance, Notebook dropdown, selected-Notebook marker, keyboard access, and Dictionary navigation passed manual approval on 2026-10-10.
+- The existing Notebook context-menu route, Concept CRUD, references, **Back to page**, and notebook-scoped loading remain on the shared navigation path; the full Narrator regression is retained for the Milestone 8 release checklist.
+
 ---
 
-## Next
+## Now
 
 ### Milestone 8 — `v0.2.0` stabilization and release
 
 **Work types:** Stabilization, release work, documentation
 
-**Status:** Next
+**Status:** Now
 
 **Target:** `v0.2.0`, x64 first
 

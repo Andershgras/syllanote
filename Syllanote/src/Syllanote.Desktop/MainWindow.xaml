@@ -17,6 +17,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -47,10 +48,17 @@
             SearchRequested="TopBar_SearchRequested"
             SearchResultInvoked="TopBar_SearchResultInvoked" />
 
-        <StackPanel
+        <controls:WorkspaceMenuBar
+            x:Name="WorkspaceMenuBar"
             Grid.Row="1"
             Grid.ColumnSpan="5"
-            Margin="0,12,0,0"
+            Margin="0,8,0,0"
+            ConceptDictionaryRequested="WorkspaceMenuBar_ConceptDictionaryRequested" />
+
+        <StackPanel
+            Grid.Row="2"
+            Grid.ColumnSpan="5"
+            Margin="0,8,0,0"
             Spacing="8">
             <InfoBar
                 IsClosable="False"
@@ -67,7 +75,7 @@
         </StackPanel>
 
         <Border
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.ColumnSpan="5"
             Style="{StaticResource SyllanotePanelCardStyle}" />
 
@@ -77,7 +85,7 @@
 
         <controls:NotebookSidebar
             x:Name="NotebookSidebar"
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="0"
             NewNotebookRequested="NewNotebookButton_Click"
             NotebookExpandCollapseRequested="NotebookExpandCollapseButton_Click"
@@ -103,7 +111,7 @@
 
         <controls:PageSidebar
             x:Name="PageSidebar"
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="2"
             NewPageRequested="NewPageButton_Click"
             PageSelectionChanged="PageListView_SelectionChanged"
@@ -119,7 +127,7 @@
 
         <controls:EditorView
             x:Name="EditorView"
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="4"
             ParagraphStyleSelectionChanged="ParagraphStyleComboBox_SelectionChanged"
             FontSizeSelectionChanged="FontSizeComboBox_SelectionChanged"
@@ -142,7 +150,7 @@
 
         <controls:ConceptDictionaryView
             x:Name="ConceptDictionaryView"
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="4"
             Margin="16"
             Visibility="Collapsed"
@@ -155,7 +163,7 @@
             DeleteRequested="DeleteConceptButton_Click" />
 
         <primitives:Thumb
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="1"
             Style="{StaticResource SyllanoteColumnSplitterStyle}"
             AutomationProperties.Name="Resize notebook panel"
@@ -163,7 +171,7 @@
             DragCompleted="NotebookColumnSplitter_DragCompleted" />
 
         <primitives:Thumb
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="3"
             Style="{StaticResource SyllanoteColumnSplitterStyle}"
             AutomationProperties.Name="Resize page panel"
