@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-10
 
-Current phase: **Milestone 5 — Rich-text editor v2**
+Current phase: **Milestone 7 — Concept Dictionary discoverability**
 
 This roadmap is the working plan for evolving the published local-first MVP into `v0.2.0 — Writing & Organization`. The next release is intentionally focused on a richer writing experience, clearer visual organization, and easier access to the notebook-scoped Concept Dictionary while preserving the stability, data safety, and accessibility established in `v0.1.0`.
 
@@ -372,13 +372,13 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 
 ---
 
-## Now
+## Completed since v0.1.0
 
 ### Milestone 5 — Rich-text editor v2
 
 **Work types:** New product feature, editor stabilization, accessibility
 
-**Status:** Now
+**Status:** Completed
 
 **Estimated size:** Large
 
@@ -431,20 +431,25 @@ Give users more control over note presentation while preserving autosave, search
 
 #### Known limitation
 
-- WinUI 3 `RichEditBox` can temporarily render user-selected foreground colors as the automatic theme foreground when the Windows app theme changes while Syllanote is open. The persisted RTF retains the selected colors, and they return after reopening Syllanote. Track a focused editor-theme stabilization task before the `v0.2.0` release; this acceptance gap does not block work on the next roadmap milestone.
+- WinUI 3 `RichEditBox` can temporarily render user-selected foreground colors as the automatic theme foreground when the Windows app theme changes while Syllanote is open. The persisted RTF retains the selected colors, and they return after reopening Syllanote. Reloading the stored RTF and recreating the editor control were both manually tested without correcting the live rendering. Further work is deferred until a relevant Windows App SDK/editor change or a future editor replacement; the documented limitation does not block `v0.2.0`.
 
 #### Verification
 
 - Add focused tests for any non-UI RTF color-preservation or normalization behavior.
 - Run the full automated test suite, then Debug and Release builds sequentially.
 - Manually test each format on selected text, a collapsed selection, mixed-format text, and empty pages.
-- Verify save, navigation, restart, search, Concept recognition, Concept flyouts, theme changes, and high contrast with colored and highlighted text.
+- Verify save, navigation, restart, search, Concept recognition, Concept flyouts, high contrast, and the documented live-theme limitation with colored and highlighted text.
 - Exercise undo and redo around every new formatting command even though dedicated undo and redo buttons are outside this milestone.
 - Inspect the toolbar at 125%, 150%, and 200% display scaling and at the minimum supported window width.
 
----
+#### Recorded verification
 
-## Next
+- 193 of 193 automated tests passed on 2026-10-10 after the unsuccessful live-theme workarounds were removed.
+- Sequential x64 Debug and Release builds completed with no warnings or errors on 2026-10-10.
+- Manual checks confirmed that user-selected foreground colors persist in stored RTF and return after restarting Syllanote, while live Windows theme changes retain the documented rendering limitation.
+- The RTF reload and editor-control recreation workarounds did not fix the WinUI rendering behavior and were removed rather than retained as unverified complexity.
+
+---
 
 ### Milestone 6 — Persistent Section colors
 
@@ -509,11 +514,13 @@ Help users visually distinguish subjects and work areas without changing the exi
 
 ---
 
+## Now
+
 ### Milestone 7 — Concept Dictionary discoverability
 
 **Work types:** Usability, navigation UI, accessibility
 
-**Status:** Next
+**Status:** Now
 
 **Estimated size:** Small
 
@@ -564,6 +571,8 @@ Make the existing Concept Dictionary discoverable without requiring users to kno
 - Run the full automated suite and sequential Debug and Release builds.
 
 ---
+
+## Next
 
 ### Milestone 8 — `v0.2.0` stabilization and release
 
