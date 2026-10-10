@@ -3,17 +3,17 @@
 Syllanote is a local-first Windows note-taking application built for students. It combines a familiar notebook structure with rich-text notes, fast search, and a notebook-specific concept dictionary that connects important terms to the pages where they are used.
 
 > [!NOTE]
-> Syllanote `v0.1.0` is the first published x64 Windows release. Download the portable ZIP and its SHA-256 checksum from the [GitHub release](https://github.com/Andershgras/syllanote/releases/tag/v0.1.0).
+> Syllanote `v0.2.0 — Writing & Organization` is currently undergoing release-candidate verification. The latest published version remains [`v0.1.0`](https://github.com/Andershgras/syllanote/releases/tag/v0.1.0) until the new ZIP, checksum, tag, and GitHub Release are verified.
 
 ## Screenshots
 
 ### Notes and formatting
 
-![Syllanote dark-mode workspace showing notebooks, pages, rich-text formatting, and concept highlighting](docs/images/syllanote-workspace.jpg)
+![Syllanote v0.2.0 workspace showing Section colors and expanded rich-text formatting](docs/images/syllanote-workspace-v0.2.0.jpg)
 
 ### Concept Dictionary
 
-![Syllanote Concept Dictionary showing a definition and its page reference](docs/images/syllanote-concept-dictionary.jpg)
+![Syllanote v0.2.0 Concepts menu with direct Notebook selection](docs/images/syllanote-concepts-menu-v0.2.0.jpg)
 
 ## Features
 
@@ -23,6 +23,7 @@ Syllanote is a local-first Windows note-taking application built for students. I
 - Navigate through a three-pane workspace with expandable notebooks and clear selection states
 - Keep the selected page and navigation hierarchy stable while moving between notes
 - Persist the order of notebooks, sections, and pages locally
+- Assign, change, or remove an optional color marker for each Section
 
 ### Write and format
 
@@ -30,7 +31,13 @@ Syllanote is a local-first Windows note-taking application built for students. I
 - Autosave changes while navigating between pages
 - Format paragraphs as Normal, Heading 1, or Heading 2
 - Apply bold, italic, and underline formatting
+- Apply strikethrough, curated text colors, and text highlighting
+- Choose from a focused set of font sizes
 - Create bulleted and numbered lists
+- Align paragraphs left, center, or right
+- Increase or decrease paragraph indentation and clear formatting
+- See live word and character counts without storing derived data
+- Reach formatting actions through a responsive overflow menu at narrow widths
 - Preserve rich-text formatting between application sessions
 
 Page content is stored as both Rich Text Format (RTF) and searchable plain text. This keeps formatting independent from search and concept recognition.
@@ -40,6 +47,8 @@ Page content is stored as both Rich Text Format (RTF) and searchable plain text.
 - Search page titles and content across all notebooks
 - Start a search with `Enter` or focus search with `Ctrl+F`
 - Create, update, and delete concepts within each notebook
+- Open a visible **Concepts** workspace menu and choose any Notebook directly
+- Open the Concepts menu with `Ctrl+Shift+D`
 - Recognize and highlight concepts in page content
 - Open a highlighted concept to read its definition
 - See which pages reference a concept and navigate directly to them
@@ -91,9 +100,9 @@ Automated tests live in `Syllanote.Tests` and cover domain behavior, application
 
 The current manual desktop checks are maintained in the [WinUI regression checklist](docs/manual-regression-checklist.md).
 
-Installation, upgrade, uninstall, local-data, backup, restore, and troubleshooting instructions for the portable release are maintained in the [release guide](docs/release-guide.md).
+Installation, upgrade, uninstall, local-data, backup, restore, and troubleshooting instructions for portable releases are maintained in the [release guide](docs/release-guide.md).
 
-The complete version mapping, highlights, verification record, and known limitations for the first release are documented in the [`v0.1.0` release notes](docs/release-notes/v0.1.0.md).
+The next release's version mapping, highlights, verification status, and known limitations are documented in the [`v0.2.0` release notes](docs/release-notes/v0.2.0.md). The published first-release record remains available in the [`v0.1.0` release notes](docs/release-notes/v0.1.0.md).
 
 ## Project structure
 
@@ -154,7 +163,7 @@ dotnet test Syllanote/tests/Syllanote.Tests/Syllanote.Tests.csproj -c Debug -m:1
 
 The `-m:1` option runs the test project without parallel MSBuild workers, which gives more predictable results for its SQLite integration tests.
 
-The current automated baseline is 160 passing tests. On 2026-10-09, restore, Debug and Release builds, and the x64 portable publish completed successfully; both builds finished with no warnings or errors.
+The current automated baseline is 195 passing tests. This includes direct migration and backup-restore coverage from a representative `v0.1.0` library to `v0.2.0`. Clean release-candidate builds and the x64 portable publish are completed during Milestone 8 before publication.
 
 The normal WinUI workflow, startup failure handling, autosave recovery, and manual backup and restore flow were also verified on 2026-10-01.
 
@@ -170,7 +179,7 @@ The committed x64 profile produces an unpackaged, self-contained release that in
 .\scripts\build-portable-release.ps1
 ```
 
-The ZIP and its SHA-256 checksum are written to `artifacts/`. For `v0.1.0`, the files are named `Syllanote-v0.1.0-win-x64.zip` and `Syllanote-v0.1.0-win-x64.zip.sha256`.
+The ZIP and its SHA-256 checksum are written to `artifacts/`. For `v0.2.0`, the files are named `Syllanote-v0.2.0-win-x64.zip` and `Syllanote-v0.2.0-win-x64.zip.sha256`.
 
 To verify the underlying publish directly without creating the ZIP:
 
@@ -210,7 +219,8 @@ The application also uses Windows local settings to retain interface preferences
 - Notes are local to one device; cloud sync and collaboration are not implemented
 - Scheduled backups, backup encryption, selective restore, import, and export are not implemented
 - Desktop interactions still require manual verification because the current automated suite does not drive the WinUI interface
-- The first portable release is not code-signed and does not include an installer or automatic updates
+- When Windows changes between light and dark app mode while Syllanote is open, user-selected text colors can temporarily render as the automatic theme foreground; the colors remain stored and return after restart
+- The portable release is not code-signed and does not include an installer or automatic updates
 
 ## License
 

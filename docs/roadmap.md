@@ -635,6 +635,18 @@ Ship Rich-text editor v2, Section colors, and improved Concept Dictionary access
 - Verify backup creation and restoration across the supported version boundary.
 - Confirm Git tag, GitHub Release, artifact, checksum, version metadata, screenshots, and documentation before marking the milestone complete.
 
+#### Recorded progress
+
+- 195 of 195 automated tests passed on 2026-10-10, including direct migration
+  and backup restoration from a representative final-`v0.1.0` schema with
+  notebooks, Sections, Pages, RTF, ordering, and Concepts.
+- Product, assembly, file, and MSIX manifest metadata have been prepared for the
+  `v0.2.0` release candidate.
+- README feature documentation, release notes, release guide, known limitations,
+  and the manual regression checklist have been updated for the release
+  candidate. Final build, manual, artifact, CI, tag, and GitHub Release evidence
+  remain pending.
+
 ---
 
 ## Later

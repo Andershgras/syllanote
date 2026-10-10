@@ -1,8 +1,10 @@
 # Syllanote release guide
 
-This guide applies to the portable x64 release of Syllanote `v0.1.0`.
-The portable ZIP is the public fallback because a trusted certificate is not
-currently available for direct MSIX distribution.
+This guide applies to Syllanote's portable x64 releases. The examples below use
+`v0.2.0`, which is still a release candidate until its final artifact, checksum,
+tag, and GitHub Release have been verified. The portable ZIP remains the public
+distribution format because a trusted certificate is not currently available
+for direct MSIX distribution.
 
 ## System requirements
 
@@ -17,18 +19,18 @@ separate .NET installation are not required.
 
 Download both of these files from the GitHub release:
 
-- `Syllanote-v0.1.0-win-x64.zip`
-- `Syllanote-v0.1.0-win-x64.zip.sha256`
+- `Syllanote-v0.2.0-win-x64.zip`
+- `Syllanote-v0.2.0-win-x64.zip.sha256`
 
 Verify the ZIP before extracting it:
 
 ```powershell
-Get-FileHash .\Syllanote-v0.1.0-win-x64.zip -Algorithm SHA256
-Get-Content .\Syllanote-v0.1.0-win-x64.zip.sha256
+Get-FileHash .\Syllanote-v0.2.0-win-x64.zip -Algorithm SHA256
+Get-Content .\Syllanote-v0.2.0-win-x64.zip.sha256
 ```
 
 The two hashes must match. Only run a release downloaded from the official
-Syllanote repository. The first release is not code-signed, so Windows or an
+Syllanote repository. The portable release is not code-signed, so Windows or an
 organization policy may show a warning or block it. Do not disable security
 controls to work around an organization policy.
 
@@ -48,8 +50,12 @@ without the files and folders beside it.
 2. Close every running Syllanote window.
 3. Extract the new version into a new program folder.
 4. Start the new `Syllanote.Desktop.exe`.
-5. Confirm that the expected notebooks and pages open before deleting the old
-   program folder.
+5. Confirm that the expected notebooks, Sections, Pages, formatting, ordering,
+   and Concepts open before deleting the old program folder.
+
+When upgrading from `v0.1.0` to `v0.2.0`, existing Sections initially have no
+color marker. Assigning a color is optional and does not change their names,
+order, or Pages.
 
 Portable releases reuse the same local data directory, and pending database
 migrations are applied at startup. Keep the package identity and the portable
@@ -131,9 +137,13 @@ replaced.
 
 ## Known limitations
 
-- Only 64-bit Windows is supported by the first release artifact.
+- Only 64-bit Windows is required for the public release artifact.
 - The portable release is not code-signed and has no installer or automatic
   updater.
+- When Windows changes between light and dark app mode while Syllanote is open,
+  WinUI 3 can temporarily render user-selected foreground colors as the
+  automatic theme foreground. The selected colors remain in the stored RTF and
+  return after restarting Syllanote. Text highlighting remains visible.
 - Notes remain local to one Windows user profile and device.
 - Cloud sync and collaboration are not implemented.
 - Scheduled backups, backup encryption, selective restore, import, and export
