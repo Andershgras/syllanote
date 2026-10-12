@@ -103,3 +103,9 @@ Complete this section without using a mouse. Repeat the Narrator checks with Win
 | --- | --- | --- | --- | --- |
 | 2026-10-01 | Self-contained `Syllanote-v0.1.0-win-x64.zip` built with checksum | Passed — the extracted application opened, saved a page, and reloaded it correctly after restart | Passed — the Syllanote icon appeared on the executable | 160/160 tests passed; x64 Release publish completed successfully |
 | 2026-10-09 | Final `Syllanote-v0.1.0-win-x64.zip` rebuilt from `main` commit `a84e586`, published through GitHub Releases, and verified against SHA-256 `4470b4d699d250e730247772cf87146e0d4711c994523da615b78ecd65aeeefb` | Passed — portable startup and page persistence across restart passed; Page move up, move down, and rename were retested successfully after correcting the context-menu target | Passed — the Syllanote icon appeared on the published executable | 160/160 tests passed; Debug, Release, and x64 publish builds passed; Windows CI passed for `a84e586` |
+
+### v0.2.0 release-candidate display verification record
+
+| Date | Scaling | High contrast | Live theme change | Notes |
+| --- | --- | --- | --- | --- |
+| 2026-10-12 | Passed at 125%, 150%, and 200% | Passed | Passed | User-confirmed display checks on the release candidate. Page actions also opened with `Shift+F10`, and `Escape` closed the menu, on the corrected Debug build. |

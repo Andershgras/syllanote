@@ -2459,8 +2459,18 @@ namespace Syllanote.Desktop
             object e)
         {
             var flyout = sender as MenuFlyout;
-            _pageActionTarget = flyout?.Target?.DataContext
-                as Syllanote.Domain.Entities.Page;
+            _pageActionTarget = flyout?.Target switch
+            {
+                ListViewItem
+                {
+                    Content: Syllanote.Domain.Entities.Page page
+                } => page,
+                FrameworkElement
+                {
+                    DataContext: Syllanote.Domain.Entities.Page page
+                } => page,
+                _ => PageSidebar.SelectedPage
+            };
 
             var index = _pageActionTarget is null
                 ? -1
