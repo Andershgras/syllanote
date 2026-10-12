@@ -52,6 +52,16 @@ namespace Syllanote.Desktop
         private const int MinimumWindowHeight = 600;
         private static readonly Windows.UI.Color ConceptHighlightColor =
             ColorHelper.FromArgb(96, 0, 120, 212);
+        private static readonly Windows.UI.Color YellowUserHighlightColor =
+            ColorHelper.FromArgb(255, 255, 241, 0);
+        private static readonly Windows.UI.Color GreenUserHighlightColor =
+            ColorHelper.FromArgb(255, 168, 230, 207);
+        private static readonly Windows.UI.Color BlueUserHighlightColor =
+            ColorHelper.FromArgb(255, 167, 216, 255);
+        private static readonly Windows.UI.Color PinkUserHighlightColor =
+            ColorHelper.FromArgb(255, 255, 192, 203);
+        private static readonly Windows.UI.Color GrayUserHighlightColor =
+            ColorHelper.FromArgb(255, 208, 208, 208);
 
         private bool _isRenamingSelection;
         private bool _isSearchNavigationInProgress;
@@ -1136,11 +1146,11 @@ namespace Syllanote.Desktop
 
             var color = colorName switch
             {
-                "Yellow" => ColorHelper.FromArgb(255, 255, 241, 0),
-                "Green" => ColorHelper.FromArgb(255, 168, 230, 207),
-                "Blue" => ColorHelper.FromArgb(255, 167, 216, 255),
-                "Pink" => ColorHelper.FromArgb(255, 255, 192, 203),
-                "Gray" => ColorHelper.FromArgb(255, 208, 208, 208),
+                "Yellow" => YellowUserHighlightColor,
+                "Green" => GreenUserHighlightColor,
+                "Blue" => BlueUserHighlightColor,
+                "Pink" => PinkUserHighlightColor,
+                "Gray" => GrayUserHighlightColor,
                 _ => Colors.Transparent
             };
 
@@ -1346,7 +1356,8 @@ namespace Syllanote.Desktop
                     formatRange.SetRange(position, endPosition);
                 }
 
-                if (formatRange.CharacterFormat.BackgroundColor.A != 0)
+                if (IsUserHighlightColor(
+                    formatRange.CharacterFormat.BackgroundColor))
                 {
                     return true;
                 }
@@ -1356,6 +1367,20 @@ namespace Syllanote.Desktop
 
             return false;
         }
+
+        private static bool IsUserHighlightColor(Windows.UI.Color color) =>
+            HasSameRgb(color, YellowUserHighlightColor) ||
+            HasSameRgb(color, GreenUserHighlightColor) ||
+            HasSameRgb(color, BlueUserHighlightColor) ||
+            HasSameRgb(color, PinkUserHighlightColor) ||
+            HasSameRgb(color, GrayUserHighlightColor);
+
+        private static bool HasSameRgb(
+            Windows.UI.Color first,
+            Windows.UI.Color second) =>
+            first.R == second.R &&
+            first.G == second.G &&
+            first.B == second.B;
 
         private void ClearConceptHighlights(int contentLength)
         {
