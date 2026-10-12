@@ -158,6 +158,8 @@ public class SqliteLibraryBackupServiceTests
     {
         var notebook = new Notebook("Algorithms", 2);
         var section = new Section(notebook.Id, "Graphs", 1);
+        section.ChangeColor(SectionColorKeys.Teal);
+        var uncoloredSection = new Section(notebook.Id, "Dynamic programming", 2);
         var page = new Page(section.Id, "Breadth-first search", 3);
         page.UpdateContent(
             "BFS visits neighbouring nodes first.",
@@ -167,7 +169,7 @@ public class SqliteLibraryBackupServiceTests
             "Breadth-first search",
             "A graph traversal algorithm.");
 
-        context.AddRange(notebook, section, page, concept);
+        context.AddRange(notebook, section, uncoloredSection, page, concept);
         await context.SaveChangesAsync();
     }
 
@@ -177,12 +179,16 @@ public class SqliteLibraryBackupServiceTests
         await using var context = CreateContext(databasePath);
 
         Assert.AreEqual(1, await context.Notebooks.CountAsync());
-        Assert.AreEqual(1, await context.Sections.CountAsync());
+        Assert.AreEqual(2, await context.Sections.CountAsync());
         Assert.AreEqual(1, await context.Pages.CountAsync());
         Assert.AreEqual(1, await context.Concepts.CountAsync());
 
         var notebook = await context.Notebooks.SingleAsync();
-        var section = await context.Sections.SingleAsync();
+        var sections = await context.Sections
+            .OrderBy(item => item.SortOrder)
+            .ToListAsync();
+        var section = sections[0];
+        var uncoloredSection = sections[1];
         var page = await context.Pages.SingleAsync();
         var concept = await context.Concepts.SingleAsync();
 
@@ -190,6 +196,9 @@ public class SqliteLibraryBackupServiceTests
         Assert.AreEqual(2, notebook.SortOrder);
         Assert.AreEqual("Graphs", section.Name);
         Assert.AreEqual(1, section.SortOrder);
+        Assert.AreEqual(SectionColorKeys.Teal, section.ColorKey);
+        Assert.AreEqual("Dynamic programming", uncoloredSection.Name);
+        Assert.IsNull(uncoloredSection.ColorKey);
         Assert.AreEqual("Breadth-first search", page.Title);
         Assert.AreEqual(3, page.SortOrder);
         Assert.AreEqual(

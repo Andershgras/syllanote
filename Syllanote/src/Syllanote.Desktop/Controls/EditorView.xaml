@@ -14,6 +14,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBox
@@ -44,21 +45,38 @@
                 CornerRadius="6"
                 ClosedDisplayMode="Compact"
                 DefaultLabelPosition="Collapsed"
-                IsDynamicOverflowEnabled="False"
-                OverflowButtonVisibility="Collapsed"
+                IsDynamicOverflowEnabled="True"
+                OverflowButtonVisibility="Auto"
                 Visibility="Collapsed">
                 <CommandBar.Content>
-                    <ComboBox
-                        x:Name="ParagraphStyleComboBox"
-                        Width="140"
-                        Height="36"
-                        PlaceholderText="Normal"
-                        AutomationProperties.Name="Paragraph style"
-                        SelectionChanged="ParagraphStyleComboBox_SelectionChanged">
-                        <ComboBoxItem Content="Normal" />
-                        <ComboBoxItem Content="Heading 1" />
-                        <ComboBoxItem Content="Heading 2" />
-                    </ComboBox>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox
+                            x:Name="ParagraphStyleComboBox"
+                            Width="132"
+                            Height="36"
+                            PlaceholderText="Normal"
+                            AutomationProperties.Name="Paragraph style"
+                            SelectionChanged="ParagraphStyleComboBox_SelectionChanged">
+                            <ComboBoxItem Content="Normal" />
+                            <ComboBoxItem Content="Heading 1" />
+                            <ComboBoxItem Content="Heading 2" />
+                        </ComboBox>
+                        <ComboBox
+                            x:Name="FontSizeComboBox"
+                            Width="96"
+                            Height="36"
+                            PlaceholderText="Size"
+                            AutomationProperties.Name="Font size"
+                            SelectionChanged="FontSizeComboBox_SelectionChanged">
+                            <ComboBoxItem Content="8 pt" Tag="8" />
+                            <ComboBoxItem Content="10.5 pt" Tag="10.5" />
+                            <ComboBoxItem Content="12 pt" Tag="12" />
+                            <ComboBoxItem Content="14 pt" Tag="14" />
+                            <ComboBoxItem Content="15 pt" Tag="15" />
+                            <ComboBoxItem Content="18 pt" Tag="18" />
+                            <ComboBoxItem Content="24 pt" Tag="24" />
+                        </ComboBox>
+                    </StackPanel>
                 </CommandBar.Content>
 
                 <CommandBar.PrimaryCommands>
@@ -109,6 +127,17 @@
                             <SymbolIcon Symbol="Underline" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
+                    <AppBarToggleButton
+                        x:Name="StrikethroughButton"
+                        Label="Strikethrough"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Strikethrough"
+                        ToolTipService.ToolTip="Strikethrough"
+                        Click="StrikethroughButton_Click">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xEDE0;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
 
                     <AppBarSeparator />
 
@@ -134,6 +163,167 @@
                             <FontIcon Glyph="&#xEA1C;" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
+
+                    <AppBarSeparator />
+
+                    <AppBarToggleButton
+                        x:Name="AlignLeftButton"
+                        Label="Align left"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Align left"
+                        ToolTipService.ToolTip="Align left"
+                        Click="AlignLeftButton_Click">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8E4;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarToggleButton
+                        x:Name="AlignCenterButton"
+                        Label="Align center"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Align center"
+                        ToolTipService.ToolTip="Align center"
+                        Click="AlignCenterButton_Click">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8E3;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarToggleButton
+                        x:Name="AlignRightButton"
+                        Label="Align right"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Align right"
+                        ToolTipService.ToolTip="Align right"
+                        Click="AlignRightButton_Click">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8E2;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarButton
+                        x:Name="DecreaseIndentButton"
+                        Label="Decrease indent"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Decrease indent"
+                        ToolTipService.ToolTip="Decrease indent"
+                        Click="DecreaseIndentButton_Click">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8FE;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        Label="Increase indent"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Increase indent"
+                        ToolTipService.ToolTip="Increase indent"
+                        Click="IncreaseIndentButton_Click">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8FF;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        Label="Clear formatting"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Clear formatting"
+                        ToolTipService.ToolTip="Clear formatting"
+                        Click="ClearFormattingButton_Click">
+                        <AppBarButton.Icon>
+                            <SymbolIcon Symbol="Clear" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+
+                    <AppBarSeparator />
+
+                    <AppBarButton
+                        Label="Text color"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Text color"
+                        ToolTipService.ToolTip="Text color">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="A" FontWeight="SemiBold" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuFlyoutItem
+                                    Text="Automatic"
+                                    Tag="Automatic"
+                                    Click="TextColorMenuFlyoutItem_Click" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="Red" Tag="Red" Click="TextColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFE74856" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Orange" Tag="Orange" Click="TextColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFF7630C" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Green" Tag="Green" Click="TextColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FF13A10E" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Blue" Tag="Blue" Click="TextColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FF0078D4" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Purple" Tag="Purple" Click="TextColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FF886CE4" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Gray" Tag="Gray" Click="TextColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FF767676" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                    <AppBarButton
+                        Label="Highlight color"
+                        AllowFocusOnInteraction="False"
+                        AutomationProperties.Name="Highlight color"
+                        ToolTipService.ToolTip="Highlight color">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE7E6;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuFlyoutItem
+                                    Text="No highlight"
+                                    Tag="None"
+                                    Click="HighlightColorMenuFlyoutItem_Click" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="Yellow" Tag="Yellow" Click="HighlightColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFFFF100" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Green" Tag="Green" Click="HighlightColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFA8E6CF" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Blue" Tag="Blue" Click="HighlightColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFA7D8FF" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Pink" Tag="Pink" Click="HighlightColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFFFC0CB" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Gray" Tag="Gray" Click="HighlightColorMenuFlyoutItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#x25CF;" Foreground="#FFD0D0D0" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
                 </CommandBar.PrimaryCommands>
             </CommandBar>
 
@@ -175,9 +365,20 @@
                 </primitives:FlyoutBase.AttachedFlyout>
             </RichEditBox>
 
+            <TextBlock
+                x:Name="PageStatisticsTextBlock"
+                Grid.Row="3"
+                Margin="0,6,4,0"
+                HorizontalAlignment="Right"
+                FontSize="12"
+                Opacity="0.65"
+                AutomationProperties.Name="Page statistics"
+                IsTabStop="False"
+                Visibility="Collapsed" />
+
             <StackPanel
                 x:Name="EditorEmptyState"
-                Grid.RowSpan="3"
+                Grid.RowSpan="4"
                 MaxWidth="260"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"

@@ -205,6 +205,17 @@
                                                 Background="{ThemeResource AccentFillColorDefaultBrush}"
                                                 Visibility="{x:Bind SelectedSectionIndicatorVisibility, Mode=OneWay}" />
 
+                                            <Border
+                                                Grid.Column="1"
+                                                Width="4"
+                                                Height="18"
+                                                Margin="5,0,0,0"
+                                                HorizontalAlignment="Left"
+                                                CornerRadius="2"
+                                                Background="{x:Bind SectionColorBrush}"
+                                                IsHitTestVisible="False"
+                                                Visibility="{x:Bind SectionColorMarkerVisibility}" />
+
                                             <Button
                                                 Grid.Column="1"
                                                 Style="{StaticResource NavigationRowButtonStyle}"
@@ -226,6 +237,18 @@
                                                             IsEnabled="{x:Bind CanMoveDown}"
                                                             Click="MoveSectionDownMenuItem_Click" />
                                                         <MenuFlyoutSeparator />
+                                                        <MenuFlyoutSubItem Text="Change color">
+                                                            <ToggleMenuFlyoutItem Text="No color" Tag="none" Click="SectionColorMenuItem_Click" />
+                                                            <MenuFlyoutSeparator />
+                                                            <ToggleMenuFlyoutItem Text="Red" Tag="red" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Orange" Tag="orange" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Yellow" Tag="yellow" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Green" Tag="green" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Teal" Tag="teal" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Blue" Tag="blue" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Purple" Tag="purple" Click="SectionColorMenuItem_Click" />
+                                                            <ToggleMenuFlyoutItem Text="Pink" Tag="pink" Click="SectionColorMenuItem_Click" />
+                                                        </MenuFlyoutSubItem>
                                                         <MenuFlyoutItem
                                                             Text="Rename"
                                                             Click="RenameSectionMenuItem_Click" />

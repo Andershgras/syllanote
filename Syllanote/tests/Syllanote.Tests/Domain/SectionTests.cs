@@ -101,5 +101,50 @@ namespace Syllanote.Tests.Domain
 
             Assert.AreEqual("Original name", section.Name);
         }
+
+        [DataTestMethod]
+        [DataRow(SectionColorKeys.Red)]
+        [DataRow(SectionColorKeys.Orange)]
+        [DataRow(SectionColorKeys.Yellow)]
+        [DataRow(SectionColorKeys.Green)]
+        [DataRow(SectionColorKeys.Teal)]
+        [DataRow(SectionColorKeys.Blue)]
+        [DataRow(SectionColorKeys.Purple)]
+        [DataRow(SectionColorKeys.Pink)]
+        public void ChangeColor_WithSupportedKey_UpdatesColor(string colorKey)
+        {
+            var section = new Section(Guid.NewGuid(), "Section");
+
+            section.ChangeColor(colorKey);
+
+            Assert.AreEqual(colorKey, section.ColorKey);
+        }
+
+        [TestMethod]
+        public void ChangeColor_WithNull_RemovesColor()
+        {
+            var section = new Section(Guid.NewGuid(), "Section");
+            section.ChangeColor(SectionColorKeys.Blue);
+
+            section.ChangeColor(null);
+
+            Assert.IsNull(section.ColorKey);
+        }
+
+        [DataTestMethod]
+        [DataRow("")]
+        [DataRow("blue ")]
+        [DataRow("Blue")]
+        [DataRow("unsupported")]
+        public void ChangeColor_WithUnsupportedKey_ThrowsArgumentException(
+            string colorKey)
+        {
+            var section = new Section(Guid.NewGuid(), "Section");
+
+            Assert.ThrowsException<ArgumentException>(
+                () => section.ChangeColor(colorKey));
+
+            Assert.IsNull(section.ColorKey);
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-10
 
-Current phase: **Milestone 5 — Rich-text editor v2**
+Current phase: **Milestone 8 — `v0.2.0` stabilization and release**
 
 This roadmap is the working plan for evolving the published local-first MVP into `v0.2.0 — Writing & Organization`. The next release is intentionally focused on a richer writing experience, clearer visual organization, and easier access to the notebook-scoped Concept Dictionary while preserving the stability, data safety, and accessibility established in `v0.1.0`.
 
@@ -372,13 +372,13 @@ Produce a reproducible, installable, and portfolio-ready first release that can 
 
 ---
 
-## Now
+## Completed since v0.1.0
 
 ### Milestone 5 — Rich-text editor v2
 
 **Work types:** New product feature, editor stabilization, accessibility
 
-**Status:** Now
+**Status:** Completed
 
 **Estimated size:** Large
 
@@ -429,24 +429,33 @@ Give users more control over note presentation while preserving autosave, search
 - The formatting toolbar remains reachable with mouse, keyboard, and Narrator at supported display scales and narrow window widths.
 - Word and character counts update without marking an otherwise unchanged page as dirty.
 
+#### Known limitation
+
+- WinUI 3 `RichEditBox` can temporarily render user-selected foreground colors as the automatic theme foreground when the Windows app theme changes while Syllanote is open. The persisted RTF retains the selected colors, and they return after reopening Syllanote. Reloading the stored RTF and recreating the editor control were both manually tested without correcting the live rendering. Further work is deferred until a relevant Windows App SDK/editor change or a future editor replacement; the documented limitation does not block `v0.2.0`.
+
 #### Verification
 
 - Add focused tests for any non-UI RTF color-preservation or normalization behavior.
 - Run the full automated test suite, then Debug and Release builds sequentially.
 - Manually test each format on selected text, a collapsed selection, mixed-format text, and empty pages.
-- Verify save, navigation, restart, search, Concept recognition, Concept flyouts, theme changes, and high contrast with colored and highlighted text.
+- Verify save, navigation, restart, search, Concept recognition, Concept flyouts, high contrast, and the documented live-theme limitation with colored and highlighted text.
 - Exercise undo and redo around every new formatting command even though dedicated undo and redo buttons are outside this milestone.
 - Inspect the toolbar at 125%, 150%, and 200% display scaling and at the minimum supported window width.
 
----
+#### Recorded verification
 
-## Next
+- 193 of 193 automated tests passed on 2026-10-10 after the unsuccessful live-theme workarounds were removed.
+- Sequential x64 Debug and Release builds completed with no warnings or errors on 2026-10-10.
+- Manual checks confirmed that user-selected foreground colors persist in stored RTF and return after restarting Syllanote, while live Windows theme changes retain the documented rendering limitation.
+- The RTF reload and editor-control recreation workarounds did not fix the WinUI rendering behavior and were removed rather than retained as unverified complexity.
+
+---
 
 ### Milestone 6 — Persistent Section colors
 
 **Work types:** New product feature, persistence, navigation UI
 
-**Status:** Next
+**Status:** Completed
 
 **Estimated size:** Medium
 
@@ -496,13 +505,20 @@ Help users visually distinguish subjects and work areas without changing the exi
 - Manually test color selection, removal, navigation, ordering, rename, delete, restart, themes, keyboard use, and Narrator.
 - Run the full automated suite and sequential Debug and Release builds.
 
+#### Recorded verification
+
+- 193 of 193 automated tests passed on 2026-10-10, including Section color validation, persistence, `v0.1.0` database upgrade, backup, and restore coverage.
+- Sequential x64 Debug and Release builds completed successfully on 2026-10-10.
+- Assigning, changing, removing, and retaining Section colors across restart passed manual verification on 2026-10-10.
+- Section markers and existing navigation states passed manual checks in both light and dark themes.
+
 ---
 
 ### Milestone 7 — Concept Dictionary discoverability
 
 **Work types:** Usability, navigation UI, accessibility
 
-**Status:** Next
+**Status:** Completed
 
 **Estimated size:** Small
 
@@ -512,17 +528,19 @@ Make the existing Concept Dictionary discoverable without requiring users to kno
 
 #### Scope
 
-- Add a visible **Concepts** entry point with both icon and text in the Notebook navigation area.
-- Make the action operate on the selected Notebook and disable it when no Notebook is selected.
+- Add a visible **Concepts** dropdown to a horizontal workspace menu below the top bar.
+- List every Notebook in the dropdown, mark the selected Notebook, and allow direct access to any Notebook's Concept Dictionary.
+- Keep the dropdown available before a Notebook is selected and show **Create a notebook first** when the library is empty.
 - Keep the existing Notebook context-menu action as a secondary route.
-- Add a documented keyboard accelerator, provisionally `Ctrl+Shift+D`.
-- Add tooltip, accessible name, and help text that identify the selected-Notebook scope.
+- Add the documented `Ctrl+Shift+D` keyboard accelerator to open the dropdown.
+- Add tooltip, accessible name, help text, and active-state information that explain the notebook-scoped choice.
 - Improve the empty state so first-time users understand that Concepts define terms and connect them to referenced Pages.
 - Preserve the current **Back to page** behavior, selected Page, and predictable keyboard focus.
 
 #### Product decisions
 
-- Place the primary entry point in the Notebook navigation area because the Dictionary is notebook-scoped.
+- Place the primary entry point in an extensible horizontal workspace menu so future top-level choices can use the same location.
+- Use a Notebook dropdown rather than a disabled action or prerequisite message so the notebook scope is visible before navigation.
 - Do not create a permanent fifth workspace column or a global cross-notebook Dictionary in this milestone.
 
 #### Deliberately excluded
@@ -552,13 +570,22 @@ Make the existing Concept Dictionary discoverable without requiring users to kno
 - Repeat Concept CRUD, recognition, reference navigation, autosave, focus, keyboard, and Narrator checks.
 - Run the full automated suite and sequential Debug and Release builds.
 
+#### Recorded verification
+
+- 193 of 193 automated tests passed on 2026-10-10 after the final dropdown implementation.
+- Sequential x64 Debug and Release builds completed with no warnings or errors on 2026-10-10.
+- The final workspace-menu placement, empty-library guidance, Notebook dropdown, selected-Notebook marker, keyboard access, and Dictionary navigation passed manual approval on 2026-10-10.
+- The existing Notebook context-menu route, Concept CRUD, references, **Back to page**, and notebook-scoped loading remain on the shared navigation path; the full Narrator regression is retained for the Milestone 8 release checklist.
+
 ---
+
+## Now
 
 ### Milestone 8 — `v0.2.0` stabilization and release
 
 **Work types:** Stabilization, release work, documentation
 
-**Status:** Next
+**Status:** Now
 
 **Target:** `v0.2.0`, x64 first
 
@@ -607,6 +634,26 @@ Ship Rich-text editor v2, Section colors, and improved Concept Dictionary access
 - Smoke-test the portable artifact from a clean extraction path and verify persistence across restart.
 - Verify backup creation and restoration across the supported version boundary.
 - Confirm Git tag, GitHub Release, artifact, checksum, version metadata, screenshots, and documentation before marking the milestone complete.
+
+#### Recorded progress
+
+- 195 of 195 automated tests passed again on 2026-10-12, including direct migration
+  and backup restoration from a representative final-`v0.1.0` schema with
+  notebooks, Sections, Pages, RTF, ordering, and Concepts.
+- Product, assembly, file, and MSIX manifest metadata have been prepared for the
+  `v0.2.0` release candidate.
+- Clean x64 Debug and Release builds completed with 0 warnings and 0 errors on
+  2026-10-12. A self-contained x64 archive was built from commit `8c54467`, and
+  its SHA-256 was verified as
+  `005fe2921a871995abd80f73bdeedfaef5c5ff85d55c1dde944dd304a74b6b98`.
+- The archive opened from a new extraction directory, loaded the existing
+  library, and loaded it again after restart.
+- The manual Narrator and unavailable-database failure-safety checks were
+  explicitly skipped for this candidate; their earlier `v0.1.0` evidence is not
+  treated as current `v0.2.0` verification.
+- README feature documentation, release notes, release guide, known limitations,
+  and the manual regression checklist are current. The final `main` artifact,
+  CI, tag, and GitHub Release evidence remain pending.
 
 ---
 

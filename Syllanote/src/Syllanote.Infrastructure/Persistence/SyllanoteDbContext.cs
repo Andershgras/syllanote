@@ -24,6 +24,10 @@ public class SyllanoteDbContext : DbContext
             .HasForeignKey(section => section.NotebookId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<Section>()
+            .Property(section => section.ColorKey)
+            .HasMaxLength(16);
+
         modelBuilder.Entity<Page>()
             .HasOne<Section>()
             .WithMany()

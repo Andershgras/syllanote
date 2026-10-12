@@ -29,6 +29,7 @@ namespace Syllanote.Desktop.Controls
         public event NavigationContextMenuOpeningEventHandler? SectionContextMenuOpening;
         public event RoutedEventHandler? MoveSectionUpRequested;
         public event RoutedEventHandler? MoveSectionDownRequested;
+        public event RoutedEventHandler? SectionColorChangeRequested;
         public event RoutedEventHandler? RenameSectionRequested;
         public event RoutedEventHandler? DeleteSectionRequested;
         public event RoutedEventHandler? NewSectionRequested;
@@ -129,14 +130,34 @@ namespace Syllanote.Desktop.Controls
         private void SectionNavigationButton_Click(object sender, RoutedEventArgs e) =>
             SectionNavigationRequested?.Invoke(sender, e);
 
-        private void SectionContextMenu_Opening(object sender, object e) =>
+        private void SectionContextMenu_Opening(object sender, object e)
+        {
+            if (sender is MenuFlyout flyout &&
+                flyout.Target?.DataContext is NotebookNavigationItem navigationItem)
+            {
+                foreach (var colorItem in flyout.Items
+                    .OfType<MenuFlyoutSubItem>()
+                    .SelectMany(item => item.Items)
+                    .OfType<ToggleMenuFlyoutItem>())
+                {
+                    var colorKey = colorItem.Tag as string;
+                    colorItem.IsChecked = colorKey == "none"
+                        ? navigationItem.Section?.ColorKey is null
+                        : colorKey == navigationItem.Section?.ColorKey;
+                }
+            }
+
             SectionContextMenuOpening?.Invoke(sender, e);
+        }
 
         private void MoveSectionUpMenuItem_Click(object sender, RoutedEventArgs e) =>
             MoveSectionUpRequested?.Invoke(sender, e);
 
         private void MoveSectionDownMenuItem_Click(object sender, RoutedEventArgs e) =>
             MoveSectionDownRequested?.Invoke(sender, e);
+
+        private void SectionColorMenuItem_Click(object sender, RoutedEventArgs e) =>
+            SectionColorChangeRequested?.Invoke(sender, e);
 
         private void RenameSectionMenuItem_Click(object sender, RoutedEventArgs e) =>
             RenameSectionRequested?.Invoke(sender, e);

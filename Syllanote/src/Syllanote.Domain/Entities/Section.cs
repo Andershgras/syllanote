@@ -10,6 +10,8 @@ public class Section
 
     public int SortOrder { get; private set; }
 
+    public string? ColorKey { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
     public Section(Guid notebookId, string name, int sortOrder = 0)
@@ -64,5 +66,17 @@ public class Section
         }
 
         SortOrder = sortOrder;
+    }
+
+    public void ChangeColor(string? colorKey)
+    {
+        if (colorKey is not null && !SectionColorKeys.IsSupported(colorKey))
+        {
+            throw new ArgumentException(
+                "Section color is not supported.",
+                nameof(colorKey));
+        }
+
+        ColorKey = colorKey;
     }
 }
