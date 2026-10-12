@@ -637,15 +637,23 @@ Ship Rich-text editor v2, Section colors, and improved Concept Dictionary access
 
 #### Recorded progress
 
-- 195 of 195 automated tests passed on 2026-10-10, including direct migration
+- 195 of 195 automated tests passed again on 2026-10-12, including direct migration
   and backup restoration from a representative final-`v0.1.0` schema with
   notebooks, Sections, Pages, RTF, ordering, and Concepts.
 - Product, assembly, file, and MSIX manifest metadata have been prepared for the
   `v0.2.0` release candidate.
+- Clean x64 Debug and Release builds completed with 0 warnings and 0 errors on
+  2026-10-12. A self-contained x64 archive was built from commit `8c54467`, and
+  its SHA-256 was verified as
+  `005fe2921a871995abd80f73bdeedfaef5c5ff85d55c1dde944dd304a74b6b98`.
+- The archive opened from a new extraction directory, loaded the existing
+  library, and loaded it again after restart.
+- The manual Narrator and unavailable-database failure-safety checks were
+  explicitly skipped for this candidate; their earlier `v0.1.0` evidence is not
+  treated as current `v0.2.0` verification.
 - README feature documentation, release notes, release guide, known limitations,
-  and the manual regression checklist have been updated for the release
-  candidate. Final build, manual, artifact, CI, tag, and GitHub Release evidence
-  remain pending.
+  and the manual regression checklist are current. The final `main` artifact,
+  CI, tag, and GitHub Release evidence remain pending.
 
 ---
 

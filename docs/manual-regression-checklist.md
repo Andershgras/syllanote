@@ -109,3 +109,9 @@ Complete this section without using a mouse. Repeat the Narrator checks with Win
 | Date | Scaling | High contrast | Live theme change | Notes |
 | --- | --- | --- | --- | --- |
 | 2026-10-12 | Passed at 125%, 150%, and 200% | Passed | Passed | User-confirmed display checks on the release candidate. Page actions also opened with `Shift+F10`, and `Escape` closed the menu, on the corrected Debug build. |
+
+### v0.2.0 portable release-candidate verification record
+
+| Date | Artifact | Startup and restart | Build verification | Manual coverage exception |
+| --- | --- | --- | --- | --- |
+| 2026-10-12 | Local `Syllanote-v0.2.0-win-x64.zip` built from commit `8c54467`; SHA-256 `005fe2921a871995abd80f73bdeedfaef5c5ff85d55c1dde944dd304a74b6b98` matched the checksum file | Passed from a new extraction directory; the existing library loaded before and after restart | Clean x64 Debug and Release builds passed with 0 warnings and 0 errors; self-contained x64 publish passed | Narrator and unavailable-database failure-safety checks were explicitly not repeated for this candidate; earlier `v0.1.0` results remain historical evidence only |
